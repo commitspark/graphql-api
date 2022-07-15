@@ -22,7 +22,7 @@ Contentlab...
 * is written for serverless environments
 * is fully headless and does _not_ offer any graphical user interface
 * supports immutable content based on Git's ref addressing scheme
-* does _not_ contain any authentication mechanism as this is better handled elsewhere (e.g. Lambda authenticators)
+* does _not_ contain any authentication mechanism as this is better handled elsewhere (e.g. Lambda authorizers)
 * only stores text-like data as there are specialized systems for non-text data (e.g. DAM for media assets)
 
 # Running Contentlab

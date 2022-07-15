@@ -1,0 +1,22 @@
+service: contentlab
+
+plugins:
+    - serverless-offline
+
+provider:
+    name: aws
+    runtime: nodejs16.x
+
+functions:
+    graphql:
+        handler: dist/main.graphql
+        events:
+            -   httpApi:
+                    method: POST
+                    path: '/{ref}/graphql'
+    schema:
+        handler: dist/main.schema
+        events:
+            -   httpApi:
+                    method: GET
+                    path: '/{ref}/schema'

@@ -124,7 +124,6 @@ export class PersistenceService {
     ref: string,
     type: string,
     id: ID,
-    data: Entry,
     message: string,
   ): Promise<CommitResult> {
     const allEntries = await this.queryApi.getContentEntries(ref)

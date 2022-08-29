@@ -116,7 +116,6 @@ export class QueriesMutationsGeneratorService {
             context.branch,
             name,
             args.id,
-            args.data,
             args.message,
           )
           context.setCurrentRef(deleteResult.ref)

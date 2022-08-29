@@ -49,6 +49,9 @@ export class SchemaGeneratorService {
       this.queriesMutationsGenerator.generateFromAnalyzedSchema(
         schemaAnalyzerResult,
       )
+    const generatedTypeQuery =
+      this.queriesMutationsGenerator.generateTypeQuery()
+
     let generatedEntryReferenceResolvers = {}
     schemaAnalyzerResult.typesWithEntryReferences.forEach((obj) => {
       generatedEntryReferenceResolvers = {
@@ -65,6 +68,7 @@ export class SchemaGeneratorService {
     const generatedSchemaRootTypeStrings =
       this.schemaRootTypeGenerator.generateSchemaRootTypeStrings(
         generatedQueriesMutations,
+        generatedTypeQuery,
       )
 
     const generatedSchemaString =
@@ -89,17 +93,20 @@ export class SchemaGeneratorService {
     generatedQueriesMutations.forEach(function (
       element: IGeneratedSchema,
     ): void {
-      generatedQueryResolvers[element.queryAllName] = element.queryAllResolver
-      generatedQueryResolvers[element.queryAllMetaName] =
-        element.queryAllMetaResolver
-      generatedQueryResolvers[element.queryByIdName] = element.queryByIdResolver
-      generatedMutationResolvers[element.createMutationName] =
-        element.createMutationResolver
-      generatedMutationResolvers[element.updateMutationName] =
-        element.updateMutationResolver
-      generatedMutationResolvers[element.deleteMutationName] =
-        element.deleteMutationResolver
+      generatedQueryResolvers[element.queryAll.name] = element.queryAll.resolver
+      generatedQueryResolvers[element.queryAllMeta.name] =
+        element.queryAllMeta.resolver
+      generatedQueryResolvers[element.queryById.name] =
+        element.queryById.resolver
+      generatedMutationResolvers[element.createMutation.name] =
+        element.createMutation.resolver
+      generatedMutationResolvers[element.updateMutation.name] =
+        element.updateMutation.resolver
+      generatedMutationResolvers[element.deleteMutation.name] =
+        element.deleteMutation.resolver
     })
+    generatedQueryResolvers[generatedTypeQuery.name] =
+      generatedTypeQuery.resolver
 
     return {
       typeDefs: [

@@ -49,8 +49,8 @@ export class SchemaGeneratorService {
       this.queriesMutationsGenerator.generateFromAnalyzedSchema(
         schemaAnalyzerResult,
       )
-    const generatedTypeQuery =
-      this.queriesMutationsGenerator.generateTypeQuery()
+    const generatedTypeNameQuery =
+      this.queriesMutationsGenerator.generateTypeNameQuery()
 
     let generatedEntryReferenceResolvers = {}
     schemaAnalyzerResult.typesWithEntryReferences.forEach((obj) => {
@@ -68,7 +68,7 @@ export class SchemaGeneratorService {
     const generatedSchemaRootTypeStrings =
       this.schemaRootTypeGenerator.generateSchemaRootTypeStrings(
         generatedQueriesMutations,
-        generatedTypeQuery,
+        generatedTypeNameQuery,
       )
 
     const generatedSchemaString =
@@ -105,8 +105,8 @@ export class SchemaGeneratorService {
       generatedMutationResolvers[element.deleteMutation.name] =
         element.deleteMutation.resolver
     })
-    generatedQueryResolvers[generatedTypeQuery.name] =
-      generatedTypeQuery.resolver
+    generatedQueryResolvers[generatedTypeNameQuery.name] =
+      generatedTypeNameQuery.resolver
 
     return {
       typeDefs: [

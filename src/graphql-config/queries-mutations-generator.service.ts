@@ -161,7 +161,7 @@ export class QueriesMutationsGeneratorService {
     )
   }
 
-  public generateTypeQuery(): IGeneratedQuery<Promise<string>> {
+  public generateTypeNameQuery(): IGeneratedQuery<Promise<string>> {
     const contentTypeQueryName = '_typeName'
     const contentTypeQueryString = `${contentTypeQueryName}(id: ID!): String`
     const contentTypeQueryResolver = async (

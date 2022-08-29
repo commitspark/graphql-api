@@ -1,12 +1,11 @@
 import { ContentEntryMetadata } from './content-entry-metadata'
-import { Entry } from '../../persistence/persistence.service'
 
 export class ContentEntry {
   readonly id: string
   readonly metadata: ContentEntryMetadata
-  readonly data: Entry
+  readonly data: Record<string, unknown>
 
-  constructor(id: string, metadata: ContentEntryMetadata, data: Entry) {
+  constructor(id: string, metadata: ContentEntryMetadata, data: Record<string, unknown>) {
     this.id = id
     this.metadata = metadata
     this.data = data

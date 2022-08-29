@@ -126,47 +126,72 @@ export class QueriesMutationsGeneratorService {
         }
 
         return {
-          queryAllName,
-          queryAllString,
-          queryAllResolver,
-          queryAllMetaName,
-          queryAllMetaString,
-          queryAllMetaResolver,
-          queryByIdName,
-          queryByIdString,
-          queryByIdResolver,
-          createMutationName,
-          createMutationString,
-          createMutationResolver,
-          updateMutationName,
-          updateMutationString,
-          updateMutationResolver,
-          deleteMutationName,
-          deleteMutationString,
-          deleteMutationResolver,
+          queryAll: {
+            name: queryAllName,
+            schemaString: queryAllString,
+            resolver: queryAllResolver,
+          },
+          queryAllMeta: {
+            name: queryAllMetaName,
+            schemaString: queryAllMetaString,
+            resolver: queryAllMetaResolver,
+          },
+          queryById: {
+            name: queryByIdName,
+            schemaString: queryByIdString,
+            resolver: queryByIdResolver,
+          },
+          createMutation: {
+            name: createMutationName,
+            schemaString: createMutationString,
+            resolver: createMutationResolver,
+          },
+          updateMutation: {
+            name: updateMutationName,
+            schemaString: updateMutationString,
+            resolver: updateMutationResolver,
+          },
+          deleteMutation: {
+            name: deleteMutationName,
+            schemaString: deleteMutationString,
+            resolver: deleteMutationResolver,
+          },
         }
       },
     )
   }
+
+  public generateTypeNameQuery(): IGeneratedQuery<Promise<string>> {
+    const contentTypeQueryName = '_typeName'
+    const contentTypeQueryString = `${contentTypeQueryName}(id: ID!): String`
+    const contentTypeQueryResolver = async (
+      source,
+      args,
+      context: IApolloContext,
+      info,
+    ): Promise<string> => {
+      return this.persistence.getTypeById(context.branch, args.id)
+    }
+
+    return {
+      name: contentTypeQueryName,
+      schemaString: contentTypeQueryString,
+      resolver: contentTypeQueryResolver,
+    }
+  }
 }
 
 export interface IGeneratedSchema {
-  queryAllName: string
-  queryAllString: string
-  queryAllResolver: (obj, args, context, info) => Promise<Entry[]>
-  queryAllMetaName: string
-  queryAllMetaString: string
-  queryAllMetaResolver: (obj, args, context, info) => Promise<Entry>
-  queryByIdName: string
-  queryByIdString: string
-  queryByIdResolver: (obj, args, context, info) => Promise<Entry>
-  createMutationName: string
-  createMutationString: string
-  createMutationResolver: (source, args, context, info) => Promise<Entry>
-  updateMutationName: string
-  updateMutationString: string
-  updateMutationResolver: (source, args, context, info) => Promise<Entry>
-  deleteMutationName: string
-  deleteMutationString: string
-  deleteMutationResolver: (source, args, context, info) => Promise<Entry>
+  queryAll: IGeneratedQuery<Promise<Entry[]>>
+  queryAllMeta: IGeneratedQuery<Promise<Entry>>
+  queryById: IGeneratedQuery<Promise<Entry>>
+  createMutation: IGeneratedQuery<Promise<Entry>>
+  updateMutation: IGeneratedQuery<Promise<Entry>>
+  deleteMutation: IGeneratedQuery<Promise<Entry>>
+}
+
+export interface IGeneratedQuery<T> {
+  name: string
+  schemaString: string
+  resolver: (obj, args, context: IApolloContext, info) => T
 }

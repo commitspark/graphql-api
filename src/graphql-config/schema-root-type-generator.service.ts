@@ -1,35 +1,41 @@
-import { IGeneratedSchema } from './queries-mutations-generator.service'
+import {
+  IGeneratedQuery,
+  IGeneratedSchema,
+} from './queries-mutations-generator.service'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()
 export class SchemaRootTypeGeneratorService {
   public generateSchemaRootTypeStrings(
     generatedSchemas: IGeneratedSchema[],
+    typeQuery: IGeneratedQuery<Promise<string>>,
   ): string {
     return (
       `type Query {\n` +
       generatedSchemas
-        .map((generated) => '  ' + generated.queryAllString)
+        .map((generated) => '  ' + generated.queryAll.schemaString)
         .join('\n') +
       generatedSchemas
-        .map((generated) => '  ' + generated.queryAllMetaString)
+        .map((generated) => '  ' + generated.queryAllMeta.schemaString)
         .join('\n') +
       generatedSchemas
-        .map((generated) => '  ' + generated.queryByIdString)
+        .map((generated) => '  ' + generated.queryById.schemaString)
         .join('\n') +
+      '\n' +
+      `  ${typeQuery.schemaString}` +
       '\n' +
       '}\n' +
       'type Mutation {\n' +
       generatedSchemas
-        .map((generated) => '  ' + generated.createMutationString)
+        .map((generated) => '  ' + generated.createMutation.schemaString)
         .join('\n') +
       '\n' +
       generatedSchemas
-        .map((generated) => '  ' + generated.updateMutationString)
+        .map((generated) => '  ' + generated.updateMutation.schemaString)
         .join('\n') +
       '\n' +
       generatedSchemas
-        .map((generated) => '  ' + generated.deleteMutationString)
+        .map((generated) => '  ' + generated.deleteMutation.schemaString)
         .join('\n') +
       '\n' +
       '}\n'

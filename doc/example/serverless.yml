@@ -14,9 +14,15 @@ functions:
             -   httpApi:
                     method: POST
                     path: '/{ref}/graphql'
+        environment:
+            GITLAB_PROJECT_PATH: ${file(./.env.yaml):GITLAB_PROJECT_PATH}
+            GITLAB_PERSONAL_ACCESS_TOKEN: ${file(./.env.yaml):GITLAB_PERSONAL_ACCESS_TOKEN}
     schema:
         handler: dist/main.schema
         events:
             -   httpApi:
                     method: GET
                     path: '/{ref}/schema'
+        environment:
+            GITLAB_PROJECT_PATH: ${file(./.env.yaml):GITLAB_PROJECT_PATH}
+            GITLAB_PERSONAL_ACCESS_TOKEN: ${file(./.env.yaml):GITLAB_PERSONAL_ACCESS_TOKEN}

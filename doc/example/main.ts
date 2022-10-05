@@ -1,16 +1,25 @@
 import { HttpStatus } from '@nestjs/common'
-import { NestFactory } from '@nestjs/core'
 import { APIGatewayProxyEventV2, Callback, Context, Handler } from 'aws-lambda'
-import { AppModule } from './app/app.module'
-import { ApiService } from './app/api.service'
+import { getApiService } from '../../src'
+import {
+  GitLabAdapterModule,
+  GitLabAdapterService,
+  GitLabRepositoryOptions,
+} from 'contentlab-git-adapter-gitlab'
 
 export const graphql: Handler = async (
   event: APIGatewayProxyEventV2,
   context: Context,
   callback: Callback,
 ) => {
-  const appContext = await NestFactory.createApplicationContext(AppModule)
-  const api = appContext.get(ApiService)
+  const api = await getApiService<GitLabRepositoryOptions>({
+    adapterModuleClass: GitLabAdapterModule,
+    adapterServiceClass: GitLabAdapterService,
+    repositoryOptions: {
+      projectPath: process.env.GITLAB_PROJECT_PATH,
+      token: process.env.GITLAB_PERSONAL_ACCESS_TOKEN,
+    },
+  })
   const response = await api.postGraphQL(
     event.pathParameters['ref'],
     JSON.parse(event.body),
@@ -35,8 +44,14 @@ export const schema: Handler = async (
   context: Context,
   callback: Callback,
 ) => {
-  const appContext = await NestFactory.createApplicationContext(AppModule)
-  const api = appContext.get(ApiService)
+  const api = await getApiService<GitLabRepositoryOptions>({
+    adapterModuleClass: GitLabAdapterModule,
+    adapterServiceClass: GitLabAdapterService,
+    repositoryOptions: {
+      projectPath: process.env.GITLAB_PROJECT_PATH,
+      token: process.env.GITLAB_PERSONAL_ACCESS_TOKEN,
+    },
+  })
   const response = await api.getSchema(event.pathParameters['ref'])
 
   return {

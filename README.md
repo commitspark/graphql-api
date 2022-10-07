@@ -1,11 +1,12 @@
-**[Contentlab](https://contentlab.sh) is a declarative, stateless, and serverless content engine based on Git and GraphQL.**
+# Introduction
+**This library is part of [Contentlab](https://contentlab.sh). It generates a fully functional GraphQL content
+management API exclusively from data in a Git repository.**
 
-It generates Content Management System (CMS) functionality on top of any GitLab-hosted Git repository.
+The exact API structure is determined by the content model which is defined in a plain GraphQL text file
+inside the repository using the standard GraphQL [type system](https://graphql.org/learn/schema/).
 
-Contentlab content models are defined in a plain GraphQL text file using the standard GraphQL
-[type system](https://graphql.org/learn/schema/).
-
-Content entries are stored in the given Git repository as plain YAML text files.
+Content entries are also stored in the given Git repository using plain YAML text files. No other data store is
+needed.
 
 ---
 
@@ -14,12 +15,11 @@ significantly before a first stable release*
 
 # Design choices
 
-Contentlab is intentionally built with a very narrow feature set to facilitate integration into larger systems.
+Contentlab is intentionally built with a very narrow feature set to facilitate composition into larger systems.
 
 Contentlab...
 * is declarative and builds its GraphQL API from a single GraphQL type definition text file
-* is completely stateless and for each API request obtains all state from Git
-* is written for serverless environments
+* is completely stateless and for each call obtains all state from Git, ideal for use in serverless environments
 * is fully headless and does _not_ offer any graphical user interface
 * supports immutable content based on Git's ref addressing scheme
 * does _not_ contain any authentication mechanism as this is better handled elsewhere (e.g. Lambda authorizers)
@@ -29,28 +29,29 @@ Contentlab...
 
 ## Development
 
-1. Clone this repository locally.
-2. Obtain a GitLab (SaaS) access token under [User Preferences](https://gitlab.com/-/profile/preferences) ->
+To build and run your own Contentlab-based CMS using 
+[Serverless](https://www.serverless.com/framework/docs/getting-started), follow these steps:
+
+1. Have two Git repositories, one for your application code, one for your content (e.g. clone the
+   [example content repository](https://github.com/contentlab-sh/example-multilanguage-website)).
+2. Run `npm i contentlab contentlab-git-adapter-gitlab` in your **code** repository to install the core library and 
+   GitLab (SaaS) adapter.
+3. Copy and adjust the files in `doc/example` to your needs to start with basic serverless function implementations.
+4. Obtain a GitLab (SaaS) access token at [User Preferences](https://gitlab.com/-/profile/preferences) ->
    [Access Tokens](https://gitlab.com/-/profile/personal_access_tokens) and create a token with `api` scope.
-3. On GitLab (SaaS), prepare a repository (private or public) for use by Contentlab (e.g. clone the
-   [example repository](https://github.com/contentlab-sh/example-multilanguage-website)) and note the project path.
+5. Get the project path for your **content** repository.
    
    For example, a repository at `https://gitlab.com/myorg/myrepo/` has project path `myorg/myrepo`.
-4. Copy `.env.dist` to `.env` and fill in your project path and access token.
-5. Install dependencies and run the development server as follows:
-
-    ```bash
-   $ npm install
-   $ npm run build
-   $ npm run serverless
-   ```
+6. Copy the example `.env.yaml.dist` to `.env.yaml` in your code repository and fill in your project path and access
+   token.
+7. Run your [serverless](https://www.serverless.com/framework/docs/getting-started) functions locally with 
+   `serverless offline`.
 
 The GraphQL API is then available under [http://localhost:3000/main/graphql](http://localhost:3000/main/graphql) and 
-[http://localhost:3000/main/schema](http://localhost:3000/main/schema) (where `main` is the name of a valid branch).
+[http://localhost:3000/main/schema](http://localhost:3000/main/schema) (where `main` is the name of a valid branch
+in your **content** repository).
 
 ## Production
-
-Contentlab is written for serverless deployment on e.g. AWS Lambda.
 
 To deploy, adjust `serverless.yml` to your needs or use the Contentlab hosted offering (coming soon).
 

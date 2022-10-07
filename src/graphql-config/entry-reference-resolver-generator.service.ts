@@ -1,14 +1,14 @@
 import { GraphQLField, GraphQLObjectType } from 'graphql'
 import { Entry, PersistenceService } from '../persistence/persistence.service'
 import { Injectable } from '@nestjs/common'
-import { IApolloContext } from '../app/api.service'
+import { ApolloContext } from '../app/api.service'
 
 @Injectable()
 export class EntryReferenceResolverGeneratorService {
   constructor(private readonly persistence: PersistenceService) {}
 
   public createResolver(
-    context: IApolloContext,
+    context: ApolloContext,
     obj: {
       type: GraphQLObjectType
       fields: GraphQLField<any, any>[]
@@ -25,10 +25,15 @@ export class EntryReferenceResolverGeneratorService {
         }
         if (Array.isArray(parent[fieldName])) {
           return parent[fieldName].map((el) =>
-            persistence.findById(context.getCurrentRef(), el.id),
+            persistence.findById(
+              context.gitAdapter,
+              context.getCurrentRef(),
+              el.id,
+            ),
           )
         } else {
           return persistence.findById(
+            context.gitAdapter,
             context.getCurrentRef(),
             parent[fieldName].id,
           )

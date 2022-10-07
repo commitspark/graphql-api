@@ -1,7 +1,7 @@
 import { ISchemaAnalyzerResult } from './schema-analyzer.service'
 import { Injectable } from '@nestjs/common'
 import { Entry, PersistenceService } from '../persistence/persistence.service'
-import { IApolloContext } from '../app/api.service'
+import { ApolloContext } from '../app/api.service'
 
 @Injectable()
 export class QueriesMutationsGeneratorService {
@@ -19,10 +19,14 @@ export class QueriesMutationsGeneratorService {
         const queryAllResolver = async (
           obj,
           args,
-          context: IApolloContext,
+          context: ApolloContext,
           info,
         ): Promise<Entry[]> => {
-          return this.persistence.findByType(context.getCurrentRef(), name)
+          return this.persistence.findByType(
+            context.gitAdapter,
+            context.getCurrentRef(),
+            name,
+          )
         }
 
         const queryAllMetaName = `_${queryAllName}Meta`
@@ -30,12 +34,16 @@ export class QueriesMutationsGeneratorService {
         const queryAllMetaResolver = async (
           obj,
           args,
-          context: IApolloContext,
+          context: ApolloContext,
           info,
         ): Promise<Entry> => {
           return {
             count: (
-              await this.persistence.findByType(context.getCurrentRef(), name)
+              await this.persistence.findByType(
+                context.gitAdapter,
+                context.getCurrentRef(),
+                name,
+              )
             ).length,
           }
         }
@@ -49,6 +57,7 @@ export class QueriesMutationsGeneratorService {
           info,
         ): Promise<Entry> => {
           return this.persistence.findByTypeId(
+            context.gitAdapter,
             context.getCurrentRef(),
             name,
             args.id,
@@ -61,11 +70,12 @@ export class QueriesMutationsGeneratorService {
         const createMutationResolver = async (
           source,
           args,
-          context: IApolloContext,
+          context: ApolloContext,
           info,
         ): Promise<Entry> => {
           // TODO validate ID references in payload to assert referenced ID exists and points to correct entry type
           const createResult = await this.persistence.createType(
+            context.gitAdapter,
             context.branch,
             name,
             args.data,
@@ -73,6 +83,7 @@ export class QueriesMutationsGeneratorService {
           )
           context.setCurrentRef(createResult.ref)
           return this.persistence.findByTypeId(
+            context.gitAdapter,
             context.getCurrentRef(),
             name,
             createResult.id,
@@ -84,11 +95,12 @@ export class QueriesMutationsGeneratorService {
         const updateMutationResolver = async (
           source,
           args,
-          context: IApolloContext,
+          context: ApolloContext,
           info,
         ): Promise<Entry> => {
           // TODO validate ID references in payload to assert referenced ID exists and points to correct entry type
           const updateResult = await this.persistence.updateByTypeId(
+            context.gitAdapter,
             context.branch,
             name,
             args.id,
@@ -97,6 +109,7 @@ export class QueriesMutationsGeneratorService {
           )
           context.setCurrentRef(updateResult.ref)
           return this.persistence.findByTypeId(
+            context.gitAdapter,
             context.getCurrentRef(),
             name,
             args.id,
@@ -108,11 +121,12 @@ export class QueriesMutationsGeneratorService {
         const deleteMutationResolver = async (
           source,
           args,
-          context: IApolloContext,
+          context: ApolloContext,
           info,
         ): Promise<Entry> => {
           // TODO validate ID to delete is not referenced anywhere
           const deleteResult = await this.persistence.deleteByTypeId(
+            context.gitAdapter,
             context.branch,
             name,
             args.id,
@@ -166,10 +180,14 @@ export class QueriesMutationsGeneratorService {
     const contentTypeQueryResolver = async (
       source,
       args,
-      context: IApolloContext,
+      context: ApolloContext,
       info,
     ): Promise<string> => {
-      return this.persistence.getTypeById(context.branch, args.id)
+      return this.persistence.getTypeById(
+        context.gitAdapter,
+        context.branch,
+        args.id,
+      )
     }
 
     return {
@@ -192,5 +210,5 @@ export interface IGeneratedSchema {
 export interface IGeneratedQuery<T> {
   name: string
   schemaString: string
-  resolver: (obj, args, context: IApolloContext, info) => T
+  resolver: (obj, args, context: ApolloContext, info) => T
 }

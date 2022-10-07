@@ -10,11 +10,10 @@ import {
 import { SchemaAnalyzerService } from './schema-analyzer.service'
 import { InputTypeGeneratorService } from './input-type-generator.service'
 import { SchemaRootTypeGeneratorService } from './schema-root-type-generator.service'
-import { QueryApiService } from '../git/gitlab/query-api.service'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { EntryReferenceResolverGeneratorService } from './entry-reference-resolver-generator.service'
 import { UnionTypeResolverGeneratorService } from './union-type-resolver-generator-service'
-import { IApolloContext } from '../app/api.service'
+import { ApolloContext } from '../app/api.service'
 
 @Injectable()
 export class SchemaGeneratorService {
@@ -23,15 +22,14 @@ export class SchemaGeneratorService {
     private readonly schemaAnalyzer: SchemaAnalyzerService,
     private readonly inputTypeGenerator: InputTypeGeneratorService,
     private readonly schemaRootTypeGenerator: SchemaRootTypeGeneratorService,
-    private readonly queryApi: QueryApiService,
     private readonly entryReferenceResolverGenerator: EntryReferenceResolverGeneratorService,
     private readonly unionTypeResolverGenerator: UnionTypeResolverGeneratorService,
   ) {}
 
   public async generateSchema(
-    context: IApolloContext,
+    context: ApolloContext,
   ): Promise<IExecutableSchemaDefinition> {
-    const originalSchemaString = await this.queryApi.getSchema(
+    const originalSchemaString = await context.gitAdapter.getSchema(
       context.getCurrentRef(),
     )
     let schema = makeExecutableSchema({

@@ -1,18 +1,17 @@
 import { v4 as uuidv4 } from 'uuid'
-import { CommitApiService } from '../git/gitlab/commit-api.service'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { QueryApiService } from '../git/gitlab/query-api.service'
-import { ContentEntry } from '../git/model/content-entry'
+import { ContentEntry, GitAdapter } from 'contentlab-git-adapter'
 
 @Injectable()
 export class PersistenceService {
-  constructor(
-    private readonly commitApi: CommitApiService,
-    private readonly queryApi: QueryApiService,
-  ) {}
+  constructor() {}
 
-  public async getTypeById(ref: string, id: ID): Promise<string> {
-    const allEntries = await this.queryApi.getContentEntries(ref)
+  public async getTypeById(
+    gitAdapter: GitAdapter,
+    ref: string,
+    id: ID,
+  ): Promise<string> {
+    const allEntries = await gitAdapter.getContentEntries(ref)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -23,8 +22,12 @@ export class PersistenceService {
     return requestedEntry.metadata.type
   }
 
-  public async findById(ref: string, id: ID): Promise<Entry> {
-    const allEntries = await this.queryApi.getContentEntries(ref)
+  public async findById(
+    gitAdapter: GitAdapter,
+    ref: string,
+    id: ID,
+  ): Promise<Entry> {
+    const allEntries = await gitAdapter.getContentEntries(ref)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -35,8 +38,12 @@ export class PersistenceService {
     return { ...requestedEntry.data, id: id }
   }
 
-  public async findByType(ref: string, type: string): Promise<Entry[]> {
-    const allEntries = await this.queryApi.getContentEntries(ref)
+  public async findByType(
+    gitAdapter: GitAdapter,
+    ref: string,
+    type: string,
+  ): Promise<Entry[]> {
+    const allEntries = await gitAdapter.getContentEntries(ref)
     return allEntries
       .filter(
         (contentEntry: ContentEntry) => contentEntry.metadata.type === type,
@@ -44,8 +51,13 @@ export class PersistenceService {
       .map((value) => ({ ...value.data, id: value.id }))
   }
 
-  public async findByTypeId(ref: string, type: string, id: ID): Promise<Entry> {
-    const allEntries = await this.queryApi.getContentEntries(ref)
+  public async findByTypeId(
+    gitAdapter: GitAdapter,
+    ref: string,
+    type: string,
+    id: ID,
+  ): Promise<Entry> {
+    const allEntries = await gitAdapter.getContentEntries(ref)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -57,14 +69,16 @@ export class PersistenceService {
   }
 
   public async createType(
+    gitAdapter: GitAdapter,
     ref: string,
     type: string,
     data: Entry,
     message: string,
   ): Promise<CommitResult> {
     const id = uuidv4()
-    const commit = await this.commitApi.createCommit({
+    const commit = await gitAdapter.createCommit({
       ref: ref,
+      parentSha: undefined,
       contentEntries: [
         {
           id: id,
@@ -85,13 +99,14 @@ export class PersistenceService {
   }
 
   public async updateByTypeId(
+    gitAdapter: GitAdapter,
     ref: string,
     type: string,
     id: ID,
     data: Entry,
     message: string,
   ): Promise<CommitResult> {
-    const allEntries = await this.queryApi.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(ref)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -101,8 +116,9 @@ export class PersistenceService {
 
     const newData: Entry = { ...requestedEntry.data, ...data }
 
-    const commit = await this.commitApi.createCommit({
+    const commit = await gitAdapter.createCommit({
       ref: ref,
+      parentSha: undefined,
       contentEntries: [
         {
           id: id,
@@ -121,12 +137,13 @@ export class PersistenceService {
   }
 
   public async deleteByTypeId(
+    gitAdapter: GitAdapter,
     ref: string,
     type: string,
     id: ID,
     message: string,
   ): Promise<CommitResult> {
-    const allEntries = await this.queryApi.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(ref)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -134,8 +151,9 @@ export class PersistenceService {
       throw new NotFoundException({ type, id })
     }
 
-    const commit = await this.commitApi.createCommit({
+    const commit = await gitAdapter.createCommit({
       ref: ref,
+      parentSha: undefined,
       contentEntries: [
         {
           id: id,

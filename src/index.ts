@@ -13,6 +13,8 @@ export interface Type<T = any> extends Function {
   new (...args: any[]): T
 }
 
+export { ApiService }
+
 export async function getApiService(): Promise<ApiService> {
   const appContext = await NestFactory.createApplicationContext(AppModule)
   return appContext.get(ApiService)

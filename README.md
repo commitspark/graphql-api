@@ -27,33 +27,22 @@ Contentlab...
 
 # Running Contentlab
 
+An application using Contentlab should be built with two Git repositories:
+* A code repository to hold the application code
+* A content repository to hold the content model (schema) and content entries
+
 ## Development
 
-To build and run your own Contentlab-based CMS using 
-[Serverless](https://www.serverless.com/framework/docs/getting-started), follow these steps:
+The quickest way to build and run your own Contentlab-based CMS is to clone the two example repositories:
 
-1. Have two Git repositories, one for your application code, one for your content (e.g. clone the
-   [example content repository](https://github.com/contentlab-sh/example-multilanguage-website)).
-2. Run `npm i contentlab contentlab-git-adapter-gitlab` in your **code** repository to install the core library and 
-   GitLab (SaaS) adapter.
-3. Copy and adjust the files in `doc/example` to your needs to start with basic serverless function implementations.
-4. Obtain a GitLab (SaaS) access token at [User Preferences](https://gitlab.com/-/profile/preferences) ->
-   [Access Tokens](https://gitlab.com/-/profile/personal_access_tokens) and create a token with `api` scope.
-5. Get the project path for your **content** repository.
-   
-   For example, a repository at `https://gitlab.com/myorg/myrepo/` has project path `myorg/myrepo`.
-6. Copy the example `.env.yaml.dist` to `.env.yaml` in your code repository and fill in your project path and access
-   token.
-7. Run your [serverless](https://www.serverless.com/framework/docs/getting-started) functions locally with 
-   `serverless offline`.
-
-The GraphQL API is then available under [http://localhost:3000/main/graphql](http://localhost:3000/main/graphql) and 
-[http://localhost:3000/main/schema](http://localhost:3000/main/schema) (where `main` is the name of a valid branch
-in your **content** repository).
+1. Clone [this example code repository](https://github.com/contentlab-sh/example-code-serverless) and follow the
+   README instructions to obtain simple pre-built serverless functions
+2. Clone [this example content repository](https://github.com/contentlab-sh/example-content-multilanguage-website)
+   to start with a simple schema typically used for multi-language websites which you can then adjust as desired
 
 ## Production
 
-To deploy, adjust `serverless.yml` to your needs or use the Contentlab hosted offering (coming soon).
+To deploy, adjust Serverless in your code repository to your needs or use the Contentlab hosted offering (coming soon).
 
 # Working with Contentlab
 

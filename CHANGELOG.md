@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Move example application into [separate repository](https://github.com/contentlab-sh/example-code-serverless)
 
 ## [0.2.0] - 2022-10-07
 ### Changed

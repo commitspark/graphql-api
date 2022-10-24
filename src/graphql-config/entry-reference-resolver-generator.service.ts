@@ -1,9 +1,7 @@
 import { GraphQLField, GraphQLObjectType } from 'graphql'
 import { Entry, PersistenceService } from '../persistence/persistence.service'
-import { Injectable } from '@nestjs/common'
 import { ApolloContext } from '../app/api.service'
 
-@Injectable()
 export class EntryReferenceResolverGeneratorService {
   constructor(private readonly persistence: PersistenceService) {}
 

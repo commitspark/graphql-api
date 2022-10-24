@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-10-24
+### Changed
+- Drop NestJS in favor of awilix due to https://github.com/nestjs/nest/issues/9622
+
 ## [0.2.1] - 2022-10-11
 ### Fixed
 - Export signature of `ApiService`

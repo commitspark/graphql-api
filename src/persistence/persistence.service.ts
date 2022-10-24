@@ -1,8 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
-import { Injectable, NotFoundException } from '@nestjs/common'
 import { ContentEntry, GitAdapter } from 'contentlab-git-adapter'
 
-@Injectable()
 export class PersistenceService {
   constructor() {}
 
@@ -16,7 +14,7 @@ export class PersistenceService {
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
     if (requestedEntry === undefined) {
-      throw new NotFoundException(id)
+      throw new Error(`Not found: ${id}`)
     }
 
     return requestedEntry.metadata.type
@@ -32,7 +30,7 @@ export class PersistenceService {
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
     if (requestedEntry === undefined) {
-      throw new NotFoundException(id)
+      throw new Error(`Not found: ${id}`)
     }
 
     return { ...requestedEntry.data, id: id }
@@ -62,7 +60,7 @@ export class PersistenceService {
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
-      throw new NotFoundException({ type, id })
+      throw new Error(`Not found: ${type}, ${id}`)
     }
 
     return { ...requestedEntry.data, id: id }
@@ -111,7 +109,7 @@ export class PersistenceService {
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
-      throw new NotFoundException({ type, id })
+      throw new Error(`Not found: ${type}, ${id}`)
     }
 
     const newData: Entry = { ...requestedEntry.data, ...data }
@@ -148,7 +146,7 @@ export class PersistenceService {
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
-      throw new NotFoundException({ type, id })
+      throw new Error(`Not found: ${type}, ${id}`)
     }
 
     const commit = await gitAdapter.createCommit({

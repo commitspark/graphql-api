@@ -11,10 +11,8 @@ import {
   GraphQLObjectType,
   GraphQLScalarType,
 } from 'graphql'
-import { Injectable } from '@nestjs/common'
 import { ISchemaAnalyzerResult } from './schema-analyzer.service'
 
-@Injectable()
 export class InputTypeGeneratorService {
   public generateFieldInputTypeString(
     type: GraphQLNullableType,

@@ -1,8 +1,6 @@
-import { Injectable } from '@nestjs/common'
 import { ApolloContext } from '../app/api.service'
 import { PersistenceService } from '../persistence/persistence.service'
 
-@Injectable()
 export class UnionTypeResolverGeneratorService {
   constructor(private readonly persistence: PersistenceService) {}
 

@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { SchemaGeneratorService } from './schema-generator.service'
 import { ApolloContext } from '../app/api.service'
 import { Config } from 'apollo-server-core/src/types'
 
-@Injectable()
 export class ApolloConfigFactoryService {
   constructor(private readonly schemaGenerator: SchemaGeneratorService) {}
 

@@ -11,9 +11,7 @@ import {
   GraphQLNullableType,
   GraphQLUnionType,
 } from 'graphql/type/definition'
-import { Injectable } from '@nestjs/common'
 
-@Injectable()
 export class SchemaAnalyzerService {
   public analyzeSchema(schema: GraphQLSchema): ISchemaAnalyzerResult {
     const result: ISchemaAnalyzerResult = {

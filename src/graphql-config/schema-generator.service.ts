@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common'
 import {
   IGeneratedSchema,
   QueriesMutationsGeneratorService,
@@ -15,7 +14,6 @@ import { EntryReferenceResolverGeneratorService } from './entry-reference-resolv
 import { UnionTypeResolverGeneratorService } from './union-type-resolver-generator-service'
 import { ApolloContext } from '../app/api.service'
 
-@Injectable()
 export class SchemaGeneratorService {
   constructor(
     private readonly queriesMutationsGenerator: QueriesMutationsGeneratorService,

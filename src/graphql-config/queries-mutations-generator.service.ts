@@ -1,9 +1,7 @@
 import { ISchemaAnalyzerResult } from './schema-analyzer.service'
-import { Injectable } from '@nestjs/common'
 import { Entry, PersistenceService } from '../persistence/persistence.service'
 import { ApolloContext } from '../app/api.service'
 
-@Injectable()
 export class QueriesMutationsGeneratorService {
   constructor(private readonly persistence: PersistenceService) {}
 

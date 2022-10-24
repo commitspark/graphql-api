@@ -2,9 +2,7 @@ import {
   IGeneratedQuery,
   IGeneratedSchema,
 } from './queries-mutations-generator.service'
-import { Injectable } from '@nestjs/common'
 
-@Injectable()
 export class SchemaRootTypeGeneratorService {
   public generateSchemaRootTypeStrings(
     generatedSchemas: IGeneratedSchema[],

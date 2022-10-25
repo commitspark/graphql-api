@@ -6,10 +6,10 @@ export class PersistenceService {
 
   public async getTypeById(
     gitAdapter: GitAdapter,
-    ref: string,
+    commitHash: string,
     id: ID,
   ): Promise<string> {
-    const allEntries = await gitAdapter.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -22,10 +22,10 @@ export class PersistenceService {
 
   public async findById(
     gitAdapter: GitAdapter,
-    ref: string,
+    commitHash: string,
     id: ID,
   ): Promise<Entry> {
-    const allEntries = await gitAdapter.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -38,10 +38,10 @@ export class PersistenceService {
 
   public async findByType(
     gitAdapter: GitAdapter,
-    ref: string,
+    commitHash: string,
     type: string,
   ): Promise<Entry[]> {
-    const allEntries = await gitAdapter.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(commitHash)
     return allEntries
       .filter(
         (contentEntry: ContentEntry) => contentEntry.metadata.type === type,
@@ -51,11 +51,11 @@ export class PersistenceService {
 
   public async findByTypeId(
     gitAdapter: GitAdapter,
-    ref: string,
+    commitHash: string,
     type: string,
     id: ID,
   ): Promise<Entry> {
-    const allEntries = await gitAdapter.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -98,13 +98,14 @@ export class PersistenceService {
 
   public async updateByTypeId(
     gitAdapter: GitAdapter,
-    ref: string,
+    branch: string,
+    commitHash: string,
     type: string,
     id: ID,
     data: Entry,
     message: string,
   ): Promise<CommitResult> {
-    const allEntries = await gitAdapter.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -115,7 +116,7 @@ export class PersistenceService {
     const newData: Entry = { ...requestedEntry.data, ...data }
 
     const commit = await gitAdapter.createCommit({
-      ref: ref,
+      ref: branch,
       parentSha: undefined,
       contentEntries: [
         {
@@ -136,12 +137,13 @@ export class PersistenceService {
 
   public async deleteByTypeId(
     gitAdapter: GitAdapter,
-    ref: string,
+    branch: string,
+    commitHash: string,
     type: string,
     id: ID,
     message: string,
   ): Promise<CommitResult> {
-    const allEntries = await gitAdapter.getContentEntries(ref)
+    const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
       (contentEntry: ContentEntry) => contentEntry.id === (id as string),
     )[0]
@@ -150,7 +152,7 @@ export class PersistenceService {
     }
 
     const commit = await gitAdapter.createCommit({
-      ref: ref,
+      ref: branch,
       parentSha: undefined,
       contentEntries: [
         {

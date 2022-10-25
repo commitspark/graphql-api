@@ -20,7 +20,7 @@
     "@graphql-tools/schema": "^8.3.10",
     "apollo-server-core": "^3.10.0",
     "awilix": "^8.0.0",
-    "contentlab-git-adapter": "^0.3.1",
+    "contentlab-git-adapter": "^0.4.0",
     "reflect-metadata": "^0.1.13",
     "uuid": "^8.3.2"
   },

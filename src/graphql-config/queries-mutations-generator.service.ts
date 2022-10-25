@@ -100,6 +100,7 @@ export class QueriesMutationsGeneratorService {
           const updateResult = await this.persistence.updateByTypeId(
             context.gitAdapter,
             context.branch,
+            context.getCurrentRef(),
             name,
             args.id,
             args.data,
@@ -126,6 +127,7 @@ export class QueriesMutationsGeneratorService {
           const deleteResult = await this.persistence.deleteByTypeId(
             context.gitAdapter,
             context.branch,
+            context.getCurrentRef(),
             name,
             args.id,
             args.message,

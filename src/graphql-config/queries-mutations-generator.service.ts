@@ -183,7 +183,7 @@ export class QueriesMutationsGeneratorService {
     ): Promise<string> => {
       return this.persistence.getTypeById(
         context.gitAdapter,
-        context.branch,
+        context.getCurrentRef(),
         args.id,
       )
     }

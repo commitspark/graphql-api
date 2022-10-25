@@ -12,11 +12,10 @@ export class ApiService {
   ) {}
 
   async postGraphQL(
-    gitAdapterFactory: () => GitAdapter,
+    gitAdapter: GitAdapter,
     ref: string,
     body: any,
   ): Promise<GraphQLResponse> {
-    const gitAdapter = gitAdapterFactory()
     let currentRef = await gitAdapter.getLatestCommitSha(ref)
     const contextGenerator = (): ApolloContext => ({
       branch: ref,
@@ -47,10 +46,9 @@ export class ApiService {
   }
 
   async getSchema(
-    gitAdapterFactory: () => GitAdapter,
+    gitAdapter: GitAdapter,
     ref: string,
   ): Promise<SchemaResponse> {
-    const gitAdapter = gitAdapterFactory()
     let currentRef = await gitAdapter.getLatestCommitSha(ref)
     const contextGenerator = () =>
       ({

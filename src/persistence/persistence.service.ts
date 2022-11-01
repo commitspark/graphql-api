@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { ContentEntry, GitAdapter } from 'contentlab-git-adapter'
+import { ContentEntry, GitAdapter } from '@contentlab/git-adapter'
 
 export class PersistenceService {
   constructor() {}

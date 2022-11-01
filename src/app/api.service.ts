@@ -3,7 +3,7 @@ import { SchemaGeneratorService } from '../graphql-config/schema-generator.servi
 import { GraphQLFormattedError } from 'graphql'
 import { ApolloServerBase } from 'apollo-server-core'
 import { Config } from 'apollo-server-core/src/types'
-import { GitAdapter } from 'contentlab-git-adapter'
+import { GitAdapter } from '@contentlab/git-adapter'
 
 export class ApiService {
   constructor(

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Move NPM package to `@contentlab` organization namespace
+- Update to organization-based `git-adapter`
 
 ## [0.4.1] - 2022-10-25
 ### Changed

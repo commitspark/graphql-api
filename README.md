@@ -4,7 +4,7 @@
 structured text data exclusively from files in a Git repository.**
 
 Queries and mutations of the generated API are determined by a plain text content model definition file inside the
-repository using the standard GraphQL [type notation](https://graphql.org/learn/schema/).
+repository using the standard GraphQL type notation.
 
 Content entries are also stored in the given Git repository using plain YAML text files. No other data store is needed.
 
@@ -29,6 +29,9 @@ The Contentlab library...
 
 # Running Contentlab
 
+This repository holds the core Contentlab library. To obtain a callable GraphQL HTTP endpoint, the library code needs
+to be wrapped by a serverless function or web server. See [Development](#development) below.
+
 An application using Contentlab should be built with two Git repositories:
 
 * A code repository to hold application code that exposes or uses the GraphQL API via this library
@@ -36,7 +39,8 @@ An application using Contentlab should be built with two Git repositories:
 
 ## Development
 
-The quickest way to build and run your own Contentlab-based GraphQL endpoint is to clone the two example repositories:
+The quickest way to build and run your own Contentlab-based GraphQL HTTP endpoint is to clone the two example
+repositories:
 
 1. Clone [this example code repository](https://github.com/contentlab-sh/example-code-serverless) and follow the
    README instructions to obtain basic pre-built serverless functions which you can run locally on a dev machine
@@ -46,24 +50,24 @@ The quickest way to build and run your own Contentlab-based GraphQL endpoint is 
 ## Production
 
 Since Contentlab is a transport-agnostic library, it can be wrapped in a thin serverless function (e.g. Serverless) or a
-web server of choice (e.g. Express) to expose the API via HTTP.
+web server of choice (e.g. Express) to expose the API via HTTP. Choose whichever approach works best for your needs.
 
-A pre-built hosted offering that requires no code but only a content repository is coming soon.
+A pre-built hosted offering that requires no coding but only a content repository is coming soon.
 
 # Working with Contentlab
 
 ## Selecting a Git adapter
 
-For better extensibility of Contentlab, code that retrieves files from a Git repository is split out into Git adapters.
-When calling the Contentlab library functions, you must pass an adapter instance of your choice.
+When calling Contentlab library functions, you must pass a Git adapter instance of your choice. A Git adapter retrieves
+files from and creates commits in a concrete Git repository.
 
 The following adapters exist:
 
-| Adapter                                                               | Description                                              |
-|-----------------------------------------------------------------------|----------------------------------------------------------|
-| [GitHub](https://github.com/contentlab-sh/git-adapter-github)         | Provides access to Git repositories hosted on github.com |
-| [GitLab (SaaS)](https://github.com/contentlab-sh/git-adapter-gitlab)  | Provides access to Git repositories hosted on gitlab.com |
-| [Filesystem](https://github.com/contentlab-sh/git-adapter-filesystem) | Provides basic access to files on filesystem level       |
+| Adapter                                                               | Description                                                                        |
+|-----------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| [GitHub](https://github.com/contentlab-sh/git-adapter-github)         | Provides access to Git repositories hosted on github.com                           |
+| [GitLab (SaaS)](https://github.com/contentlab-sh/git-adapter-gitlab)  | Provides access to Git repositories hosted on gitlab.com                           |
+| [Filesystem](https://github.com/contentlab-sh/git-adapter-filesystem) | Provides read-only access to files on filesystem level, useful for CI/CD pipelines |
 
 If you want to build your own adapter, implement the interfaces found
 in [this repository](https://github.com/contentlab-sh/git-adapter).

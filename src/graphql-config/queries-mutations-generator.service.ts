@@ -75,6 +75,7 @@ export class QueriesMutationsGeneratorService {
           const createResult = await this.persistence.createType(
             context.gitAdapter,
             context.branch,
+            context.getCurrentRef(),
             name,
             args.data,
             args.message,

@@ -68,15 +68,16 @@ export class PersistenceService {
 
   public async createType(
     gitAdapter: GitAdapter,
-    ref: string,
+    branch: string,
+    commitHash: string,
     type: string,
     data: Entry,
     message: string,
   ): Promise<CommitResult> {
     const id = uuidv4()
     const commit = await gitAdapter.createCommit({
-      ref: ref,
-      parentSha: undefined,
+      ref: branch,
+      parentSha: commitHash,
       contentEntries: [
         {
           id: id,
@@ -117,7 +118,7 @@ export class PersistenceService {
 
     const commit = await gitAdapter.createCommit({
       ref: branch,
-      parentSha: undefined,
+      parentSha: commitHash,
       contentEntries: [
         {
           id: id,
@@ -153,7 +154,7 @@ export class PersistenceService {
 
     const commit = await gitAdapter.createCommit({
       ref: branch,
-      parentSha: undefined,
+      parentSha: commitHash,
       contentEntries: [
         {
           id: id,

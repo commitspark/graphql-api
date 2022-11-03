@@ -61,7 +61,8 @@ The following adapters exist:
 
 | Adapter                                                               | Description                                              |
 |-----------------------------------------------------------------------|----------------------------------------------------------|
-| [GitLab (SaaS)](https://github.com/contentlab-sh/git-adapter)         | Provides access to Git repositories hosted on gitlab.com |
+| [GitHub](https://github.com/contentlab-sh/git-adapter-github)         | Provides access to Git repositories hosted on github.com |
+| [GitLab (SaaS)](https://github.com/contentlab-sh/git-adapter-gitlab)  | Provides access to Git repositories hosted on gitlab.com |
 | [Filesystem](https://github.com/contentlab-sh/git-adapter-filesystem) | Provides basic access to files on filesystem level       |
 
 If you want to build your own adapter, implement the interfaces found

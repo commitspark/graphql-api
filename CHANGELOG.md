@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Clean up unused dependencies
+- Extensive update of README
 
 ### Fixed
 - Fix omission of providing preceding commit hash when requesting a new commit from Git adapter

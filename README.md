@@ -1,110 +1,122 @@
 # Introduction
-**This library is part of [Contentlab](https://contentlab.sh). It generates a fully functional GraphQL content
-management API exclusively from data in a Git repository.**
 
-The exact API structure is determined by the content model which is defined in a plain GraphQL text file
-inside the repository using the standard GraphQL [type system](https://graphql.org/learn/schema/).
+**This library is part of [Contentlab](https://contentlab.sh). It generates a fully functional CRUD GraphQL API for
+structured text data exclusively from files in a Git repository.**
 
-Content entries are also stored in the given Git repository using plain YAML text files. No other data store is
-needed.
+Queries and mutations of the generated API are determined by a plain text content model definition file inside the
+repository using the standard GraphQL type notation.
+
+Content entries are also stored in the given Git repository using plain YAML text files. No other data store is needed.
 
 ---
 
-*Contentlab is currently in Alpha, i.e. it is missing functionality, error handling, and tests and may be changed
-significantly before a first stable release*
+*Contentlab is currently in Alpha, i.e. it is not feature-complete, missing error handling and tests, and may be
+changed significantly before a first stable release*
 
-# Design choices
+# Architecture
 
-Contentlab is intentionally built with a very narrow feature set to facilitate composition into larger systems.
+The Contentlab library...
 
-Contentlab...
-* is declarative and builds its GraphQL API from a single GraphQL type definition text file
+* is intentionally built with a narrow feature set to facilitate composition into larger systems
+* is extensible by using separate adapter packages that implement access to Git repositories
+* is transport-agnostic and can be used with or without a web server (or serverless function)
+* is declarative, which means the generated API structure is Git-versioned due to the underlying definition file being
+  Git-versioned
 * is completely stateless and for each call obtains all state from Git, ideal for use in serverless environments
 * is fully headless and does _not_ offer any graphical user interface
 * supports immutable content based on Git's ref addressing scheme
-* does _not_ contain any authentication mechanism as this is better handled elsewhere (e.g. Lambda authorizers)
-* only stores text-like data as there are specialized systems for non-text data (e.g. DAM for media assets)
+* is meant for working with text-like data, delegating non-text data to other systems (e.g. DAM for media assets)
 
 # Running Contentlab
 
+This repository holds the core Contentlab library. To obtain a callable GraphQL HTTP endpoint, the library code needs
+to be wrapped by a serverless function or web server. See [Development](#development) below.
+
 An application using Contentlab should be built with two Git repositories:
-* A code repository to hold the application code
-* A content repository to hold the content model (schema) and content entries
+
+* A code repository to hold application code that exposes or uses the GraphQL API via this library
+* A content repository to hold the content model definition as well as actual content entries
 
 ## Development
 
-The quickest way to build and run your own Contentlab-based CMS is to clone the two example repositories:
+The quickest way to build and run your own Contentlab-based GraphQL HTTP endpoint is to clone the two example
+repositories:
 
 1. Clone [this example code repository](https://github.com/contentlab-sh/example-code-serverless) and follow the
-   README instructions to obtain simple pre-built serverless functions
+   README instructions to obtain basic pre-built serverless functions which you can run locally on a dev machine
 2. Clone [this example content repository](https://github.com/contentlab-sh/example-content-multilanguage-website)
    to start with a simple schema typically used for multi-language websites which you can then adjust as desired
 
 ## Production
 
-To deploy, adjust Serverless in your code repository to your needs or use the Contentlab hosted offering (coming soon).
+Since Contentlab is a transport-agnostic library, it can be wrapped in a thin serverless function (e.g. Serverless) or a
+web server of choice (e.g. Express) to expose the API via HTTP. Choose whichever approach works best for your needs.
+
+A pre-built hosted offering that requires no coding but only a content repository is coming soon.
 
 # Working with Contentlab
 
-## Selecting a Git commit
+## Selecting a Git adapter
 
-The Contentlab API fully supports traversing the Git commit tree by setting `{ref}` in API URLs to a
+When calling Contentlab library functions, you must pass a Git adapter instance of your choice. A Git adapter retrieves
+files from and creates commits in a concrete Git repository.
+
+The following adapters exist:
+
+| Adapter                                                               | Description                                                                        |
+|-----------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| [GitHub](https://github.com/contentlab-sh/git-adapter-github)         | Provides access to Git repositories hosted on github.com                           |
+| [GitLab (SaaS)](https://github.com/contentlab-sh/git-adapter-gitlab)  | Provides access to Git repositories hosted on gitlab.com                           |
+| [Filesystem](https://github.com/contentlab-sh/git-adapter-filesystem) | Provides read-only access to files on filesystem level, useful for CI/CD pipelines |
+
+If you want to build your own adapter, implement the interfaces found
+in [this repository](https://github.com/contentlab-sh/git-adapter).
+
+## Picking from the Git commit tree
+
+The Contentlab API fully supports traversing the Git commit tree by setting the `ref` argument in library calls to a
+
 * ref (i.e. commit hash),
 * branch name, or
 * tag name (light or regular)
 
-## Querying the generated schema
+## Obtaining the generated GraphQL schema
 
-Contentlab extends the user-defined schema with additional types as well as queries and mutations. This extended
-schema can be retrieved with a `GET` request to `/{ref}/schema`.
+Contentlab extends the schema defined in the schema file with additional types as well as queries and mutations. This
+extended schema can be retrieved by calling `getSchema()`.
 
 Compared to schema data obtained through GraphQL introspection, the schema returned here also includes directive
 declarations and annotations, allowing for development of additional tools that require this information.
 
-## Querying content
+## Reading data
 
-The Contentlab GraphQL API `/{ref}/graphql` is a conventional GraphQL API that supports introspection. The API also
-transparently resolves references between entries, allowing for retrieval of complex data in a single query.
+The `body` argument of `postGraphQL()` expects conventional GraphQL query / mutation syntax and supports introspection.
+Contentlab also transparently resolves references between entries, allowing for retrieval of complex data in a single
+query.
 
 ### Generated queries
 
-For each content type annotated with `@Entry` (see below), the following queries are generated:
+For each content type annotated with `@Entry` in the content model (see below), the following queries are generated:
 
-* Query a single entry of a type by ID, e.g. `MyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")`
-* Query all entries of a type, e.g. `allMyTypes`
+* Query a single entry of a type by ID, e.g. `MyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"): MyType`
+* Query all entries of a type, e.g. `allMyTypes: [MyType]`
 
-## Managing content
+## Writing data
 
 Mutation operations work on branch names only and (when successful) each create a new commit on HEAD in the given
-branch. To avoid race conditions, multiple mutations are processed sequentially (see the 
+branch. To avoid race conditions, multiple mutations are processed sequentially (see the
 [GraphQL documentation](https://graphql.org/learn/queries/#multiple-fields-in-mutations)).
 
 ### Generated queries
 
 For each content type annotated with `@Entry` (see below), the following mutations are generated:
 
+* Create a single entry of a type, e.g.
+  `createMyType(message:"Commit message", data:{...}): MyType`
 * Mutate a single entry of a type by ID, e.g.
-  `updateMyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", message:"Commit message", data:{...})`
+  `updateMyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", message:"Commit message", data:{...}): MyType`
 * Delete a single entry of a type by ID, e.g.
-  `deleteMyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", message:"Commit message")`
-
-## Publishing content
-
-The easiest way to understand workflows in Contentlab is by thinking of content as code. In this sense, like in
-software development, content is considered "published" when it is present in a specific branch of your choice. 
-
-"Publishing content" therefore means adding one or more content commits to your "published" branch. Together with merge
-requests and CI/CD pipelines, complex workflows can be built. For example, you can configure your Git platform 
-to require merge request approval by a person while also running a QA validation script that needs to pass before
-content can be merged into the "published" branch.
-
-## Migrating content
-
-Content can be migrated in two ways:
-
-1. Following the expand & contract pattern (add new fields to schema, move data to new fields via Contentlab API,
-   delete old fields from schema)
-2. By modifying the schema and YAML content files directly in a Git branch, completely outside Contentlab
+  `deleteMyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", message:"Commit message"): { id }`
 
 # Technical documentation
 
@@ -127,15 +139,17 @@ To denote which content type instances are to be given a unique identity for ref
 to be declared (this must be done right in the schema file so that the schema remains valid).
 
 To define the `@Entry` directive, simply add this line to the schema file:
+
 ```graphql
 directive @Entry on OBJECT
 ```
 
 To promote a content type to Entry, annotate the type as follows:
+
 ```graphql
 type MyType @Entry {
-   id: ID!
-   # ...
+    id: ID!
+    # ...
 }
 ```
 
@@ -152,11 +166,12 @@ a folder `entries` in the repository.
 The filename (excluding file extension) constitutes the entry ID and is generated as a UUID4 string by Contentlab.
 
 Entry files have the following structure:
+
 ```yaml
 metadata:
     type: MyType # name of type as defined in your schema
 data:
-    # ... fields of the type as defined in your schema
+#   ... fields of the type as defined in your schema
 ```
 
 ### Serialization
@@ -164,16 +179,19 @@ data:
 References to types annotated with `@Entry` are stored using a sub-field `id`.
 
 For example, consider the following schema:
+
 ```graphql
 type Page @Entry {
-   id: ID!
+    id: ID!
 }
 
 type Link @Entry {
-   target: Page
+    target: Page
 }
 ```
+
 An entry for `Link` referencing a `Page` will look like this:
+
 ```yaml
 metadata:
     type: Link
@@ -181,6 +199,18 @@ data:
     target:
         id: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa # ID of targeted Page
 ```
+
+# FAQ
+
+* Q: Do I need to run a web server or serverless function to use Contentlab?
+
+  A: No. You can pass a GraphQL request string directly to the Contentlab library without going through HTTP. This can
+  be useful e.g. in CI/CD pipelines where you might not want to bring up a server just to execute a GraphQL query.
+
+* Q: Do I really need to have two separate repositories for application code and content?
+
+  A: No. You can have both in the same repository but depending on how your software and content workflows are
+  structured, you may have a hard time finding a workflow that works equally well for both domains.
 
 # License
 

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Update dependencies
+- Upgrade to Apollo Server 4
+
 ## [0.5.1] - 2022-11-04
 ### Changed
 - Clean up unused dependencies

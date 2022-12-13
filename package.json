@@ -12,10 +12,10 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {
-    "@contentlab/git-adapter": "^0.5.0",
+    "@apollo/server": "^4.3.0",
+    "@contentlab/git-adapter": "^0.6.0",
     "@graphql-tools/mock": "^8.6.8",
     "@graphql-tools/schema": "^8.3.10",
-    "apollo-server-core": "^3.10.0",
     "awilix": "^8.0.0",
     "uuid": "^8.3.2"
   },
@@ -23,7 +23,6 @@
     "@types/node": "^16.11.1",
     "@typescript-eslint/eslint-plugin": "^4.29.2",
     "@typescript-eslint/parser": "^4.29.2",
-    "apollo-server-types": "^3.6.2",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.1",

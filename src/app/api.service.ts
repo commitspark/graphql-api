@@ -1,9 +1,8 @@
 import { ApolloConfigFactoryService } from '../graphql-config/apollo-config-factory.service'
 import { SchemaGeneratorService } from '../graphql-config/schema-generator.service'
 import { GraphQLFormattedError } from 'graphql'
-import { ApolloServerBase } from 'apollo-server-core'
-import { Config } from 'apollo-server-core/src/types'
 import { GitAdapter } from '@contentlab/git-adapter'
+import { ApolloServer, ApolloServerOptions } from '@apollo/server'
 
 export class ApiService {
   constructor(
@@ -17,7 +16,7 @@ export class ApiService {
     body: any,
   ): Promise<GraphQLResponse> {
     let currentRef = await gitAdapter.getLatestCommitHash(ref)
-    const contextGenerator = (): ApolloContext => ({
+    const context: ApolloContext = {
       branch: ref,
       gitAdapter: gitAdapter,
       getCurrentRef(): string {
@@ -26,22 +25,29 @@ export class ApiService {
       setCurrentRef(refArg: string) {
         currentRef = refArg
       },
-    })
+    }
 
-    const apolloDriverConfig: Config =
-      await this.apolloConfigFactory.createGqlOptions(contextGenerator())
+    const apolloDriverConfig: ApolloServerOptions<ApolloContext> =
+      await this.apolloConfigFactory.createGqlOptions(context)
 
-    const apolloServer = new ApolloServerBase({
+    const apolloServer = new ApolloServer<ApolloContext>({
       ...apolloDriverConfig,
-      context: contextGenerator,
     })
 
-    const result = await apolloServer.executeOperation(body)
+    const result = await apolloServer.executeOperation(body, {
+      contextValue: context,
+    })
 
     return {
-      ref: contextGenerator().getCurrentRef(),
-      data: result.data,
-      errors: result.errors,
+      ref: context.getCurrentRef(),
+      data:
+        result.body.kind === 'single'
+          ? result.body.singleResult.data
+          : undefined,
+      errors:
+        result.body.kind === 'single'
+          ? result.body.singleResult.errors
+          : undefined,
     }
   }
 

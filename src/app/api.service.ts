@@ -3,6 +3,9 @@ import { SchemaGeneratorService } from '../graphql-config/schema-generator.servi
 import { GraphQLFormattedError } from 'graphql'
 import { GitAdapter } from '@contentlab/git-adapter'
 import { ApolloServer, ApolloServerOptions } from '@apollo/server'
+import { VariableValues } from '@apollo/server/src/externalTypes/graphql'
+import { GraphQLRequest } from '@apollo/server/src/externalTypes'
+import { DocumentNode, TypedQueryDocumentNode } from 'graphql/index'
 
 export class ApiService {
   constructor(
@@ -10,11 +13,16 @@ export class ApiService {
     private readonly schemaGenerator: SchemaGeneratorService,
   ) {}
 
-  async postGraphQL(
+  async postGraphQL<
+    TData = Record<string, unknown>,
+    TVariables extends VariableValues = VariableValues,
+  >(
     gitAdapter: GitAdapter,
     ref: string,
-    body: any,
-  ): Promise<GraphQLResponse> {
+    request: Omit<GraphQLRequest<TVariables>, 'query'> & {
+      query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
+    },
+  ): Promise<GraphQLResponse<TData>> {
     let currentRef = await gitAdapter.getLatestCommitHash(ref)
     const context: ApolloContext = {
       branch: ref,
@@ -34,9 +42,12 @@ export class ApiService {
       ...apolloDriverConfig,
     })
 
-    const result = await apolloServer.executeOperation(body, {
-      contextValue: context,
-    })
+    const result = await apolloServer.executeOperation<TData, TVariables>(
+      request,
+      {
+        contextValue: context,
+      },
+    )
 
     return {
       ref: context.getCurrentRef(),
@@ -89,9 +100,9 @@ export interface ApolloContext {
   setCurrentRef(sha: string): void
 }
 
-export interface GraphQLResponse {
+export interface GraphQLResponse<TData> {
   ref: string
-  data?: Record<string, any> | null
+  data?: TData
   errors: ReadonlyArray<GraphQLFormattedError>
 }
 

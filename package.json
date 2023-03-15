@@ -16,7 +16,6 @@
     "@contentlab/git-adapter": "^0.6.0",
     "@graphql-tools/mock": "^8.6.8",
     "@graphql-tools/schema": "^8.3.10",
-    "awilix": "^8.0.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

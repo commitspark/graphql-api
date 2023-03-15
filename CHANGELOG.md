@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Remove dependency injection package to support bundling with webpack & co.
+- Upgrade to Apollo Server 4.5
 
 ## [0.5.3] - 2023-03-12
 ### Changed

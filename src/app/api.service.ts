@@ -19,7 +19,8 @@ export class ApiService {
   >(
     gitAdapter: GitAdapter,
     ref: string,
-    request: Omit<GraphQLRequest<TVariables>, 'query'> & {
+    // omit 'http' due to packaging incompatibility
+    request: Omit<Omit<GraphQLRequest<TVariables>, 'query'>, 'http'> & {
       query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
     },
   ): Promise<GraphQLResponse<TData>> {

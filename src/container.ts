@@ -1,4 +1,3 @@
-import { asClass, createContainer, InjectionMode } from 'awilix'
 import { ApiService } from './app/api.service'
 import { ApolloConfigFactoryService } from './graphql-config/apollo-config-factory.service'
 import { EntryReferenceResolverGeneratorService } from './graphql-config/entry-reference-resolver-generator.service'
@@ -10,28 +9,36 @@ import { UnionTypeResolverGeneratorService } from './graphql-config/union-type-r
 import { PersistenceService } from './persistence/persistence.service'
 import { SchemaGeneratorService } from './graphql-config/schema-generator.service'
 
-const container = createContainer({ injectionMode: InjectionMode.CLASSIC })
+// we used to have a DI container here, however that doesn't work well with webpack & co, so doing it by hand for now
 
-container.register({
-  api: asClass(ApiService),
+const persistenceService = new PersistenceService()
+const schemaRootTypeGeneratorService = new SchemaRootTypeGeneratorService()
+const schemaAnalyzerService = new SchemaAnalyzerService()
+const inputTypeGeneratorService = new InputTypeGeneratorService()
 
-  apolloConfigFactory: asClass(ApolloConfigFactoryService),
-  entryReferenceResolverGenerator: asClass(
-    EntryReferenceResolverGeneratorService,
-  ),
-  inputTypeGenerator: asClass(InputTypeGeneratorService),
-  queriesMutationsGenerator: asClass(QueriesMutationsGeneratorService),
-  schemaAnalyzer: asClass(SchemaAnalyzerService),
-  schemaGenerator: asClass(SchemaGeneratorService),
-  schemaRootTypeGenerator: asClass(SchemaRootTypeGeneratorService),
-  unionTypeResolverGenerator: asClass(UnionTypeResolverGeneratorService),
+const unionTypeResolverGeneratorService = new UnionTypeResolverGeneratorService(
+  persistenceService,
+)
+const queriesMutationsGeneratorService = new QueriesMutationsGeneratorService(
+  persistenceService,
+)
+const entryReferenceResolverGeneratorService =
+  new EntryReferenceResolverGeneratorService(persistenceService)
 
-  persistence: asClass(PersistenceService),
-})
+const schemaGeneratorService = new SchemaGeneratorService(
+  queriesMutationsGeneratorService,
+  schemaAnalyzerService,
+  inputTypeGeneratorService,
+  schemaRootTypeGeneratorService,
+  entryReferenceResolverGeneratorService,
+  unionTypeResolverGeneratorService,
+)
 
-const api = container.resolve<ApiService>('api')
+const apolloConfigFactoryService = new ApolloConfigFactoryService(
+  schemaGeneratorService,
+)
 
-export const app = {
-  api,
-  container,
-}
+export const apiService = new ApiService(
+  apolloConfigFactoryService,
+  schemaGeneratorService,
+)

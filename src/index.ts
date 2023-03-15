@@ -1,8 +1,8 @@
 import { ApiService } from './app/api.service'
-import { app } from './container'
+import { apiService } from './container'
 
 export { ApiService }
 
 export async function getApiService(): Promise<ApiService> {
-  return app.api
+  return apiService
 }

@@ -1,5 +1,6 @@
 import { ApolloContext } from '../app/api.service'
 import { PersistenceService } from '../persistence/persistence.service'
+import { GraphQLResolveInfo } from 'graphql/type/definition'
 
 export class UnionTypeResolverGeneratorService {
   constructor(private readonly persistence: PersistenceService) {}
@@ -7,7 +8,11 @@ export class UnionTypeResolverGeneratorService {
   public createResolver(): IUnionTypeResolver {
     const persistence = this.persistence
     return {
-      async __resolveType(obj, context: ApolloContext, info): Promise<string> {
+      async __resolveType(
+        obj: any,
+        context: ApolloContext,
+        info: GraphQLResolveInfo,
+      ): Promise<string> {
         // TODO same for interface type: https://www.apollographql.com/docs/apollo-server/data/resolvers/#resolving-unions-and-interfaces
         return persistence.getTypeById(
           context.gitAdapter,
@@ -20,5 +25,9 @@ export class UnionTypeResolverGeneratorService {
 }
 
 export interface IUnionTypeResolver {
-  __resolveType(obj, context: ApolloContext, info): Promise<string>
+  __resolveType(
+    obj: any,
+    context: ApolloContext,
+    info: GraphQLResolveInfo,
+  ): Promise<string>
 }

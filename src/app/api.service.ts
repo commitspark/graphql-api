@@ -23,7 +23,7 @@ export class ApiService {
     request: Omit<Omit<GraphQLRequest<TVariables>, 'query'>, 'http'> & {
       query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
     },
-  ): Promise<GraphQLResponse<TData>> {
+  ): Promise<GraphQLResponse<TData | null>> {
     let currentRef = await gitAdapter.getLatestCommitHash(ref)
     const context: ApolloContext = {
       branch: ref,
@@ -104,7 +104,7 @@ export interface ApolloContext {
 export interface GraphQLResponse<TData> {
   ref: string
   data?: TData
-  errors: ReadonlyArray<GraphQLFormattedError>
+  errors: ReadonlyArray<GraphQLFormattedError> | undefined
 }
 
 export interface SchemaResponse {

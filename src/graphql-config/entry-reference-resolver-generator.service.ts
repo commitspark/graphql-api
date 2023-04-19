@@ -11,18 +11,23 @@ export class EntryReferenceResolverGeneratorService {
       type: GraphQLObjectType
       fields: GraphQLField<any, any>[]
     },
-  ): any {
+  ): Record<string, RecordFieldResolvers> {
     const persistence = this.persistence
     const typeName = obj.type.name
-    const fields = {}
-    obj.fields.forEach((field) => {
+
+    const fieldResolvers: RecordFieldResolvers = {}
+
+    for (const field of obj.fields) {
       const fieldName = field.name
-      fields[fieldName] = async function (parent): Promise<Entry | Entry[]> {
+      fieldResolvers[fieldName] = async (
+        parent: Record<string, any>,
+      ): Promise<Entry | Entry[] | undefined> => {
         if (parent[fieldName] === undefined) {
           return undefined
         }
+        // TODO decide this based on type definition, not data
         if (Array.isArray(parent[fieldName])) {
-          return parent[fieldName].map((el) =>
+          return parent[fieldName].map((el: any) =>
             persistence.findById(
               context.gitAdapter,
               context.getCurrentRef(),
@@ -37,11 +42,16 @@ export class EntryReferenceResolverGeneratorService {
           )
         }
       }
-    })
+    }
 
-    const result = {}
-    result[typeName] = fields
+    const result: Record<string, RecordFieldResolvers> = {}
+    result[typeName] = fieldResolvers
 
     return result
   }
 }
+
+type RecordFieldResolvers = Record<
+  string,
+  (parent: Record<string, any>) => Promise<Entry | Entry[] | undefined>
+>

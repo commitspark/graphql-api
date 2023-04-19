@@ -83,10 +83,11 @@ export class SchemaAnalyzerService {
           ).length > 0
       )
     } else if (type instanceof GraphQLObjectType) {
-      const astNode = type.astNode
+      const astNode = type.toConfig().astNode
       if (
-        Array.isArray(astNode['directives']) &&
-        astNode['directives'].filter(
+        astNode &&
+        astNode.directives &&
+        astNode.directives.filter(
           (directive) => directive.name.value === 'Entry',
         ).length > 0
       ) {

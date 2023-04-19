@@ -11,8 +11,12 @@ import { InputTypeGeneratorService } from './input-type-generator.service'
 import { SchemaRootTypeGeneratorService } from './schema-root-type-generator.service'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { EntryReferenceResolverGeneratorService } from './entry-reference-resolver-generator.service'
-import { UnionTypeResolverGeneratorService } from './union-type-resolver-generator-service'
+import {
+  IUnionTypeResolver,
+  UnionTypeResolverGeneratorService,
+} from './union-type-resolver-generator-service'
 import { ApolloContext } from '../app/api.service'
+import { GraphQLFieldResolver } from 'graphql/type/definition'
 
 export class SchemaGeneratorService {
   constructor(
@@ -30,7 +34,7 @@ export class SchemaGeneratorService {
     const originalSchemaString = await context.gitAdapter.getSchema(
       context.getCurrentRef(),
     )
-    let schema = makeExecutableSchema({
+    const schema = makeExecutableSchema({
       typeDefs: originalSchemaString,
     })
 
@@ -78,14 +82,21 @@ export class SchemaGeneratorService {
       '  id: ID\n' +
       '}\n'
 
-    const generatedUnionTypeResolvers = {}
+    const generatedUnionTypeResolvers: Record<string, IUnionTypeResolver> = {}
     schemaAnalyzerResult.unionTypes.forEach((elem): void => {
       generatedUnionTypeResolvers[elem.name] =
         this.unionTypeResolverGenerator.createResolver()
     })
 
-    const generatedQueryResolvers = {}
-    const generatedMutationResolvers = {}
+    const generatedQueryResolvers: Record<
+      string,
+      GraphQLFieldResolver<any, ApolloContext>
+    > = {}
+    const generatedMutationResolvers: Record<
+      string,
+      GraphQLFieldResolver<any, ApolloContext>
+    > = {}
+
     generatedQueriesMutations.forEach(function (
       element: IGeneratedSchema,
     ): void {

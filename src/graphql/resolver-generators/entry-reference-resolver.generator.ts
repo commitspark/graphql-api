@@ -1,8 +1,12 @@
 import { GraphQLField, GraphQLObjectType } from 'graphql'
-import { Entry, PersistenceService } from '../persistence/persistence.service'
-import { ApolloContext } from '../app/api.service'
+import {
+  Entry,
+  PersistenceService,
+} from '../../persistence/persistence.service'
+import { ApolloContext } from '../../app/api.service'
+import { GraphQLFieldResolver } from 'graphql/type/definition'
 
-export class EntryReferenceResolverGeneratorService {
+export class EntryReferenceResolverGenerator {
   constructor(private readonly persistence: PersistenceService) {}
 
   public createResolver(
@@ -11,23 +15,41 @@ export class EntryReferenceResolverGeneratorService {
       type: GraphQLObjectType
       fields: GraphQLField<any, any>[]
     },
-  ): Record<string, RecordFieldResolvers> {
+  ): Record<
+    string,
+    GraphQLFieldResolver<
+      Record<string, any>,
+      ApolloContext,
+      any,
+      Promise<Entry | Entry[] | undefined>
+    >
+  > {
     const persistence = this.persistence
-    const typeName = obj.type.name
 
-    const fieldResolvers: RecordFieldResolvers = {}
+    const fieldResolvers: Record<
+      string,
+      GraphQLFieldResolver<
+        Record<string, any>,
+        ApolloContext,
+        any,
+        Promise<Entry | Entry[] | undefined>
+      >
+    > = {}
 
     for (const field of obj.fields) {
       const fieldName = field.name
       fieldResolvers[fieldName] = async (
-        parent: Record<string, any>,
+        source,
+        args,
+        context,
+        info,
       ): Promise<Entry | Entry[] | undefined> => {
-        if (parent[fieldName] === undefined) {
+        if (source[fieldName] === undefined) {
           return undefined
         }
         // TODO decide this based on type definition, not data
-        if (Array.isArray(parent[fieldName])) {
-          return parent[fieldName].map((el: any) =>
+        if (Array.isArray(source[fieldName])) {
+          return source[fieldName].map((el: any) =>
             persistence.findById(
               context.gitAdapter,
               context.getCurrentRef(),
@@ -38,20 +60,12 @@ export class EntryReferenceResolverGeneratorService {
           return persistence.findById(
             context.gitAdapter,
             context.getCurrentRef(),
-            parent[fieldName].id,
+            source[fieldName].id,
           )
         }
       }
     }
 
-    const result: Record<string, RecordFieldResolvers> = {}
-    result[typeName] = fieldResolvers
-
-    return result
+    return fieldResolvers
   }
 }
-
-type RecordFieldResolvers = Record<
-  string,
-  (parent: Record<string, any>) => Promise<Entry | Entry[] | undefined>
->

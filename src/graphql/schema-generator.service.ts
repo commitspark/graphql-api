@@ -10,13 +10,16 @@ import { SchemaAnalyzerService } from './schema-analyzer.service'
 import { InputTypeGeneratorService } from './input-type-generator.service'
 import { SchemaRootTypeGeneratorService } from './schema-root-type-generator.service'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
-import { EntryReferenceResolverGeneratorService } from './entry-reference-resolver-generator.service'
-import {
-  IUnionTypeResolver,
-  UnionTypeResolverGeneratorService,
-} from './union-type-resolver-generator-service'
+import { EntryReferenceResolverGenerator } from './resolver-generators/entry-reference-resolver.generator'
+import { UnionTypeResolverGenerator } from './resolver-generators/union-type-resolver-generator'
 import { ApolloContext } from '../app/api.service'
-import { GraphQLFieldResolver } from 'graphql/type/definition'
+import {
+  GraphQLFieldResolver,
+  GraphQLTypeResolver,
+} from 'graphql/type/definition'
+import { SchemaValidator } from './schema-validator'
+import { Entry } from '../persistence/persistence.service'
+import { UnionValueResolverGenerator } from './resolver-generators/union-value-resolver-generator'
 
 export class SchemaGeneratorService {
   constructor(
@@ -24,8 +27,10 @@ export class SchemaGeneratorService {
     private readonly schemaAnalyzer: SchemaAnalyzerService,
     private readonly inputTypeGenerator: InputTypeGeneratorService,
     private readonly schemaRootTypeGenerator: SchemaRootTypeGeneratorService,
-    private readonly entryReferenceResolverGenerator: EntryReferenceResolverGeneratorService,
-    private readonly unionTypeResolverGenerator: UnionTypeResolverGeneratorService,
+    private readonly entryReferenceResolverGenerator: EntryReferenceResolverGenerator,
+    private readonly unionTypeResolverGenerator: UnionTypeResolverGenerator,
+    private readonly unionValueResolverGenerator: UnionValueResolverGenerator,
+    private readonly schemaValidator: SchemaValidator,
   ) {}
 
   public async generateSchema(
@@ -38,6 +43,10 @@ export class SchemaGeneratorService {
       typeDefs: originalSchemaString,
     })
 
+    const validationResult = this.schemaValidator.getValidationResult(schema)
+    if (validationResult.length > 0) {
+      throw new Error(validationResult.join('\n'))
+    }
     const schemaAnalyzerResult = this.schemaAnalyzer.analyzeSchema(schema)
 
     const filteredOriginalSchemaString = printSchemaWithDirectives(schema)
@@ -47,22 +56,36 @@ export class SchemaGeneratorService {
 
     const generatedQueriesMutations =
       this.queriesMutationsGenerator.generateFromAnalyzedSchema(
-        schemaAnalyzerResult,
+        schemaAnalyzerResult.entryDirectiveTypes,
       )
     const generatedTypeNameQuery =
       this.queriesMutationsGenerator.generateTypeNameQuery()
 
-    let generatedEntryReferenceResolvers = {}
-    schemaAnalyzerResult.typesWithEntryReferences.forEach((obj) => {
-      generatedEntryReferenceResolvers = {
-        ...generatedEntryReferenceResolvers,
-        ...this.entryReferenceResolverGenerator.createResolver(context, obj),
-      }
-    })
+    let generatedEntryReferenceResolvers: Record<
+      string,
+      Record<
+        string,
+        GraphQLFieldResolver<
+          Record<string, any>,
+          ApolloContext,
+          any,
+          Promise<Entry | Entry[] | undefined>
+        >
+      >
+    > = {}
+    for (const type of schemaAnalyzerResult.typesWithEntryReferences) {
+      generatedEntryReferenceResolvers[type.type.name] =
+        this.entryReferenceResolverGenerator.createResolver(context, type)
+    }
 
     const generatedObjectInputTypeStrings =
       this.inputTypeGenerator.generateObjectInputTypeStrings(
-        schemaAnalyzerResult,
+        schemaAnalyzerResult.objectTypes,
+      )
+
+    const generatedUnionInputTypeStrings =
+      this.inputTypeGenerator.generateUnionInputTypeStrings(
+        schemaAnalyzerResult.unionTypes,
       )
 
     const generatedSchemaRootTypeStrings =
@@ -82,11 +105,14 @@ export class SchemaGeneratorService {
       '  id: ID\n' +
       '}\n'
 
-    const generatedUnionTypeResolvers: Record<string, IUnionTypeResolver> = {}
-    schemaAnalyzerResult.unionTypes.forEach((elem): void => {
-      generatedUnionTypeResolvers[elem.name] =
-        this.unionTypeResolverGenerator.createResolver()
-    })
+    const generatedUnionTypeResolvers: Record<string, UnionTypeResolver> = {}
+    for (const unionType of schemaAnalyzerResult.unionTypes) {
+      generatedUnionTypeResolvers[unionType.name] = {
+        __resolveType: this.unionTypeResolverGenerator.createResolver(),
+      }
+    }
+    const generatedUnionValueResolvers =
+      this.unionValueResolverGenerator.createResolver(schema)
 
     const generatedQueryResolvers: Record<
       string,
@@ -115,19 +141,50 @@ export class SchemaGeneratorService {
     generatedQueryResolvers[generatedTypeNameQuery.name] =
       generatedTypeNameQuery.resolver
 
+    const allGeneratedResolvers: Record<
+      string,
+      Record<
+        string,
+        | GraphQLFieldResolver<any, ApolloContext>
+        | GraphQLTypeResolver<any, ApolloContext>
+      >
+    > = {
+      Query: generatedQueryResolvers,
+      Mutation: generatedMutationResolvers,
+    }
+
+    for (const typeName of Object.keys(generatedUnionTypeResolvers)) {
+      allGeneratedResolvers[typeName] = {
+        ...(allGeneratedResolvers[typeName] ?? {}),
+        ...generatedUnionTypeResolvers[typeName],
+      }
+    }
+    for (const typeName of Object.keys(generatedUnionValueResolvers)) {
+      allGeneratedResolvers[typeName] = {
+        ...(allGeneratedResolvers[typeName] ?? {}),
+        ...generatedUnionValueResolvers[typeName],
+      }
+    }
+    for (const typeName of Object.keys(generatedEntryReferenceResolvers)) {
+      allGeneratedResolvers[typeName] = {
+        ...(allGeneratedResolvers[typeName] ?? {}),
+        ...generatedEntryReferenceResolvers[typeName],
+      }
+    }
+
     return {
       typeDefs: [
         filteredOriginalSchemaString,
         generatedSchemaString,
         generatedIdInputTypeStrings.join('\n'),
         generatedObjectInputTypeStrings.join('\n'),
+        generatedUnionInputTypeStrings.join('\n'),
       ],
-      resolvers: {
-        Query: generatedQueryResolvers,
-        Mutation: generatedMutationResolvers,
-        ...generatedUnionTypeResolvers,
-        ...generatedEntryReferenceResolvers,
-      },
+      resolvers: allGeneratedResolvers,
     }
   }
+}
+
+interface UnionTypeResolver {
+  __resolveType: GraphQLTypeResolver<any, ApolloContext>
 }

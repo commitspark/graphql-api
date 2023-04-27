@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Enable strict TypeScript for improved type safety
+- Update packages to address NPM security audit
 
 ### Fixed
 - [#23](https://github.com/contentlab-sh/contentlab/issues/23) Data of unions with non-Entry members is 

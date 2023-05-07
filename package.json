@@ -1,7 +1,7 @@
 {
   "name": "@contentlab/contentlab",
   "description": "A declarative, stateless, and serverless content engine based on Git and GraphQL",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "license": "ISC",
   "private": false,
   "main": "dist/index.js",

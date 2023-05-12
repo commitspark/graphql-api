@@ -11,7 +11,7 @@ needed.
 
 ---
 
-*Contentlab is in tech-preview, i.e. it is not yet feature-complete, missing some error handling and tests, and may
+*Commitspark is in tech-preview, i.e. it is not yet feature-complete, missing some error handling and tests, and may
 implement breaking changes before a first production-ready release.*
 
 # Usage
@@ -20,57 +20,57 @@ Use this library to query structured content from a Git repository via GraphQL e
 Next.js-based website with content. The generated GraphQL API is similar to those offered by headless content management
 systems (CMS), only that content comes from a Git repository and not a proprietary storage or API.
 
-To edit content, either use the [Contentlab user interface](https://contentlab.sh) or execute the library's generated
+To edit content, either use the [Commitspark user interface](https://commitspark.com) or execute the library's generated
 GraphQL mutations yourself. (Or if you know what you're doing, you could even edit the YAML content files directly in a
 repository).
 
 To change the content model, simply modify the GraphQL type definition (schema) file. For details, see below.
 
-# Running the Contentlab library
+# Running the Commitspark library
 
 There are two common ways to run this library:
 
 1. By making GraphQL calls directly against the library as a code dependency in your own JavaScript / TypeScript /
-   NodeJS application (NPM package name `@contentlab/contentlab`)
+   NodeJS application (NPM package name `@commitspark/graphql-api`)
 2. By making GraphQL calls over HTTP to the library wrapped in
    a webserver or Lambda function of choice
-   ([NodeJS Express server example](https://github.com/contentlab-sh/example-http-express),
-   [Lambda function example](https://github.com/contentlab-sh/example-code-serverless))
+   ([NodeJS Express server example](https://github.com/commitspark/example-http-express),
+   [Lambda function example](https://github.com/commitspark/example-code-serverless))
 
 In both cases, it is recommended to use a dedicated Git repository for content and not use the same repository as used
 for application code. See "Git repository hosting" below on where this content repository can be located.
 
 # Getting started
 
-If you're new to Contentlab, the quickest way to see Contentlab in action is as follows:
+If you're new to Commitspark, the quickest way to see Commitspark in action is as follows:
 
-1. [Copy the example Git content repository](https://github.com/contentlab-sh/example-content-website/generate)
-2. [Copy the example Next.js application repository](https://github.com/contentlab-sh/example-nextjs/generate)
+1. [Copy the example Git content repository](https://github.com/commitspark/example-content-website/generate)
+2. [Copy the example Next.js application repository](https://github.com/commitspark/example-nextjs/generate)
 3. In the application repository, follow the simple
-   [README](https://github.com/contentlab-sh/example-nextjs/blob/main/README.md) steps to point Next.js to your content
+   [README](https://github.com/commitspark/example-nextjs/blob/main/README.md) steps to point Next.js to your content
    repository
 
 # Git repository hosting
 
-Contentlab follows an adapter pattern, so it can read from and write to Git repositories in various places, either
+Commitspark follows an adapter pattern, so it can read from and write to Git repositories in various places, either
 hosted or locally. When using the library, pass an adapter instance as needed by your project.
 
 The following adapters exist:
 
-| Adapter                                                               | Description                                                | NPM package name                     |
-|-----------------------------------------------------------------------|------------------------------------------------------------|--------------------------------------|
-| [GitHub](https://github.com/contentlab-sh/git-adapter-github)         | Provides access to Git repositories hosted on github.com   | `@contentlab/git-adapter-github`     |
-| [GitLab (SaaS)](https://github.com/contentlab-sh/git-adapter-gitlab)  | Provides access to Git repositories hosted on gitlab.com   | `@contentlab/git-adapter-gitlab`     |
-| [Filesystem](https://github.com/contentlab-sh/git-adapter-filesystem) | Provides read-only access to files on the filesystem level | `@contentlab/git-adapter-filesystem` |
+| Adapter                                                             | Description                                                | NPM package name                      |
+|---------------------------------------------------------------------|------------------------------------------------------------|---------------------------------------|
+| [GitHub](https://github.com/commitspark/git-adapter-github)         | Provides access to Git repositories hosted on github.com   | `@commitspark/git-adapter-github`     |
+| [GitLab (SaaS)](https://github.com/commitspark/git-adapter-gitlab)  | Provides access to Git repositories hosted on gitlab.com   | `@commitspark/git-adapter-gitlab`     |
+| [Filesystem](https://github.com/commitspark/git-adapter-filesystem) | Provides read-only access to files on the filesystem level | `@commitspark/git-adapter-filesystem` |
 
 In case you want to build your own adapter, implement the interfaces found
-in [this repository](https://github.com/contentlab-sh/git-adapter).
+in [this repository](https://github.com/commitspark/git-adapter).
 
 # Making GraphQL calls
 
 ## Picking from the Git tree
 
-As Contentlab is Git-based, all queries and mutations support traversing the Git commit tree by setting the `ref`
+As Commitspark is Git-based, all queries and mutations support traversing the Git commit tree by setting the `ref`
 argument in library calls to a
 
 * ref (i.e. commit hash),
@@ -82,7 +82,7 @@ different branches with different content, or to retrieve content by tag such as
 
 ## Obtaining the generated GraphQL schema
 
-Contentlab dynamically extends the GraphQL schema file's content model at runtime with additional types as well as
+Commitspark dynamically extends the GraphQL schema file's content model at runtime with additional types as well as
 queries and mutations. This extended schema can be retrieved by calling `getSchema()`.
 
 Compared to schema data obtained through GraphQL introspection, the schema returned here also includes directive
@@ -91,7 +91,7 @@ declarations and annotations, allowing for development of additional tools that 
 ## Reading data
 
 The `request` argument of `postGraphQL()` expects a conventional GraphQL query and supports query variables as well as
-introspection. Contentlab also transparently resolves references between @Entry-annotated content entries (see below),
+introspection. Commitspark also transparently resolves references between @Entry-annotated content entries (see below),
 allowing for retrieval of complex data in a single query.
 
 ### Generated queries
@@ -133,7 +133,7 @@ The content model (i.e. schema) is defined in a single GraphQL type definition t
 
 The schema file must be located at `schema/schema.graphql` inside the Git repository.
 
-Contentlab currently supports the following data types:
+Commitspark currently supports the following data types:
 
 * `type`
 * `union`
@@ -169,7 +169,7 @@ keeps the number of entries low and performance up.
 Content entries, i.e. instances of content types annotated with `@Entry`, are stored as `.yaml` YAML text files inside
 a folder `entries` in the repository.
 
-The filename (excluding file extension) constitutes the entry ID and is generated as a UUID4 string by Contentlab.
+The filename (excluding file extension) constitutes the entry ID and is generated as a UUID4 string by Commitspark.
 
 Entry files have the following structure:
 
@@ -208,9 +208,9 @@ data:
 
 # FAQ
 
-* Q: Do I need to run a web server or serverless function to use Contentlab?
+* Q: Do I need to run a web server or serverless function to use Commitspark?
 
-  A: No. You can pass a GraphQL request string directly to the Contentlab library without going through HTTP. This can
+  A: No. You can pass a GraphQL request string directly to the Commitspark library without going through HTTP. This can
   be useful e.g. in CI/CD pipelines where you might not want to bring up a server just to execute a GraphQL query.
 
 * Q: Do I really need to have two separate repositories for application code and content?

@@ -1,7 +1,7 @@
 import { ApolloConfigFactoryService } from '../graphql/apollo-config-factory.service'
 import { SchemaGeneratorService } from '../graphql/schema-generator.service'
 import { GraphQLFormattedError } from 'graphql'
-import { GitAdapter } from '@contentlab/git-adapter'
+import { GitAdapter } from '@commitspark/git-adapter'
 import { ApolloServer, ApolloServerOptions } from '@apollo/server'
 import { VariableValues } from '@apollo/server/src/externalTypes/graphql'
 import { GraphQLRequest } from '@apollo/server/src/externalTypes'

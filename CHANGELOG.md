@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Rename organization
+
 ## [0.6.1] - 2023-05-07
 ### Changed
 - Improve documentation
@@ -14,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update packages to address NPM security audit
 
 ### Fixed
-- [#23](https://github.com/contentlab-sh/contentlab/issues/23) Data of unions with non-Entry members is 
+- [#23](https://github.com/commitspark/graphql-api/issues/23) Data of unions with non-Entry members is 
   not discernible after serialization
 
 ## [0.5.4] - 2023-03-15
@@ -41,12 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2022-11-01
 ### Changed
-- Move NPM package to `@contentlab` organization namespace
+- Move NPM package to organization namespace
 - Update to organization-based `git-adapter`
 
 ## [0.4.1] - 2022-10-25
 ### Changed
-- Update to Contentlab Git Adapter interface 0.4.0
+- Update to Git Adapter interface 0.4.0
 
 ## [0.4.0] - 2022-10-25
 ### Changed
@@ -62,11 +66,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export signature of `ApiService`
 
 ### Changed
-- Move example application into [separate repository](https://github.com/contentlab-sh/example-code-serverless)
+- Move example application into [separate repository](https://github.com/commitspark/example-code-serverless)
 
 ## [0.2.0] - 2022-10-07
 ### Changed
-- Move GitLab (SaaS) implementation into [separate repository](https://github.com/contentlab-sh/contentlab-git-adapter-gitlab)
+- Move GitLab (SaaS) implementation into [separate repository](https://github.com/commitspark/git-adapter-gitlab)
 - Refactor code to be used as library
 - Move application-specific code to example directory
 - Upgrade to NestJS 9

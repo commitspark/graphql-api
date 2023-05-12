@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Rename organization
+- Remove deprecated code
 
 ## [0.6.1] - 2023-05-07
 ### Changed

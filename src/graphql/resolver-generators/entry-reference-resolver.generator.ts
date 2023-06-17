@@ -21,7 +21,7 @@ export class EntryReferenceResolverGenerator {
       Record<string, any>,
       ApolloContext,
       any,
-      Promise<Entry | Entry[] | undefined>
+      Promise<Entry | Entry[] | null>
     >
   > {
     const persistence = this.persistence
@@ -32,7 +32,7 @@ export class EntryReferenceResolverGenerator {
         Record<string, any>,
         ApolloContext,
         any,
-        Promise<Entry | Entry[] | undefined>
+        Promise<Entry | Entry[] | null>
       >
     > = {}
 
@@ -43,9 +43,9 @@ export class EntryReferenceResolverGenerator {
         args,
         context,
         info,
-      ): Promise<Entry | Entry[] | undefined> => {
-        if (source[fieldName] === undefined) {
-          return undefined
+      ): Promise<Entry | Entry[] | null> => {
+        if (source[fieldName] === undefined || source[fieldName] === null) {
+          return null
         }
         // TODO decide this based on type definition, not data
         if (Array.isArray(source[fieldName])) {

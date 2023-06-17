@@ -69,7 +69,7 @@ export class SchemaGeneratorService {
           Record<string, any>,
           ApolloContext,
           any,
-          Promise<Entry | Entry[] | undefined>
+          Promise<Entry | Entry[] | null>
         >
       >
     > = {}

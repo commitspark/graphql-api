@@ -49,7 +49,7 @@ export class SchemaGeneratorService {
     }
     const schemaAnalyzerResult = this.schemaAnalyzer.analyzeSchema(schema)
 
-    const filteredOriginalSchemaString = printSchemaWithDirectives(schema)
+    const filteredOriginalSchemaString = printSchemaWithDirectives(schema) + '\n'
 
     const generatedIdInputTypeStrings =
       this.inputTypeGenerator.generateIdInputTypeStrings(schemaAnalyzerResult)
@@ -172,14 +172,16 @@ export class SchemaGeneratorService {
       }
     }
 
+    const typeDefs = [
+      filteredOriginalSchemaString,
+      generatedSchemaString,
+      generatedIdInputTypeStrings.join('\n'),
+      generatedObjectInputTypeStrings.join('\n'),
+      generatedUnionInputTypeStrings.join('\n'),
+    ].filter((typeDef) => typeDef.length > 0)
+
     return {
-      typeDefs: [
-        filteredOriginalSchemaString,
-        generatedSchemaString,
-        generatedIdInputTypeStrings.join('\n'),
-        generatedObjectInputTypeStrings.join('\n'),
-        generatedUnionInputTypeStrings.join('\n'),
-      ],
+      typeDefs: typeDefs,
       resolvers: allGeneratedResolvers,
     }
   }

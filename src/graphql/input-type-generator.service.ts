@@ -61,7 +61,7 @@ export class InputTypeGeneratorService {
     typesWithIdField = typesWithIdField.concat(schemaAnalyzerResult.unionTypes)
 
     return typesWithIdField.map((type): string => {
-      return `input ${type.name}IdInput {\n` + '  id:ID!\n' + '}\n'
+      return `input ${type.name}IdInput {\n` + '  id: ID!\n' + '}\n'
     })
   }
 

@@ -14,8 +14,12 @@ type MyEntry @Entry {
     name: String
 }`
 
-    gitAdapter.getLatestCommitHash.calledWith(gitRef).mockResolvedValue(commitHash)
-    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(originalSchema)
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
 
     const apiService = await getApiService()
     const result = await apiService.getSchema(gitAdapter, gitRef)
@@ -82,8 +86,12 @@ type EntryB @Entry {
     entryA: EntryA
 }`
 
-    gitAdapter.getLatestCommitHash.calledWith(gitRef).mockResolvedValue(commitHash)
-    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(originalSchema)
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
 
     const apiService = await getApiService()
     const result = await apiService.getSchema(gitAdapter, gitRef)
@@ -178,8 +186,12 @@ type EntryB @Entry {
     field2: String
 }`
 
-    gitAdapter.getLatestCommitHash.calledWith(gitRef).mockResolvedValue(commitHash)
-    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(originalSchema)
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
 
     const apiService = await getApiService()
     const result = await apiService.getSchema(gitAdapter, gitRef)
@@ -297,8 +309,12 @@ type TypeB {
     field2: String
 }`
 
-    gitAdapter.getLatestCommitHash.calledWith(gitRef).mockResolvedValue(commitHash)
-    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(originalSchema)
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
 
     const apiService = await getApiService()
     const result = await apiService.getSchema(gitAdapter, gitRef)

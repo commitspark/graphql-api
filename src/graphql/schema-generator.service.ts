@@ -49,7 +49,8 @@ export class SchemaGeneratorService {
     }
     const schemaAnalyzerResult = this.schemaAnalyzer.analyzeSchema(schema)
 
-    const filteredOriginalSchemaString = printSchemaWithDirectives(schema) + '\n'
+    const filteredOriginalSchemaString =
+      printSchemaWithDirectives(schema) + '\n'
 
     const generatedIdInputTypeStrings =
       this.inputTypeGenerator.generateIdInputTypeStrings(schemaAnalyzerResult)
@@ -61,7 +62,7 @@ export class SchemaGeneratorService {
     const generatedTypeNameQuery =
       this.queriesMutationsGenerator.generateTypeNameQuery()
 
-    let generatedEntryReferenceResolvers: Record<
+    const generatedEntryReferenceResolvers: Record<
       string,
       Record<
         string,

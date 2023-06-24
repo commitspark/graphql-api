@@ -3,15 +3,16 @@ import { mock } from 'jest-mock-extended'
 import { getApiService } from '../../../src'
 
 describe('Schema generator', () => {
-  it('should create a CRUD API for an @Entry type', async () => {
+  it('should extend schema with a CRUD API for an @Entry type', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'
     const originalSchema = `directive @Entry on OBJECT
+directive @Ui(visibleList:Boolean) on FIELD_DEFINITION
 
 type MyEntry @Entry {
     id: ID!
-    name: String
+    name: String @Ui(visibleList:true)
 }`
 
     gitAdapter.getLatestCommitHash
@@ -26,9 +27,11 @@ type MyEntry @Entry {
 
     const expectedSchema = `directive @Entry on OBJECT
 
+directive @Ui(visibleList: Boolean) on FIELD_DEFINITION
+
 type MyEntry @Entry {
   id: ID!
-  name: String
+  name: String @Ui(visibleList: true)
 }
 
 schema {
@@ -70,7 +73,7 @@ input MyEntryInput {
     expect(result.ref).toBe(commitHash)
   })
 
-  it('should create a CRUD API for two @Entry types with reference', async () => {
+  it('should extend schema with a CRUD API for two @Entry types with reference', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'
@@ -161,7 +164,7 @@ input EntryBInput {
     expect(result.ref).toBe(commitHash)
   })
 
-  it('should create a CRUD API for an @Entry-based union type', async () => {
+  it('should extend schema with a CRUD API for an @Entry-based union type', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'

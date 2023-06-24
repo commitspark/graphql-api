@@ -56,7 +56,7 @@ export class QueriesMutationsGeneratorService {
 
       const inputTypeName = `${typeName}Input`
       const createMutationName = `create${typeName}`
-      const createMutationString = `${createMutationName}(data:${inputTypeName}, message:String): ${typeName}`
+      const createMutationString = `${createMutationName}(id: ID!, data:${inputTypeName}, message:String): ${typeName}`
       const createMutationResolver: GraphQLFieldResolver<
         any,
         ApolloContext,

@@ -1,15 +1,15 @@
-import { v4 as uuidv4 } from 'uuid'
 import { ContentEntry, GitAdapter } from '@commitspark/git-adapter'
+import { GraphQLError } from 'graphql/error/GraphQLError'
 
 export class PersistenceService {
   public async getTypeById(
     gitAdapter: GitAdapter,
     commitHash: string,
-    id: ID,
+    id: string,
   ): Promise<string> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
-      (contentEntry: ContentEntry) => contentEntry.id === (id as string),
+      (contentEntry: ContentEntry) => contentEntry.id === id,
     )[0]
     if (requestedEntry === undefined) {
       throw new Error(`Not found: ${id}`)
@@ -21,11 +21,11 @@ export class PersistenceService {
   public async findById(
     gitAdapter: GitAdapter,
     commitHash: string,
-    id: ID,
+    id: string,
   ): Promise<Entry> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
-      (contentEntry: ContentEntry) => contentEntry.id === (id as string),
+      (contentEntry: ContentEntry) => contentEntry.id === id,
     )[0]
     if (requestedEntry === undefined) {
       throw new Error(`Not found: ${id}`)
@@ -51,11 +51,11 @@ export class PersistenceService {
     gitAdapter: GitAdapter,
     commitHash: string,
     type: string,
-    id: ID,
+    id: string,
   ): Promise<Entry> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
-      (contentEntry: ContentEntry) => contentEntry.id === (id as string),
+      (contentEntry: ContentEntry) => contentEntry.id === id,
     )[0]
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
       throw new Error(`Not found: ${type}, ${id}`)
@@ -68,21 +68,32 @@ export class PersistenceService {
     gitAdapter: GitAdapter,
     branch: string,
     commitHash: string,
-    type: string,
+    typeName: string,
+    id: string,
     data: Entry,
     message: string,
   ): Promise<CommitResult> {
-    const id = uuidv4()
+    // TODO expose regex publicly to allow reuse
+    const regex = /^[a-zA-Z\-_]{1,250}$/
+    if (!id.match(regex)) {
+      throw new GraphQLError(`"id" does not match regex "${regex}"`, {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          argumentName: 'id',
+        },
+      })
+    }
+
     const commit = await gitAdapter.createCommit({
       ref: branch,
       parentSha: commitHash,
       contentEntries: [
         {
           id: id,
-          data: data,
           metadata: {
-            type: type,
+            type: typeName,
           },
+          data: data,
           deletion: false,
         },
       ],
@@ -90,7 +101,6 @@ export class PersistenceService {
     })
 
     return {
-      id,
       ref: commit.ref,
     }
   }
@@ -100,13 +110,13 @@ export class PersistenceService {
     branch: string,
     commitHash: string,
     type: string,
-    id: ID,
+    id: string,
     data: Entry,
     message: string,
   ): Promise<CommitResult> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
-      (contentEntry: ContentEntry) => contentEntry.id === (id as string),
+      (contentEntry: ContentEntry) => contentEntry.id === id,
     )[0]
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
       throw new Error(`Not found: ${type}, ${id}`)
@@ -120,8 +130,8 @@ export class PersistenceService {
       contentEntries: [
         {
           id: id,
-          data: newData,
           metadata: requestedEntry.metadata,
+          data: newData,
           deletion: false,
         },
       ],
@@ -129,7 +139,6 @@ export class PersistenceService {
     })
 
     return {
-      id,
       ref: commit.ref,
     }
   }
@@ -139,12 +148,12 @@ export class PersistenceService {
     branch: string,
     commitHash: string,
     type: string,
-    id: ID,
+    id: string,
     message: string,
   ): Promise<CommitResult> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.filter(
-      (contentEntry: ContentEntry) => contentEntry.id === (id as string),
+      (contentEntry: ContentEntry) => contentEntry.id === id,
     )[0]
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
       throw new Error(`Not found: ${type}, ${id}`)
@@ -156,8 +165,8 @@ export class PersistenceService {
       contentEntries: [
         {
           id: id,
-          data: {},
           metadata: requestedEntry.metadata,
+          data: {},
           deletion: true,
         },
       ],
@@ -165,17 +174,13 @@ export class PersistenceService {
     })
 
     return {
-      id,
       ref: commit.ref,
     }
   }
 }
 
 export interface CommitResult {
-  id: ID
   ref: string // commit sha
 }
-
-export type ID = string
 
 export type Entry = Record<string, unknown>

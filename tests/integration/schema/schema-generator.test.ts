@@ -47,7 +47,7 @@ type Query {
 }
 
 type Mutation {
-  createMyEntry(data:MyEntryInput, message:String): MyEntry
+  createMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
   updateMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
   deleteMyEntry(id: ID!, message:String): DeletionResult
 }
@@ -127,8 +127,8 @@ type Query {
 }
 
 type Mutation {
-  createEntryA(data:EntryAInput, message:String): EntryA
-  createEntryB(data:EntryBInput, message:String): EntryB
+  createEntryA(id: ID!, data:EntryAInput, message:String): EntryA
+  createEntryB(id: ID!, data:EntryBInput, message:String): EntryB
   updateEntryA(id: ID!, data:EntryAInput, message:String): EntryA
   updateEntryB(id: ID!, data:EntryBInput, message:String): EntryB
   deleteEntryA(id: ID!, message:String): DeletionResult
@@ -237,9 +237,9 @@ type Query {
 }
 
 type Mutation {
-  createMyEntry(data:MyEntryInput, message:String): MyEntry
-  createEntryA(data:EntryAInput, message:String): EntryA
-  createEntryB(data:EntryBInput, message:String): EntryB
+  createMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
+  createEntryA(id: ID!, data:EntryAInput, message:String): EntryA
+  createEntryB(id: ID!, data:EntryBInput, message:String): EntryB
   updateMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
   updateEntryA(id: ID!, data:EntryAInput, message:String): EntryA
   updateEntryB(id: ID!, data:EntryBInput, message:String): EntryB
@@ -352,7 +352,7 @@ type Query {
 }
 
 type Mutation {
-  createMyEntry(data:MyEntryInput, message:String): MyEntry
+  createMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
   updateMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
   deleteMyEntry(id: ID!, message:String): DeletionResult
 }

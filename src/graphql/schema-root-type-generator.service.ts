@@ -13,16 +13,18 @@ export class SchemaRootTypeGeneratorService {
       generatedSchemas
         .map((generated) => '  ' + generated.queryAll.schemaString)
         .join('\n') +
+      '\n' +
       generatedSchemas
         .map((generated) => '  ' + generated.queryAllMeta.schemaString)
         .join('\n') +
+      '\n' +
       generatedSchemas
         .map((generated) => '  ' + generated.queryById.schemaString)
         .join('\n') +
       '\n' +
       `  ${typeQuery.schemaString}` +
       '\n' +
-      '}\n' +
+      '}\n\n' +
       'type Mutation {\n' +
       generatedSchemas
         .map((generated) => '  ' + generated.createMutation.schemaString)

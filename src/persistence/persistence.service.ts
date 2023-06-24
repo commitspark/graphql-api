@@ -2,8 +2,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { ContentEntry, GitAdapter } from '@commitspark/git-adapter'
 
 export class PersistenceService {
-  constructor() {}
-
   public async getTypeById(
     gitAdapter: GitAdapter,
     commitHash: string,

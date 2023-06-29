@@ -7,7 +7,7 @@ import {
 import { Matcher, mock } from 'jest-mock-extended'
 import { getApiService } from '../../../src'
 
-describe('Mutation resolvers', () => {
+describe('"Create" mutation resolvers', () => {
   it('should create an entry', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'

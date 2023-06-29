@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Improve schema formatting
+- Expose entry ID as argument of "create" mutation instead of automatic ID generation
 
 ## [0.8.0] - 2023-06-17
 ### Fixed

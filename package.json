@@ -16,13 +16,11 @@
     "@apollo/server": "^4.3.0",
     "@commitspark/git-adapter": "^0.8.0",
     "@graphql-tools/mock": "^8.6.8",
-    "@graphql-tools/schema": "^8.3.10",
-    "uuid": "^8.3.2"
+    "@graphql-tools/schema": "^8.3.10"
   },
   "devDependencies": {
     "@types/jest": "^29.5.2",
     "@types/node": "^16.11.1",
-    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.59.0",
     "@typescript-eslint/parser": "^5.59.0",
     "eslint": "^8.38.0",

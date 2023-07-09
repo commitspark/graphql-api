@@ -98,7 +98,7 @@ allowing for retrieval of complex data in a single query.
 
 For each content type annotated with `@Entry` in the content model (see below), the following queries are generated:
 
-* Query a single entry of a type by ID, e.g. `MyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"): MyType`
+* Query a single entry of a type by ID, e.g. `MyType(id:"..."): MyType`
 * Query all entries of a type, e.g. `allMyTypes: [MyType]`
 
 ## Writing data
@@ -113,11 +113,11 @@ sequentially (see the [GraphQL documentation](https://graphql.org/learn/queries/
 For each content type annotated with `@Entry` (see below), the following mutations are generated:
 
 * Create a single entry of a type, e.g.
-  `createMyType(message:"Commit message", data:{...}): MyType`
+  `createMyType(id:"...", message:"Commit message", data:{...}): MyType`
 * Mutate a single entry of a type by ID, e.g.
-  `updateMyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", message:"Commit message", data:{...}): MyType`
+  `updateMyType(id:"...", message:"Commit message", data:{...}): MyType`
 * Delete a single entry of a type by ID, e.g.
-  `deleteMyType(id:"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", message:"Commit message"): { id }`
+  `deleteMyType(id:"...", message:"Commit message"): { id }`
 
 ## Authenticating with your repository
 
@@ -169,7 +169,7 @@ keeps the number of entries low and performance up.
 Content entries, i.e. instances of content types annotated with `@Entry`, are stored as `.yaml` YAML text files inside
 a folder `entries` in the repository.
 
-The filename (excluding file extension) constitutes the entry ID and is generated as a UUID4 string by Commitspark.
+The filename (excluding file extension) constitutes the entry ID.
 
 Entry files have the following structure:
 
@@ -192,6 +192,7 @@ type Page @Entry {
 }
 
 type Link @Entry {
+    id: ID!
     target: Page
 }
 ```
@@ -203,7 +204,7 @@ metadata:
     type: Link
 data:
     target:
-        id: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa # ID of targeted Page
+        id: "..." # ID of targeted Page
 ```
 
 # FAQ

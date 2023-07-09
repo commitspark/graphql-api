@@ -50,6 +50,8 @@ export class ApiService {
       },
     )
 
+    await apolloServer.stop()
+
     return {
       ref: context.getCurrentRef(),
       data:

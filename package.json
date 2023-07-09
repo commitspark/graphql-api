@@ -6,6 +6,14 @@
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "src/**",
+    "README.md",
+    "LICENSE",
+    "package.json",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

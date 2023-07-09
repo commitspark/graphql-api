@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve schema formatting
 - Expose entry ID as argument of "create" mutation instead of automatic ID generation
 - Check ID of entry before executing an update, delete mutation
+- Update dependencies
 
 ### Fixed
 - [#32](https://github.com/commitspark/graphql-api/issues/32) Fix memory leak triggered by API calls

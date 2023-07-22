@@ -20,7 +20,7 @@ type EntryA @Entry {
 }`
 
     const commitMessage = 'My message'
-    const entryAId = 'A'
+    const entryAId = 'd92f77d2-be9b-429f-877d-5c400ea9ce78'
     const postCommitHash = 'ef01'
 
     const mutationData = {

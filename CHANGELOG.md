@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Fix documentation to match implementation
+- Fix missing numeric character permission in entry ID validation regex
 
 ## [0.9.1] - 2023-07-09
 ### Fixed

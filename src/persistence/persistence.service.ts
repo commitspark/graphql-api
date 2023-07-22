@@ -74,7 +74,7 @@ export class PersistenceService {
     message: string,
   ): Promise<CommitResult> {
     // TODO expose regex publicly to allow reuse
-    const regex = /^[a-zA-Z\-_]{1,250}$/
+    const regex = /^[a-zA-Z0-9\-_]{1,250}$/
     if (!id.match(regex)) {
       throw new GraphQLError(`"id" does not match regex "${regex}"`, {
         extensions: {

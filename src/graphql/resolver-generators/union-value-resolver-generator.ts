@@ -21,11 +21,14 @@ export class UnionValueResolverGenerator {
     schema: GraphQLSchema,
   ): Record<
     string,
-    Record<string, GraphQLFieldResolver<any, ApolloContext, any, Entry>>
+    Record<string, GraphQLFieldResolver<any, ApolloContext, any, Entry | null>>
   > {
     const resolvers: Record<
       string,
-      Record<string, GraphQLFieldResolver<any, ApolloContext, any, Entry>>
+      Record<
+        string,
+        GraphQLFieldResolver<any, ApolloContext, any, Entry | null>
+      >
     > = {}
     for (const typeName of Object.keys(schema.getTypeMap())) {
       const type = schema.getType(typeName)
@@ -38,10 +41,15 @@ export class UnionValueResolverGenerator {
 
       const fieldResolvers: Record<
         string,
-        GraphQLFieldResolver<any, ApolloContext, any, Entry>
+        GraphQLFieldResolver<any, ApolloContext, any, Entry | null>
       > = {}
       for (const field of unionFieldsNotUsingEntry) {
-        fieldResolvers[field.name] = (obj, args, context, info): Entry => {
+        fieldResolvers[field.name] = (
+          obj,
+          args,
+          context,
+          info,
+        ): Entry | null => {
           const fieldValue = obj[info.fieldName]
           return this.collapseTypeField(field.type, fieldValue)
         }
@@ -86,10 +94,12 @@ export class UnionValueResolverGenerator {
 
   private collapseTypeField(
     type: GraphQLNullableType,
-    fieldValue: Record<string, any> | Record<string, any>[],
-  ): Record<string, any> {
+    fieldValue: Record<string, any> | Record<string, any>[] | null,
+  ): Record<string, any> | null {
     if (type instanceof GraphQLNonNull) {
       return this.collapseTypeField(type.ofType, fieldValue)
+    } else if (fieldValue === null) {
+      return null
     } else if (type instanceof GraphQLList) {
       if (!Array.isArray(fieldValue)) {
         throw new Error('Expected array value')

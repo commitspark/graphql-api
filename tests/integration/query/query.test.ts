@@ -161,6 +161,144 @@ type TypeB {
     expect(result.ref).toBe(commitHash)
   })
 
+  it('should resolve an array of non-@Entry-based unions that is null', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type MyEntry @Entry {
+    id: ID!
+    union: [MyUnion!]
+}
+
+union MyUnion =
+    | TypeA
+    | TypeB
+
+type TypeA {
+    field1: String
+}
+
+type TypeB {
+    field2: String
+}`
+
+    const entryId = 'A'
+
+    const entries = [
+      {
+        id: entryId,
+        metadata: {
+          type: 'MyEntry',
+        },
+        data: {
+          union: null,
+        },
+      } as ContentEntry,
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue(entries)
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `query {
+        data: MyEntry(id:"${entryId}") {
+          id
+          union {
+            __typename
+          }
+        }
+      }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: entryId,
+        union: null,
+      },
+    })
+    expect(result.ref).toBe(commitHash)
+  })
+
+  it('should resolve an empty array of non-@Entry-based unions', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type MyEntry @Entry {
+    id: ID!
+    union: [MyUnion!]
+}
+
+union MyUnion =
+    | TypeA
+    | TypeB
+
+type TypeA {
+    field1: String
+}
+
+type TypeB {
+    field2: String
+}`
+
+    const entryId = 'A'
+
+    const entries = [
+      {
+        id: entryId,
+        metadata: {
+          type: 'MyEntry',
+        },
+        data: {
+          union: [],
+        },
+      } as ContentEntry,
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue(entries)
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `query {
+        data: MyEntry(id:"${entryId}") {
+          id
+          union {
+            __typename
+          }
+        }
+      }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: entryId,
+        union: [],
+      },
+    })
+    expect(result.ref).toBe(commitHash)
+  })
+
   it('should resolve an @Entry-based union', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'

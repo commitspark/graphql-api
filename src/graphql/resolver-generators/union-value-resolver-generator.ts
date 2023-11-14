@@ -1,17 +1,16 @@
-import {
-  GraphQLFieldResolver,
-  GraphQLNullableType,
-  GraphQLUnionType,
-} from 'graphql/type/definition'
+import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
 import { Entry } from '../../persistence/persistence.service'
-import { GraphQLSchema, Kind } from 'graphql'
 import {
   GraphQLField,
-  GraphQLList,
-  GraphQLNonNull,
+  GraphQLNullableType,
   GraphQLObjectType,
-} from 'graphql/type'
+  GraphQLSchema,
+  isListType,
+  isNonNullType,
+  isObjectType,
+  isUnionType,
+} from 'graphql'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 
 export class UnionValueResolverGenerator {
@@ -32,7 +31,7 @@ export class UnionValueResolverGenerator {
     > = {}
     for (const typeName of Object.keys(schema.getTypeMap())) {
       const type = schema.getType(typeName)
-      if (!type || type.astNode?.kind !== Kind.OBJECT_TYPE_DEFINITION) {
+      if (!isObjectType(type)) {
         continue
       }
       const objectType = type as GraphQLObjectType
@@ -80,13 +79,13 @@ export class UnionValueResolverGenerator {
   }
 
   private buildsOnUnionType(type: GraphQLNullableType): boolean {
-    if (type instanceof GraphQLNonNull) {
+    if (isNonNullType(type)) {
       return this.buildsOnUnionType(type.ofType)
-    } else if (type instanceof GraphQLList) {
+    } else if (isListType(type)) {
       return this.buildsOnUnionType(type.ofType)
-    } else if (type instanceof GraphQLUnionType) {
+    } else if (isUnionType(type)) {
       return true
-    } else if (type instanceof GraphQLObjectType) {
+    } else if (isObjectType(type)) {
       return false
     }
     return false
@@ -96,11 +95,11 @@ export class UnionValueResolverGenerator {
     type: GraphQLNullableType,
     fieldValue: Record<string, any> | Record<string, any>[] | null,
   ): Record<string, any> | null {
-    if (type instanceof GraphQLNonNull) {
+    if (isNonNullType(type)) {
       return this.collapseTypeField(type.ofType, fieldValue)
     } else if (fieldValue === null) {
       return null
-    } else if (type instanceof GraphQLList) {
+    } else if (isListType(type)) {
       if (!Array.isArray(fieldValue)) {
         throw new Error('Expected array value')
       }

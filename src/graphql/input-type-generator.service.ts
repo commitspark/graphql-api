@@ -3,13 +3,14 @@ import {
   GraphQLInputObjectType,
   GraphQLInterfaceType,
   GraphQLNullableType,
-  GraphQLUnionType,
-} from 'graphql/type/definition'
-import {
-  GraphQLList,
-  GraphQLNonNull,
   GraphQLObjectType,
   GraphQLScalarType,
+  GraphQLUnionType,
+  isInterfaceType,
+  isListType,
+  isNonNullType,
+  isObjectType,
+  isUnionType,
 } from 'graphql'
 import { ISchemaAnalyzerResult } from './schema-analyzer.service'
 import { EntryReferenceUtil } from './schema-utils/entry-reference-util'
@@ -18,20 +19,20 @@ export class InputTypeGeneratorService {
   constructor(private readonly entryReferenceUtil: EntryReferenceUtil) {}
 
   public generateFieldInputTypeString(type: GraphQLNullableType): string {
-    if (type instanceof GraphQLList) {
+    if (isListType(type)) {
       return `[${this.generateFieldInputTypeString(type.ofType)}]`
-    } else if (type instanceof GraphQLNonNull) {
+    } else if (isNonNullType(type)) {
       return `${this.generateFieldInputTypeString(type.ofType)}!`
-    } else if (type instanceof GraphQLObjectType) {
+    } else if (isObjectType(type)) {
       if (this.entryReferenceUtil.hasEntryDirective(type)) {
         return `${type.name}IdInput`
       } else {
         return `${type.name}Input`
       }
-    } else if (type instanceof GraphQLInterfaceType) {
+    } else if (isInterfaceType(type)) {
       // TODO
       return ''
-    } else if (type instanceof GraphQLUnionType) {
+    } else if (isUnionType(type)) {
       if (this.entryReferenceUtil.buildsOnTypeWithEntryDirective(type)) {
         return `${type.name}IdInput`
       } else {

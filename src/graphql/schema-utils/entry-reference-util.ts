@@ -1,10 +1,12 @@
 import {
   GraphQLField,
-  GraphQLList,
-  GraphQLNonNull,
+  GraphQLNullableType,
   GraphQLObjectType,
-} from 'graphql/type'
-import { GraphQLNullableType, GraphQLUnionType } from 'graphql/type/definition'
+  isListType,
+  isNonNullType,
+  isObjectType,
+  isUnionType,
+} from 'graphql'
 
 export class EntryReferenceUtil {
   public getFieldsWithReferenceToTypeWithEntryDirective(
@@ -21,18 +23,18 @@ export class EntryReferenceUtil {
   }
 
   public buildsOnTypeWithEntryDirective(type: GraphQLNullableType): boolean {
-    if (type instanceof GraphQLNonNull) {
+    if (isNonNullType(type)) {
       return this.buildsOnTypeWithEntryDirective(type.ofType)
-    } else if (type instanceof GraphQLList) {
+    } else if (isListType(type)) {
       return this.buildsOnTypeWithEntryDirective(type.ofType)
-    } else if (type instanceof GraphQLUnionType) {
+    } else if (isUnionType(type)) {
       return (
         type
           .getTypes()
           .filter((unionType) => this.buildsOnTypeWithEntryDirective(unionType))
           .length > 0
       )
-    } else if (type instanceof GraphQLObjectType) {
+    } else if (isObjectType(type)) {
       return this.hasEntryDirective(type)
     }
     return false

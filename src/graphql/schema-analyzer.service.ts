@@ -1,20 +1,15 @@
-import { GraphQLField, GraphQLObjectType, GraphQLSchema } from 'graphql'
+import { GraphQLObjectType, GraphQLSchema } from 'graphql'
 import { getDirective } from '@graphql-tools/utils'
 import { GraphQLInterfaceType, GraphQLUnionType } from 'graphql/type/definition'
 import { Kind } from 'graphql/language/kinds'
-import { ApolloContext } from '../app/api.service'
-import { EntryReferenceUtil } from './schema-utils/entry-reference-util'
 
 export class SchemaAnalyzerService {
-  constructor(private readonly entryReferenceUtil: EntryReferenceUtil) {}
-
   public analyzeSchema(schema: GraphQLSchema): ISchemaAnalyzerResult {
     const result: ISchemaAnalyzerResult = {
       entryDirectiveTypes: [],
       objectTypes: [],
       interfaceTypes: [],
       unionTypes: [],
-      typesWithEntryReferences: [],
     }
 
     const typeMap = schema.getTypeMap()
@@ -30,16 +25,6 @@ export class SchemaAnalyzerService {
         const entityDirective = getDirective(schema, objectType, 'Entry')?.[0]
         if (entityDirective) {
           result.entryDirectiveTypes.push(objectType)
-        }
-        const fieldsWithEntryReference =
-          this.entryReferenceUtil.getFieldsWithReferenceToTypeWithEntryDirective(
-            objectType,
-          )
-        if (fieldsWithEntryReference.length > 0) {
-          result.typesWithEntryReferences.push({
-            type: objectType,
-            fields: fieldsWithEntryReference,
-          })
         }
       }
 
@@ -63,8 +48,4 @@ export interface ISchemaAnalyzerResult {
   objectTypes: GraphQLObjectType[]
   interfaceTypes: GraphQLInterfaceType[]
   unionTypes: GraphQLUnionType[]
-  typesWithEntryReferences: {
-    type: GraphQLObjectType<any, ApolloContext>
-    fields: GraphQLField<any, ApolloContext>[]
-  }[]
 }

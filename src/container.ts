@@ -1,6 +1,5 @@
 import { ApiService } from './app/api.service'
 import { ApolloConfigFactoryService } from './graphql/apollo-config-factory.service'
-import { EntryReferenceResolverGenerator } from './graphql/resolver-generators/entry-reference-resolver.generator'
 import { InputTypeGeneratorService } from './graphql/input-type-generator.service'
 import { QueriesMutationsGeneratorService } from './graphql/queries-mutations-generator.service'
 import { SchemaAnalyzerService } from './graphql/schema-analyzer.service'
@@ -16,8 +15,11 @@ import { QueryByIdResolverGenerator } from './graphql/resolver-generators/query-
 import { QueryCountAllResolverGenerator } from './graphql/resolver-generators/query-count-all-resolver-generator'
 import { QueryTypeByIdResolverGenerator } from './graphql/resolver-generators/query-type-by-id-resolver-generator'
 import { SchemaValidator } from './graphql/schema-validator'
-import { UnionValueResolverGenerator } from './graphql/resolver-generators/union-value-resolver-generator'
+import { UnionValueResolver } from './graphql/field-resolver/union-value-resolver'
 import { EntryReferenceUtil } from './graphql/schema-utils/entry-reference-util'
+import { ObjectTypeFieldDefaultValueResolverGenerator } from './graphql/resolver-generators/object-type-field-default-value-resolver-generator'
+import { FieldDefaultValueResolver } from './graphql/field-resolver/field-default-value-resolver'
+import { EntryReferenceResolver } from './graphql/field-resolver/entry-reference-resolver'
 
 // we used to have a DI container here, however that doesn't work well with webpack & co, so doing it by hand for now
 
@@ -29,9 +31,7 @@ const schemaRootTypeGeneratorService = new SchemaRootTypeGeneratorService()
 const inputTypeGeneratorService = new InputTypeGeneratorService(
   entryReferenceUtil,
 )
-const schemaAnalyzerService = new SchemaAnalyzerService(entryReferenceUtil)
-const entryReferenceResolverGeneratorService =
-  new EntryReferenceResolverGenerator(persistenceService)
+const schemaAnalyzerService = new SchemaAnalyzerService()
 const mutationCreateResolverGenerator = new MutationCreateResolverGenerator(
   persistenceService,
 )
@@ -57,9 +57,15 @@ const unionTypeResolverGenerator = new UnionTypeResolverGenerator(
   persistenceService,
   entryReferenceUtil,
 )
-const unionValueResolverGenerator = new UnionValueResolverGenerator(
+const unionValueResolver = new UnionValueResolver()
+const entryReferenceResolver = new EntryReferenceResolver(persistenceService)
+const fieldDefaultValueResolver = new FieldDefaultValueResolver(
   entryReferenceUtil,
+  unionValueResolver,
+  entryReferenceResolver,
 )
+const objectTypeFieldDefaultValueResolverGenerator =
+  new ObjectTypeFieldDefaultValueResolverGenerator(fieldDefaultValueResolver)
 
 const queriesMutationsGeneratorService = new QueriesMutationsGeneratorService(
   queryAllResolverGenerator,
@@ -76,9 +82,8 @@ const schemaGeneratorService = new SchemaGeneratorService(
   schemaAnalyzerService,
   inputTypeGeneratorService,
   schemaRootTypeGeneratorService,
-  entryReferenceResolverGeneratorService,
   unionTypeResolverGenerator,
-  unionValueResolverGenerator,
+  objectTypeFieldDefaultValueResolverGenerator,
   schemaValidator,
 )
 

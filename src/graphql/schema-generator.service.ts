@@ -1,7 +1,4 @@
-import {
-  IGeneratedSchema,
-  QueriesMutationsGeneratorService,
-} from './queries-mutations-generator.service'
+import { QueriesMutationsGeneratorService } from './queries-mutations-generator.service'
 import {
   IExecutableSchemaDefinition,
   makeExecutableSchema,
@@ -10,7 +7,6 @@ import { SchemaAnalyzerService } from './schema-analyzer.service'
 import { InputTypeGeneratorService } from './input-type-generator.service'
 import { SchemaRootTypeGeneratorService } from './schema-root-type-generator.service'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
-import { EntryReferenceResolverGenerator } from './resolver-generators/entry-reference-resolver.generator'
 import { UnionTypeResolverGenerator } from './resolver-generators/union-type-resolver-generator'
 import { ApolloContext } from '../app/api.service'
 import {
@@ -19,7 +15,7 @@ import {
 } from 'graphql/type/definition'
 import { SchemaValidator } from './schema-validator'
 import { Entry } from '../persistence/persistence.service'
-import { UnionValueResolverGenerator } from './resolver-generators/union-value-resolver-generator'
+import { ObjectTypeFieldDefaultValueResolverGenerator } from './resolver-generators/object-type-field-default-value-resolver-generator'
 
 export class SchemaGeneratorService {
   constructor(
@@ -27,9 +23,8 @@ export class SchemaGeneratorService {
     private readonly schemaAnalyzer: SchemaAnalyzerService,
     private readonly inputTypeGenerator: InputTypeGeneratorService,
     private readonly schemaRootTypeGenerator: SchemaRootTypeGeneratorService,
-    private readonly entryReferenceResolverGenerator: EntryReferenceResolverGenerator,
     private readonly unionTypeResolverGenerator: UnionTypeResolverGenerator,
-    private readonly unionValueResolverGenerator: UnionValueResolverGenerator,
+    private readonly objectTypeFieldDefaultValueResolverGenerator: ObjectTypeFieldDefaultValueResolverGenerator,
     private readonly schemaValidator: SchemaValidator,
   ) {}
 
@@ -74,10 +69,6 @@ export class SchemaGeneratorService {
         >
       >
     > = {}
-    for (const type of schemaAnalyzerResult.typesWithEntryReferences) {
-      generatedEntryReferenceResolvers[type.type.name] =
-        this.entryReferenceResolverGenerator.createResolver(context, type)
-    }
 
     const generatedObjectInputTypeStrings =
       this.inputTypeGenerator.generateObjectInputTypeStrings(
@@ -112,8 +103,8 @@ export class SchemaGeneratorService {
         __resolveType: this.unionTypeResolverGenerator.createResolver(),
       }
     }
-    const generatedUnionValueResolvers =
-      this.unionValueResolverGenerator.createResolver(schema)
+    const generatedObjectTypeFieldDefaultValueResolvers =
+      this.objectTypeFieldDefaultValueResolverGenerator.createResolver(schema)
 
     const generatedQueryResolvers: Record<
       string,
@@ -124,9 +115,7 @@ export class SchemaGeneratorService {
       GraphQLFieldResolver<any, ApolloContext>
     > = {}
 
-    generatedQueriesMutations.forEach(function (
-      element: IGeneratedSchema,
-    ): void {
+    for (const element of generatedQueriesMutations) {
       generatedQueryResolvers[element.queryAll.name] = element.queryAll.resolver
       generatedQueryResolvers[element.queryAllMeta.name] =
         element.queryAllMeta.resolver
@@ -138,7 +127,7 @@ export class SchemaGeneratorService {
         element.updateMutation.resolver
       generatedMutationResolvers[element.deleteMutation.name] =
         element.deleteMutation.resolver
-    })
+    }
     generatedQueryResolvers[generatedTypeNameQuery.name] =
       generatedTypeNameQuery.resolver
 
@@ -160,10 +149,12 @@ export class SchemaGeneratorService {
         ...generatedUnionTypeResolvers[typeName],
       }
     }
-    for (const typeName of Object.keys(generatedUnionValueResolvers)) {
+    for (const typeName of Object.keys(
+      generatedObjectTypeFieldDefaultValueResolvers,
+    )) {
       allGeneratedResolvers[typeName] = {
         ...(allGeneratedResolvers[typeName] ?? {}),
-        ...generatedUnionValueResolvers[typeName],
+        ...generatedObjectTypeFieldDefaultValueResolvers[typeName],
       }
     }
     for (const typeName of Object.keys(generatedEntryReferenceResolvers)) {

@@ -30,7 +30,7 @@ export class UnionTypeResolverGenerator {
         )
       } else {
         // We have injected an internal `__typename` field into the data of fields pointing to a non-entry union
-        // in UnionValueResolverGenerator. This artificial field holds the type information we need here.
+        // in UnionValueResolver. This artificial field holds the type information we need here.
         return obj.__typename
       }
 

@@ -887,4 +887,53 @@ type TypeB {
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
   })
+
+  it('should return entries that only have an `id` field', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type MyEntry @Entry {
+    id: ID!
+}`
+
+    const entryId = 'A'
+
+    const entries = [
+      {
+        id: entryId,
+        metadata: {
+          type: 'MyEntry',
+        },
+      } as ContentEntry,
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue(entries)
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `query {
+        data: MyEntry(id:"${entryId}") {
+          id
+        }
+      }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: entryId,
+      },
+    })
+    expect(result.ref).toBe(commitHash)
+  })
 })

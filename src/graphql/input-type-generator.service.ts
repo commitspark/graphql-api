@@ -14,6 +14,7 @@ import {
 } from 'graphql'
 import { ISchemaAnalyzerResult } from './schema-analyzer.service'
 import { EntryReferenceUtil } from './schema-utils/entry-reference-util'
+import { isScalarType } from 'graphql/type/definition'
 
 export class InputTypeGeneratorService {
   constructor(private readonly entryReferenceUtil: EntryReferenceUtil) {}
@@ -73,16 +74,29 @@ export class InputTypeGeneratorService {
       const name = objectType.name
       const inputTypeName = `${name}Input`
       let inputType = `input ${inputTypeName} {\n`
+      let inputTypeFieldStrings = ''
       for (const fieldsKey in objectType.getFields()) {
         const field = objectType.getFields()[fieldsKey]
-        if (field.name === 'id') {
-          // TODO check by type name `ID` (incl. non-null) instead of field name
+        if (
+          (isNonNullType(field.type) &&
+            isScalarType(field.type.ofType) &&
+            field.type.ofType.name === 'ID') ||
+          (isScalarType(field.type) && field.type.name === 'ID')
+        ) {
           continue
         }
         const inputTypeString = this.generateFieldInputTypeString(field.type)
-        inputType += `  ${field.name}: ${inputTypeString}\n`
+        inputTypeFieldStrings += `  ${field.name}: ${inputTypeString}\n`
+      }
+
+      if (inputTypeFieldStrings.length > 0) {
+        inputType += `${inputTypeFieldStrings}`
+      } else {
+        // generate a dummy field as empty input types are not permitted
+        inputType += '  _: Boolean\n'
       }
       inputType += '}\n'
+
       return inputType
     })
   }

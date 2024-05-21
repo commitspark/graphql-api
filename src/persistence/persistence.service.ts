@@ -24,9 +24,9 @@ export class PersistenceService {
     id: string,
   ): Promise<Entry> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
-    const requestedEntry = allEntries.filter(
+    const requestedEntry = allEntries.find(
       (contentEntry: ContentEntry) => contentEntry.id === id,
-    )[0]
+    )
     if (requestedEntry === undefined) {
       throw new Error(`Not found: ${id}`)
     }
@@ -54,9 +54,9 @@ export class PersistenceService {
     id: string,
   ): Promise<Entry> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
-    const requestedEntry = allEntries.filter(
+    const requestedEntry = allEntries.find(
       (contentEntry: ContentEntry) => contentEntry.id === id,
-    )[0]
+    )
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
       throw new Error(`Not found: ${type}, ${id}`)
     }
@@ -115,9 +115,9 @@ export class PersistenceService {
     message: string,
   ): Promise<CommitResult> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
-    const requestedEntry = allEntries.filter(
+    const requestedEntry = allEntries.find(
       (contentEntry: ContentEntry) => contentEntry.id === id,
-    )[0]
+    )
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
       throw new Error(`Not found: ${type}, ${id}`)
     }
@@ -152,9 +152,9 @@ export class PersistenceService {
     message: string,
   ): Promise<CommitResult> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
-    const requestedEntry = allEntries.filter(
+    const requestedEntry = allEntries.find(
       (contentEntry: ContentEntry) => contentEntry.id === id,
-    )[0]
+    )
     if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
       throw new Error(`Not found: ${type}, ${id}`)
     }

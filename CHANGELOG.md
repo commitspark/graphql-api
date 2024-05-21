@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Return default data where possible when entry data is incomplete
+- Improve content retrieval performance
 
 ## [0.9.4] - 2023-11-14
 ### Fixed

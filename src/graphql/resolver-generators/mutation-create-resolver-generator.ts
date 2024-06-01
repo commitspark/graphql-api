@@ -5,9 +5,14 @@ import {
   PersistenceService,
 } from '../../persistence/persistence.service'
 import { GraphQLError } from 'graphql/error/GraphQLError'
+import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
+import { isObjectType } from 'graphql'
 
 export class MutationCreateResolverGenerator {
-  constructor(private readonly persistence: PersistenceService) {}
+  constructor(
+    private readonly persistence: PersistenceService,
+    private readonly entryReferenceUtil: EntryReferenceUtil,
+  ) {}
 
   public createResolver(
     typeName: string,
@@ -35,7 +40,21 @@ export class MutationCreateResolverGenerator {
         })
       }
 
-      // TODO validate ID references within args.data to assert referenced IDs exist and point to correct entry type
+      if (!isObjectType(info.returnType)) {
+        throw new Error('Expected to create an ObjectType')
+      }
+      const referencedEntryIds =
+        await this.entryReferenceUtil.getReferencedEntryIds(
+          info.returnType,
+          context,
+          info.returnType,
+          args.data,
+        )
+
+      // TODO get all referenced entries
+      // add ID of new entry to "referencedBy" metadata of referenced entries
+      // create a single commit that creates the new entry and at the same time updates the existing entries
+
       const commitResult = await this.persistence.createType(
         context.gitAdapter,
         context.branch,
@@ -46,12 +65,14 @@ export class MutationCreateResolverGenerator {
         args.message,
       )
       context.setCurrentRef(commitResult.ref)
-      return this.persistence.findByTypeId(
+
+      const newEntry = await this.persistence.findByTypeId(
         context.gitAdapter,
         context.getCurrentRef(),
         typeName,
         args.id,
       )
+      return { ...newEntry.data, id: newEntry.id }
     }
   }
 }

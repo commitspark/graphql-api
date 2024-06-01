@@ -12,7 +12,7 @@ describe('"Create" mutation resolvers', () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'
-    const originalSchema = `directive @Entry on OBJECT
+    const schema = `directive @Entry on OBJECT
 
 type EntryA @Entry {
     id: ID!
@@ -53,9 +53,7 @@ type EntryA @Entry {
     gitAdapter.getLatestCommitHash
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
-    gitAdapter.getSchema
-      .calledWith(commitHash)
-      .mockResolvedValue(originalSchema)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
     gitAdapter.getContentEntries.calledWith(commitHash).mockResolvedValue([])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
@@ -85,5 +83,327 @@ type EntryA @Entry {
       },
     })
     expect(result.ref).toBe(postCommitHash)
+  })
+
+  it('should create an entry that references other entries', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    optionalReference: OptionalReference1
+    nonNullReference: NonNullReference!
+    arrayReference: [ArrayReference!]!
+    unionReference: UnionReference!
+    unionNestedReference: UnionNestedReference!
+}
+
+type OptionalReference1 {
+    nestedReference: OptionalReference2!
+}
+
+type OptionalReference2 @Entry {
+    id: ID!
+}
+
+type NonNullReference @Entry {
+    id: ID!
+}
+
+type ArrayReference @Entry {
+    id: ID!
+}
+
+union UnionReference = 
+    | UnionEntryType1
+    | UnionEntryType2
+
+type UnionEntryType1 @Entry {
+    id: ID!
+}
+
+type UnionEntryType2 @Entry {
+    id: ID!
+}
+
+union UnionNestedReference = 
+    | UnionType1
+    | UnionType2
+
+type UnionType1 {
+    otherField: String
+}
+
+type UnionType2 {
+    nestedReference: UnionNestedEntry
+}
+
+type UnionNestedEntry @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const entryAId = 'A'
+    const optionalReference2EntryId = 'optionalReference2EntryId'
+    const nonNullReferenceEntryId = 'nonNullReferenceEntryId'
+    const arrayReferenceEntry1Id = 'arrayReferenceEntry1Id'
+    const arrayReferenceEntry2Id = 'arrayReferenceEntry2Id'
+    const unionEntryType1Id = 'unionEntryType1Id'
+    const unionEntryType2Id = 'unionEntryType2Id'
+    const unionNestedEntryId = 'unionNestedEntryId'
+    const postCommitHash = 'ef01'
+
+    const mutationData = {
+      optionalReference: {
+        nestedReference: { id: optionalReference2EntryId },
+      },
+      nonNullReference: { id: nonNullReferenceEntryId },
+      arrayReference: [
+        { id: arrayReferenceEntry1Id },
+        { id: arrayReferenceEntry2Id },
+      ],
+      unionReference: {
+        id: unionEntryType2Id,
+      },
+      unionNestedReference: {
+        unionType2: {
+          nestedReference: {
+            id: unionNestedEntryId,
+          },
+        },
+      },
+    }
+
+    const commitResult: Commit = {
+      ref: postCommitHash,
+    }
+    const existingEntries: ContentEntry[] = [
+      {
+        id: optionalReference2EntryId,
+        metadata: { type: 'OptionalReference2' },
+      },
+      { id: nonNullReferenceEntryId, metadata: { type: 'NonNullReference' } },
+      { id: arrayReferenceEntry1Id, metadata: { type: 'ArrayReference' } },
+      { id: arrayReferenceEntry2Id, metadata: { type: 'ArrayReference' } },
+      { id: unionEntryType1Id, metadata: { type: 'UnionEntryType1' } },
+      { id: unionEntryType2Id, metadata: { type: 'UnionEntryType2' } },
+      { id: unionNestedEntryId, metadata: { type: 'UnionNestedEntry' } },
+    ]
+    const newEntryA: ContentEntry = {
+      id: entryAId,
+      metadata: {
+        type: 'EntryA',
+      },
+      data: mutationData,
+    }
+    const updatedOptionalReference2: ContentEntry = {
+      id: optionalReference2EntryId,
+      metadata: {
+        type: 'OptionalReference2',
+        referencedBy: [entryAId],
+      },
+    }
+    const updatedNonNullReference: ContentEntry = {
+      id: nonNullReferenceEntryId,
+      metadata: {
+        type: 'NonNullReference',
+        referencedBy: [entryAId],
+      },
+    }
+    const updatedArrayReference1: ContentEntry = {
+      id: arrayReferenceEntry1Id,
+      metadata: {
+        type: 'ArrayReference',
+        referencedBy: [entryAId],
+      },
+    }
+    const updatedArrayReference2: ContentEntry = {
+      id: arrayReferenceEntry2Id,
+      metadata: {
+        type: 'ArrayReference',
+        referencedBy: [entryAId],
+      },
+    }
+    const updatedUnionEntryType2: ContentEntry = {
+      id: unionEntryType2Id,
+      metadata: {
+        type: 'UnionEntryType2',
+        referencedBy: [entryAId],
+      },
+    }
+    const updatedUnionNestedEntry: ContentEntry = {
+      id: unionNestedEntryId,
+      metadata: {
+        type: 'UnionNestedEntry',
+        referencedBy: [entryAId],
+      },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      contentEntries: [
+        { ...newEntryA, deletion: false },
+        { ...updatedOptionalReference2, deletion: false },
+        { ...updatedNonNullReference, deletion: false },
+        { ...updatedArrayReference1, deletion: false },
+        { ...updatedArrayReference2, deletion: false },
+        { ...updatedUnionEntryType2, deletion: false },
+        { ...updatedUnionNestedEntry, deletion: false },
+      ],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue(existingEntries)
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getContentEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([newEntryA])
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
+        data: createEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: entryAId,
+        mutationData: mutationData,
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: entryAId,
+      },
+    })
+    expect(result.ref).toBe(postCommitHash)
+  })
+
+  it('should not create an entry that references a non-existent entry', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    reference: EntryB!
+}
+
+type EntryB @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const entryAId = 'A'
+    const entryBId = 'B'
+
+    const existingEntries: ContentEntry[] = [
+      { id: entryBId, metadata: { type: 'EntryB' } },
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue(existingEntries)
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
+        data: createEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: entryAId,
+        mutationData: { reference: { id: 'someUnknownId' } },
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toMatchObject([
+      { extensions: { fieldName: 'reference', code: 'BAD_USER_INPUT' } },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(result.ref).toBe(commitHash)
+  })
+
+  it('should not create an entry that references an entry of incorrect type', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    reference: EntryB!
+}
+
+type EntryB @Entry {
+    id: ID!
+}
+
+type OtherEntry @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const entryAId = 'A'
+    const entryBId = 'B'
+    const otherEntryId = 'otherEntryId'
+
+    const existingEntries: ContentEntry[] = [
+      { id: entryBId, metadata: { type: 'EntryB' } },
+      { id: otherEntryId, metadata: { type: 'OtherEntry' } },
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue(existingEntries)
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
+        data: createEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: entryAId,
+        mutationData: { reference: { id: otherEntryId } },
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toMatchObject([
+      { extensions: { fieldName: 'reference', code: 'BAD_USER_INPUT' } },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(result.ref).toBe(commitHash)
   })
 })

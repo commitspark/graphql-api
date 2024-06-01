@@ -4,13 +4,13 @@ import {
   GraphQLAbstractType,
   GraphQLResolveInfo,
   GraphQLTypeResolver,
-} from 'graphql/type/definition'
-import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
+} from 'graphql'
+import { EntryTypeUtil } from '../schema-utils/entry-type-util'
 
 export class UnionTypeResolverGenerator {
   constructor(
     private readonly persistence: PersistenceService,
-    private readonly entryReferenceUtil: EntryReferenceUtil,
+    private readonly entryTypeUtil: EntryTypeUtil,
   ) {}
 
   public createResolver(): GraphQLTypeResolver<any, ApolloContext> {
@@ -20,9 +20,7 @@ export class UnionTypeResolverGenerator {
       info: GraphQLResolveInfo,
       abstractType: GraphQLAbstractType,
     ): Promise<string> => {
-      if (
-        this.entryReferenceUtil.buildsOnTypeWithEntryDirective(abstractType)
-      ) {
+      if (this.entryTypeUtil.buildsOnTypeWithEntryDirective(abstractType)) {
         return this.persistence.getTypeById(
           context.gitAdapter,
           context.getCurrentRef(),

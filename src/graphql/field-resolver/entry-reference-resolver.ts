@@ -31,17 +31,19 @@ export class EntryReferenceResolver implements FieldResolver<any> {
       this.resolveFieldValue(fieldValue, args, context, info, info.returnType)
   }
 
-  private resolveFieldValue(
+  private async resolveFieldValue(
     fieldValue: any,
     args: any,
     context: FieldResolverContext,
     info: GraphQLResolveInfo,
     currentType: GraphQLOutputType,
   ): Promise<ResolvedEntryData<Entry | Entry[] | null>> {
-    return this.persistence.findById(
+    const entry = await this.persistence.findById(
       context.gitAdapter,
       context.getCurrentRef(),
       fieldValue.id,
     )
+
+    return { ...entry.data, id: entry.id }
   }
 }

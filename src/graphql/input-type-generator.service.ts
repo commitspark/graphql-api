@@ -13,11 +13,11 @@ import {
   isUnionType,
 } from 'graphql'
 import { ISchemaAnalyzerResult } from './schema-analyzer.service'
-import { EntryReferenceUtil } from './schema-utils/entry-reference-util'
+import { EntryTypeUtil } from './schema-utils/entry-type-util'
 import { isScalarType } from 'graphql/type/definition'
 
 export class InputTypeGeneratorService {
-  constructor(private readonly entryReferenceUtil: EntryReferenceUtil) {}
+  constructor(private readonly entryTypeUtil: EntryTypeUtil) {}
 
   public generateFieldInputTypeString(type: GraphQLNullableType): string {
     if (isListType(type)) {
@@ -25,7 +25,7 @@ export class InputTypeGeneratorService {
     } else if (isNonNullType(type)) {
       return `${this.generateFieldInputTypeString(type.ofType)}!`
     } else if (isObjectType(type)) {
-      if (this.entryReferenceUtil.hasEntryDirective(type)) {
+      if (this.entryTypeUtil.hasEntryDirective(type)) {
         return `${type.name}IdInput`
       } else {
         return `${type.name}Input`
@@ -34,7 +34,7 @@ export class InputTypeGeneratorService {
       // TODO
       return ''
     } else if (isUnionType(type)) {
-      if (this.entryReferenceUtil.buildsOnTypeWithEntryDirective(type)) {
+      if (this.entryTypeUtil.buildsOnTypeWithEntryDirective(type)) {
         return `${type.name}IdInput`
       } else {
         return `${type.name}Input`
@@ -105,7 +105,7 @@ export class InputTypeGeneratorService {
     unionTypes: GraphQLUnionType[],
   ): string[] {
     const typeStrings = unionTypes.map((unionType): string => {
-      if (this.entryReferenceUtil.buildsOnTypeWithEntryDirective(unionType)) {
+      if (this.entryTypeUtil.buildsOnTypeWithEntryDirective(unionType)) {
         return ''
       }
 

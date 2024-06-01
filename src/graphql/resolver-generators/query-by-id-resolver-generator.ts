@@ -12,12 +12,14 @@ export class QueryByIdResolverGenerator {
     typeName: string,
   ): GraphQLFieldResolver<any, ApolloContext, any, Promise<Entry>> {
     return async (obj, args, context, info): Promise<Entry> => {
-      return this.persistence.findByTypeId(
+      const entry = await this.persistence.findByTypeId(
         context.gitAdapter,
         context.getCurrentRef(),
         typeName,
         args.id,
       )
+
+      return { ...entry.data, id: entry.id }
     }
   }
 }

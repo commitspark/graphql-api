@@ -130,4 +130,74 @@ type EntryA @Entry {
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
   })
+
+  it('should return an error when trying to delete an entry that is referenced elsewhere', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    reference: EntryB!
+}
+
+type EntryB @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const entryAId = 'A'
+    const entryBId = 'B'
+
+    const entries: ContentEntry[] = [
+      {
+        id: entryAId,
+        metadata: {
+          type: 'EntryA',
+        },
+        data: {
+          reference: {
+            id: entryBId,
+          },
+        },
+      },
+      {
+        id: entryBId,
+        metadata: {
+          type: 'EntryB',
+          referencedBy: [entryAId],
+        },
+      },
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue(entries)
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $commitMessage: String!) {
+        data: deleteEntryB(id: $id, message: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: entryBId,
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toMatchObject([
+      { extensions: { argumentName: 'id', code: 'IN_USE' } },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(result.ref).toBe(commitHash)
+  })
 })

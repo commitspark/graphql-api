@@ -17,7 +17,7 @@ import {
   isObjectType,
   isUnionType,
 } from 'graphql'
-import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
+import { EntryTypeUtil } from '../schema-utils/entry-type-util'
 import { UnionValueResolver } from './union-value-resolver'
 import { EntryReferenceResolver } from './entry-reference-resolver'
 
@@ -30,7 +30,7 @@ export class FieldDefaultValueResolver implements FieldResolver<any> {
   >
 
   constructor(
-    private readonly entryReferenceUtil: EntryReferenceUtil,
+    private readonly entryTypeUtil: EntryTypeUtil,
     private readonly unionValueResolver: UnionValueResolver,
     private readonly entryReferenceResolver: EntryReferenceResolver,
   ) {
@@ -116,7 +116,7 @@ export class FieldDefaultValueResolver implements FieldResolver<any> {
         }
       }
 
-      if (this.entryReferenceUtil.buildsOnTypeWithEntryDirective(currentType)) {
+      if (this.entryTypeUtil.buildsOnTypeWithEntryDirective(currentType)) {
         return this.entryReferenceResolver.resolve(
           fieldValue,
           args,
@@ -137,7 +137,7 @@ export class FieldDefaultValueResolver implements FieldResolver<any> {
         }
       }
 
-      if (this.entryReferenceUtil.hasEntryDirective(currentType)) {
+      if (this.entryTypeUtil.hasEntryDirective(currentType)) {
         return this.entryReferenceResolver.resolve(
           fieldValue,
           args,

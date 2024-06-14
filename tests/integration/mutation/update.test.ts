@@ -103,7 +103,150 @@ type EntryA @Entry {
     expect(result.ref).toBe(postCommitHash)
   })
 
-  // TODO assert partial update leaves data of existing unspecified optional fields in place, sets data of all other provided fields to provided values
+  it('should update an entry only where data was provided (partial update)', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    fieldChanged: String
+    fieldNulled: String
+    fieldNotSpecified: String
+    fieldUndefinedData: String
+    subTypeChanged: SubType
+    subTypeNulled: SubType
+    subTypeNotSpecified: SubType
+    subTypeUndefinedData: SubType
+    arrayChanged: [SubType!]
+    arrayNulled: [SubType!]
+    arrayNotSpecified: [SubType!]
+    arrayUndefinedData: [SubType!]
+}
+
+type SubType {
+    field: String
+}`
+
+    const commitMessage = 'My message'
+    const entryId = 'A'
+    const postCommitHash = 'ef01'
+
+    const originalValue = 'original'
+    const commitResult: Commit = {
+      ref: postCommitHash,
+    }
+    const originalEntry: ContentEntry = {
+      id: entryId,
+      metadata: {
+        type: 'EntryA',
+      },
+      data: {
+        fieldChanged: originalValue,
+        fieldNulled: originalValue,
+        fieldNotSpecified: originalValue,
+        subTypeChanged: {
+          field: originalValue,
+        },
+        subTypeNulled: {
+          field: originalValue,
+        },
+        subTypeNotSpecified: {
+          field: originalValue,
+        },
+        arrayChanged: [{ field: originalValue }],
+        arrayNulled: [{ field: originalValue }],
+        arrayNotSpecified: [{ field: originalValue }],
+      },
+    }
+
+    const changedValue = 'changed'
+    const mutationData = {
+      fieldChanged: changedValue,
+      fieldNulled: null,
+      fieldUndefinedData: changedValue,
+      subTypeChanged: { field: changedValue },
+      subTypeNulled: null,
+      subTypeUndefinedData: { field: changedValue },
+      arrayChanged: [{ field: changedValue }],
+      arrayNulled: null,
+      arrayUndefinedData: [{ field: changedValue }],
+    }
+
+    const updatedEntry: ContentEntry = {
+      id: entryId,
+      metadata: {
+        type: 'EntryA',
+      },
+      data: {
+        fieldChanged: changedValue,
+        fieldNulled: null,
+        fieldNotSpecified: originalValue,
+        subTypeChanged: {
+          field: changedValue,
+        },
+        subTypeNulled: null,
+        subTypeNotSpecified: {
+          field: originalValue,
+        },
+        arrayChanged: [{ field: changedValue }],
+        arrayNulled: null,
+        arrayNotSpecified: [{ field: originalValue }],
+        // we only do a dumb equality check using JSON below, so order matters and these fields were added
+        fieldUndefinedData: changedValue,
+        subTypeUndefinedData: {
+          field: changedValue,
+        },
+        arrayUndefinedData: [{ field: changedValue }],
+      },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      contentEntries: [{ ...updatedEntry, deletion: false }],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue([originalEntry])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getContentEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([updatedEntry])
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
+        data: updateEntryA(id: $id, data: $mutationData, message: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: entryId,
+        mutationData: mutationData,
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({ data: { id: entryId } })
+    expect(result.ref).toBe(postCommitHash)
+  })
 
   it('should return an error when trying to update a non-existent entry', async () => {
     const gitAdapter = mock<GitAdapter>()
@@ -383,7 +526,6 @@ type Box @Entry {
       variables: {
         id: itemId,
         mutationData: {
-          box: { id: boxId },
           boxAlias: { id: boxId },
         },
         commitMessage: commitMessage,

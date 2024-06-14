@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] 
 ### Added
 - Add referential integrity by tracking and validating references between entries
+- Add support of partial updates
 
 ### Fixed
 - [#18](https://github.com/commitspark/graphql-api/issues/18), [#25](https://github.com/commitspark/graphql-api/issues/25)

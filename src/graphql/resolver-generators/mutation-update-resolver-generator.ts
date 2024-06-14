@@ -6,7 +6,7 @@ import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import { isObjectType } from 'graphql'
-import { ContentEntryDraft } from '@commitspark/git-adapter'
+import { ContentEntryData, ContentEntryDraft } from '@commitspark/git-adapter'
 
 export class MutationUpdateResolverGenerator {
   constructor(
@@ -43,14 +43,14 @@ export class MutationUpdateResolverGenerator {
           existingEntry.data,
         )
 
-      // TODO first merge args with existingEntry.data in case of partial update
+      const mergedData = this.mergeData(existingEntry.data ?? null, args.data)
       const updatedReferencedEntryIds =
         await this.entryReferenceUtil.getReferencedEntryIds(
           info.returnType,
           context,
           null,
           info.returnType,
-          args.data,
+          mergedData,
         )
 
       const noLongerReferencedIds = existingReferencedEntryIds.filter(
@@ -102,7 +102,7 @@ export class MutationUpdateResolverGenerator {
         ref: context.branch,
         parentSha: context.getCurrentRef(),
         contentEntries: [
-          { ...existingEntry, data: args.data, deletion: false },
+          { ...existingEntry, data: mergedData, deletion: false },
           ...referencedEntryUpdates,
         ],
         message: args.message,
@@ -117,5 +117,40 @@ export class MutationUpdateResolverGenerator {
       )
       return { ...updatedEntry.data, id: updatedEntry.id }
     }
+  }
+
+  private mergeData(
+    existingEntryData: ContentEntryData,
+    updateData: ContentEntryData,
+  ): ContentEntryData {
+    if (existingEntryData === null || updateData === null) {
+      return updateData
+    }
+
+    const mergedEntry: ContentEntryData = { ...existingEntryData }
+    for (const fieldName of Object.keys(updateData)) {
+      const fieldDataExisting = existingEntryData[fieldName]
+      const fieldDataUpdate = updateData[fieldName]
+
+      if (
+        fieldDataExisting === undefined ||
+        fieldDataExisting === null ||
+        fieldDataUpdate === null
+      ) {
+        mergedEntry[fieldName] = fieldDataUpdate
+      } else if (
+        typeof fieldDataUpdate === 'object' &&
+        !Array.isArray(fieldDataUpdate)
+      ) {
+        mergedEntry[fieldName] = this.mergeData(
+          { ...fieldDataExisting },
+          { ...fieldDataUpdate },
+        )
+      } else {
+        mergedEntry[fieldName] = fieldDataUpdate
+      }
+    }
+
+    return mergedEntry
   }
 }

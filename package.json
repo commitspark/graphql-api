@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.3.0",
-    "@commitspark/git-adapter": "^0.8.0",
+    "@commitspark/git-adapter": "^0.11.0",
     "@graphql-tools/mock": "^8.6.8",
     "@graphql-tools/schema": "^8.3.10"
   },

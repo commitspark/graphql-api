@@ -61,9 +61,10 @@ export class PersistenceService {
   ): Promise<ContentEntry> {
     const allEntries = await gitAdapter.getContentEntries(commitHash)
     const requestedEntry = allEntries.find(
-      (contentEntry: ContentEntry) => contentEntry.id === id,
+      (contentEntry: ContentEntry) =>
+        contentEntry.id === id && contentEntry.metadata.type === type,
     )
-    if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
+    if (requestedEntry === undefined) {
       throw new GraphQLError(
         `No entry of type "${type}" with id "${id}" exists`,
         {
@@ -76,132 +77,6 @@ export class PersistenceService {
     }
 
     return requestedEntry
-  }
-
-  public async createType(
-    gitAdapter: GitAdapter,
-    branch: string,
-    commitHash: string,
-    typeName: string,
-    id: string,
-    data: Entry,
-    message: string,
-  ): Promise<CommitResult> {
-    // TODO expose regex publicly to allow reuse
-    const regex = /^[a-zA-Z0-9\-_]{1,250}$/
-    if (!id.match(regex)) {
-      throw new GraphQLError(`"id" does not match regex "${regex}"`, {
-        extensions: {
-          code: 'BAD_USER_INPUT',
-          argumentName: 'id',
-        },
-      })
-    }
-
-    const commit = await gitAdapter.createCommit({
-      ref: branch,
-      parentSha: commitHash,
-      contentEntries: [
-        {
-          id: id,
-          metadata: {
-            type: typeName,
-          },
-          data: data,
-          deletion: false,
-        },
-      ],
-      message: message,
-    })
-
-    return {
-      ref: commit.ref,
-    }
-  }
-
-  public async update(
-    gitAdapter: GitAdapter,
-    branch: string,
-    parentSha: string,
-    contentEntry: ContentEntry,
-    message: string,
-  ): Promise<CommitResult> {
-    const allEntries = await gitAdapter.getContentEntries(parentSha)
-    const existingEntry = allEntries.find(
-      (entry) => entry.id === contentEntry.id,
-    )
-    if (
-      existingEntry === undefined ||
-      existingEntry.metadata.type !== contentEntry.metadata.type
-    ) {
-      throw new GraphQLError(
-        `No entry of type "${contentEntry.metadata.type}" with id "${contentEntry.id}" exists`,
-        {
-          extensions: {
-            code: 'BAD_USER_INPUT',
-            argumentName: 'id',
-          },
-        },
-      )
-    }
-
-    const commit = await gitAdapter.createCommit({
-      ref: branch,
-      parentSha: parentSha,
-      contentEntries: [
-        {
-          ...contentEntry,
-          deletion: false,
-        },
-      ],
-      message: message,
-    })
-
-    return {
-      ref: commit.ref,
-    }
-  }
-
-  public async deleteByTypeId(
-    gitAdapter: GitAdapter,
-    branch: string,
-    commitHash: string,
-    type: string,
-    id: string,
-    message: string,
-  ): Promise<CommitResult> {
-    const allEntries = await gitAdapter.getContentEntries(commitHash)
-    const requestedEntry = allEntries.find(
-      (contentEntry: ContentEntry) => contentEntry.id === id,
-    )
-    if (requestedEntry === undefined || requestedEntry.metadata.type !== type) {
-      throw new GraphQLError(
-        `No entry of type "${type}" with id "${id}" exists`,
-        {
-          extensions: {
-            code: 'BAD_USER_INPUT',
-            argumentName: 'id',
-          },
-        },
-      )
-    }
-
-    const commit = await gitAdapter.createCommit({
-      ref: branch,
-      parentSha: commitHash,
-      contentEntries: [
-        {
-          id: id,
-          metadata: requestedEntry.metadata,
-          deletion: true,
-        },
-      ],
-      message: message,
-    })
-
-    return {
-      ref: commit.ref,
-    }
   }
 }
 

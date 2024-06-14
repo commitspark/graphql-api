@@ -33,6 +33,7 @@ type EntryA @Entry {
       id: entryAId,
       metadata: {
         type: 'EntryA',
+        referencedBy: [],
       },
       data: {
         name: mutationData.name,
@@ -65,7 +66,7 @@ type EntryA @Entry {
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: createEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+        data: createEntryA(id: $id, data: $mutationData, message: $commitMessage) {
           id
         }
       }`,
@@ -98,6 +99,7 @@ type EntryA @Entry {
     arrayReference: [ArrayReference!]!
     unionReference: UnionReference!
     unionNestedReference: UnionNestedReference!
+    circularReferenceEntryReference: CircularReferenceEntry
 }
 
 type OptionalReference1 {
@@ -142,6 +144,11 @@ type UnionType2 {
 
 type UnionNestedEntry @Entry {
     id: ID!
+}
+
+type CircularReferenceEntry @Entry {
+    id: ID!
+    next: CircularReferenceEntry
 }`
 
     const commitMessage = 'My message'
@@ -153,6 +160,8 @@ type UnionNestedEntry @Entry {
     const unionEntryType1Id = 'unionEntryType1Id'
     const unionEntryType2Id = 'unionEntryType2Id'
     const unionNestedEntryId = 'unionNestedEntryId'
+    const circularReferenceEntry1Id = 'circularReferenceEntry1Id'
+    const circularReferenceEntry2Id = 'circularReferenceEntry2Id'
     const postCommitHash = 'ef01'
 
     const mutationData = {
@@ -174,11 +183,23 @@ type UnionNestedEntry @Entry {
           },
         },
       },
+      circularReferenceEntryReference: {
+        id: circularReferenceEntry1Id,
+      },
     }
 
     const commitResult: Commit = {
       ref: postCommitHash,
     }
+
+    const existingCircularReference2Entry = {
+      id: circularReferenceEntry2Id,
+      metadata: {
+        type: 'CircularReferenceEntry',
+        referencedBy: [circularReferenceEntry1Id],
+      },
+    }
+
     const existingEntries: ContentEntry[] = [
       {
         id: optionalReference2EntryId,
@@ -190,11 +211,20 @@ type UnionNestedEntry @Entry {
       { id: unionEntryType1Id, metadata: { type: 'UnionEntryType1' } },
       { id: unionEntryType2Id, metadata: { type: 'UnionEntryType2' } },
       { id: unionNestedEntryId, metadata: { type: 'UnionNestedEntry' } },
+      {
+        id: circularReferenceEntry1Id,
+        metadata: {
+          type: 'CircularReferenceEntry',
+          referencedBy: [circularReferenceEntry2Id],
+        },
+      },
+      existingCircularReference2Entry,
     ]
     const newEntryA: ContentEntry = {
       id: entryAId,
       metadata: {
         type: 'EntryA',
+        referencedBy: [],
       },
       data: mutationData,
     }
@@ -240,6 +270,13 @@ type UnionNestedEntry @Entry {
         referencedBy: [entryAId],
       },
     }
+    const updatedCircularReference1Entry: ContentEntry = {
+      id: circularReferenceEntry1Id,
+      metadata: {
+        type: 'CircularReferenceEntry',
+        referencedBy: [entryAId, circularReferenceEntry2Id],
+      },
+    }
 
     const commitDraft: CommitDraft = {
       ref: gitRef,
@@ -252,6 +289,7 @@ type UnionNestedEntry @Entry {
         { ...updatedArrayReference2, deletion: false },
         { ...updatedUnionEntryType2, deletion: false },
         { ...updatedUnionNestedEntry, deletion: false },
+        { ...updatedCircularReference1Entry, deletion: false },
       ],
       message: commitMessage,
     }
@@ -272,7 +310,17 @@ type UnionNestedEntry @Entry {
       .mockResolvedValue(commitResult)
     gitAdapter.getContentEntries
       .calledWith(postCommitHash)
-      .mockResolvedValue([newEntryA])
+      .mockResolvedValue([
+        newEntryA,
+        updatedOptionalReference2,
+        updatedNonNullReference,
+        updatedArrayReference1,
+        updatedArrayReference2,
+        updatedUnionEntryType2,
+        updatedUnionNestedEntry,
+        updatedCircularReference1Entry,
+        existingCircularReference2Entry,
+      ])
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -331,7 +379,7 @@ type EntryB @Entry {
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: createEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+        data: createEntryA(id: $id, data: $mutationData, message: $commitMessage) {
           id
         }
       }`,

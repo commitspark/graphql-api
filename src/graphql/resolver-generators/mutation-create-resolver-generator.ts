@@ -7,6 +7,10 @@ import {
 import { GraphQLError } from 'graphql/error/GraphQLError'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import { isObjectType } from 'graphql'
+import {
+  ContentEntryDraft,
+  ENTRY_ID_INVALID_CHARACTERS,
+} from '@commitspark/git-adapter'
 
 export class MutationCreateResolverGenerator {
   constructor(
@@ -43,28 +47,68 @@ export class MutationCreateResolverGenerator {
       if (!isObjectType(info.returnType)) {
         throw new Error('Expected to create an ObjectType')
       }
+
       const referencedEntryIds =
         await this.entryReferenceUtil.getReferencedEntryIds(
           info.returnType,
           context,
+          null,
           info.returnType,
           args.data,
         )
 
-      // TODO get all referenced entries
-      // add ID of new entry to "referencedBy" metadata of referenced entries
-      // create a single commit that creates the new entry and at the same time updates the existing entries
+      const idValidationResult = args.id.match(ENTRY_ID_INVALID_CHARACTERS)
+      if (idValidationResult) {
+        throw new GraphQLError(
+          `"id" contains invalid characters "${idValidationResult.join(', ')}"`,
+          {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+              argumentName: 'id',
+            },
+          },
+        )
+      }
 
-      const commitResult = await this.persistence.createType(
-        context.gitAdapter,
-        context.branch,
-        context.getCurrentRef(),
-        typeName,
-        args.id,
-        args.data,
-        args.message,
-      )
-      context.setCurrentRef(commitResult.ref)
+      const referencedEntryUpdates: ContentEntryDraft[] = []
+      for (const referencedEntryId of referencedEntryIds) {
+        const referencedEntry = await this.persistence.findById(
+          context.gitAdapter,
+          context.getCurrentRef(),
+          referencedEntryId,
+        )
+        const newReferencedEntryIds: string[] = [
+          ...(referencedEntry.metadata.referencedBy ?? []),
+          args.id,
+        ].sort()
+        const newReferencedEntryDraft: ContentEntryDraft = {
+          ...referencedEntry,
+          metadata: {
+            ...referencedEntry.metadata,
+            referencedBy: newReferencedEntryIds,
+          },
+          deletion: false,
+        }
+        referencedEntryUpdates.push(newReferencedEntryDraft)
+      }
+
+      const newEntryDraft: ContentEntryDraft = {
+        id: args.id,
+        metadata: {
+          type: typeName,
+          referencedBy: [],
+        },
+        data: args.data,
+        deletion: false,
+      }
+
+      const commit = await context.gitAdapter.createCommit({
+        ref: context.branch,
+        parentSha: context.getCurrentRef(),
+        contentEntries: [newEntryDraft, ...referencedEntryUpdates],
+        message: args.message,
+      })
+      context.setCurrentRef(commit.ref)
 
       const newEntry = await this.persistence.findByTypeId(
         context.gitAdapter,

@@ -44,9 +44,11 @@ const mutationCreateResolverGenerator = new MutationCreateResolverGenerator(
 )
 const mutationDeleteResolverGenerator = new MutationDeleteResolverGenerator(
   persistenceService,
+  entryReferenceUtil,
 )
 const mutationUpdateResolverGenerator = new MutationUpdateResolverGenerator(
   persistenceService,
+  entryReferenceUtil,
 )
 const queryAllResolverGenerator = new QueryAllResolverGenerator(
   persistenceService,

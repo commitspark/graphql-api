@@ -19,33 +19,21 @@ export class EntryReferenceUtil {
     private readonly unionTypeUtil: UnionTypeUtil,
   ) {}
 
-  public isPermittedReferenceType(
-    referencedTypeName: string,
-    fieldType: GraphQLNullableType,
-  ): boolean {
-    if (isNonNullType(fieldType)) {
-      return this.isPermittedReferenceType(referencedTypeName, fieldType.ofType)
-    } else if (isListType(fieldType)) {
-      return this.isPermittedReferenceType(referencedTypeName, fieldType.ofType)
-    } else if (isUnionType(fieldType)) {
-      return fieldType
-        .getTypes()
-        .map((concreteType) => concreteType.name)
-        .includes(referencedTypeName)
-    } else if (isObjectType(fieldType)) {
-      return fieldType.name === referencedTypeName
-    }
-    return false
-  }
-
   public async getReferencedEntryIds(
     rootType: GraphQLObjectType,
     context: ApolloContext,
+    fieldName: string | null,
     type: GraphQLNullableType,
     data: any,
   ): Promise<string[]> {
     if (isNonNullType(type)) {
-      return this.getReferencedEntryIds(rootType, context, type.ofType, data)
+      return this.getReferencedEntryIds(
+        rootType,
+        context,
+        fieldName,
+        type.ofType,
+        data,
+      )
     } else if (isListType(type)) {
       let referencedEntryIds: string[] = []
       for (const element of data) {
@@ -54,6 +42,7 @@ export class EntryReferenceUtil {
           ...(await this.getReferencedEntryIds(
             rootType,
             context,
+            fieldName,
             type.ofType,
             element,
           )),
@@ -82,6 +71,7 @@ export class EntryReferenceUtil {
       return this.getReferencedEntryIds(
         rootType,
         context,
+        fieldName,
         unionType,
         unionValue,
       )
@@ -90,7 +80,7 @@ export class EntryReferenceUtil {
         type.name !== rootType.name &&
         this.entryTypeUtil.hasEntryDirective(type)
       ) {
-        await this.validateReference(context, type.name, type, data)
+        await this.validateReference(context, fieldName ?? '', type, data)
         return [data.id]
       } else {
         let referencedEntryIds: string[] = []
@@ -100,6 +90,7 @@ export class EntryReferenceUtil {
             const nestedResult = await this.getReferencedEntryIds(
               rootType,
               context,
+              fieldsKey,
               field.type,
               fieldValue,
             )
@@ -147,12 +138,14 @@ export class EntryReferenceUtil {
         throw new Error('Expected key "id"')
       }
       const referencedId = fieldValue.id
-      const referencedTypeName = await this.persistence.getTypeById(
-        context.gitAdapter,
-        context.getCurrentRef(),
-        referencedId,
-      )
-      if (referencedTypeName === undefined) {
+      let referencedTypeName
+      try {
+        referencedTypeName = await this.persistence.getTypeById(
+          context.gitAdapter,
+          context.getCurrentRef(),
+          referencedId,
+        )
+      } catch (error) {
         throw new GraphQLError(
           `Reference with id "${referencedId}" points to non-existing entry`,
           {
@@ -175,5 +168,24 @@ export class EntryReferenceUtil {
         )
       }
     }
+  }
+
+  private isPermittedReferenceType(
+    referencedTypeName: string,
+    fieldType: GraphQLNullableType,
+  ): boolean {
+    if (isNonNullType(fieldType)) {
+      return this.isPermittedReferenceType(referencedTypeName, fieldType.ofType)
+    } else if (isListType(fieldType)) {
+      return this.isPermittedReferenceType(referencedTypeName, fieldType.ofType)
+    } else if (isUnionType(fieldType)) {
+      return fieldType
+        .getTypes()
+        .map((concreteType) => concreteType.name)
+        .includes(referencedTypeName)
+    } else if (isObjectType(fieldType)) {
+      return fieldType.name === referencedTypeName
+    }
+    return false
   }
 }

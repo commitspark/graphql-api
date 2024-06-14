@@ -34,7 +34,7 @@ export class UnionValueResolver implements FieldResolver<any> {
 
     const res: Entry = {
       ...unionValue,
-      __typeName: typeName,
+      __typename: typeName,
     }
 
     // We replace the above name field that nests our concrete data directly

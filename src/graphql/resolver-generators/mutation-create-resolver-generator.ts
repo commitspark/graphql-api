@@ -27,6 +27,23 @@ export class MutationCreateResolverGenerator {
       context: ApolloContext,
       info,
     ): Promise<Entry> => {
+      if (!isObjectType(info.returnType)) {
+        throw new Error('Expected to create an ObjectType')
+      }
+
+      const idValidationResult = args.id.match(ENTRY_ID_INVALID_CHARACTERS)
+      if (idValidationResult) {
+        throw new GraphQLError(
+          `"id" contains invalid characters "${idValidationResult.join(', ')}"`,
+          {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+              argumentName: 'id',
+            },
+          },
+        )
+      }
+
       let existingEntry
       try {
         existingEntry = await this.persistence.findById(
@@ -44,10 +61,6 @@ export class MutationCreateResolverGenerator {
         })
       }
 
-      if (!isObjectType(info.returnType)) {
-        throw new Error('Expected to create an ObjectType')
-      }
-
       const referencedEntryIds =
         await this.entryReferenceUtil.getReferencedEntryIds(
           info.returnType,
@@ -56,19 +69,6 @@ export class MutationCreateResolverGenerator {
           info.returnType,
           args.data,
         )
-
-      const idValidationResult = args.id.match(ENTRY_ID_INVALID_CHARACTERS)
-      if (idValidationResult) {
-        throw new GraphQLError(
-          `"id" contains invalid characters "${idValidationResult.join(', ')}"`,
-          {
-            extensions: {
-              code: 'BAD_USER_INPUT',
-              argumentName: 'id',
-            },
-          },
-        )
-      }
 
       const referencedEntryUpdates: ContentEntryDraft[] = []
       for (const referencedEntryId of referencedEntryIds) {

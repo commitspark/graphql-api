@@ -23,16 +23,16 @@ export class MutationUpdateResolverGenerator {
       context: ApolloContext,
       info,
     ): Promise<Entry> => {
+      if (!isObjectType(info.returnType)) {
+        throw new Error('Expected to update an ObjectType')
+      }
+
       const existingEntry = await this.persistence.findByTypeId(
         context.gitAdapter,
         context.getCurrentRef(),
         typeName,
         args.id,
       )
-
-      if (!isObjectType(info.returnType)) {
-        throw new Error('Expected to update an ObjectType')
-      }
 
       const existingReferencedEntryIds =
         await this.entryReferenceUtil.getReferencedEntryIds(

@@ -32,15 +32,15 @@ export class UnionValueResolver implements FieldResolver<any> {
       this.unionTypeUtil.getUnionTypeNameFromFieldValue(fieldValue)
     const unionValue = this.unionTypeUtil.getUnionValue(fieldValue)
 
+    // We replace the helper type name field that holds our field's actual data
+    // with this actual data and add a `__typename` field, so that our output data
+    // corresponds to the output schema provided by the user (i.e. there is
+    // no additional nesting level there).
     const res: Entry = {
       ...unionValue,
       __typename: typeName,
     }
 
-    // We replace the above name field that nests our concrete data directly
-    // with the data and a `__typename` field, so that our output data
-    // corresponds to the output schema provided by the user (i.e. there is
-    // no additional nesting level there).
     return new Promise((resolve) => resolve(res))
   }
 }

@@ -123,34 +123,9 @@ export class MutationUpdateResolverGenerator {
     existingEntryData: ContentEntryData,
     updateData: ContentEntryData,
   ): ContentEntryData {
-    if (existingEntryData === null || updateData === null) {
-      return updateData
+    return {
+      ...existingEntryData,
+      ...updateData,
     }
-
-    const mergedEntry: ContentEntryData = { ...existingEntryData }
-    for (const fieldName of Object.keys(updateData)) {
-      const fieldDataExisting = existingEntryData[fieldName]
-      const fieldDataUpdate = updateData[fieldName]
-
-      if (
-        fieldDataExisting === undefined ||
-        fieldDataExisting === null ||
-        fieldDataUpdate === null
-      ) {
-        mergedEntry[fieldName] = fieldDataUpdate
-      } else if (
-        typeof fieldDataUpdate === 'object' &&
-        !Array.isArray(fieldDataUpdate)
-      ) {
-        mergedEntry[fieldName] = this.mergeData(
-          { ...fieldDataExisting },
-          { ...fieldDataUpdate },
-        )
-      } else {
-        mergedEntry[fieldName] = fieldDataUpdate
-      }
-    }
-
-    return mergedEntry
   }
 }

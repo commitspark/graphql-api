@@ -126,7 +126,8 @@ type EntryA @Entry {
 }
 
 type SubType {
-    field: String
+    field1: String
+    field2: String
 }`
 
     const commitMessage = 'My message'
@@ -147,17 +148,17 @@ type SubType {
         fieldNulled: originalValue,
         fieldNotSpecified: originalValue,
         subTypeChanged: {
-          field: originalValue,
+          field1: originalValue,
         },
         subTypeNulled: {
-          field: originalValue,
+          field1: originalValue,
         },
         subTypeNotSpecified: {
-          field: originalValue,
+          field1: originalValue,
         },
-        arrayChanged: [{ field: originalValue }],
-        arrayNulled: [{ field: originalValue }],
-        arrayNotSpecified: [{ field: originalValue }],
+        arrayChanged: [{ field1: originalValue }],
+        arrayNulled: [{ field1: originalValue }],
+        arrayNotSpecified: [{ field1: originalValue }],
       },
     }
 
@@ -166,12 +167,12 @@ type SubType {
       fieldChanged: changedValue,
       fieldNulled: null,
       fieldUndefinedData: changedValue,
-      subTypeChanged: { field: changedValue },
+      subTypeChanged: { field2: changedValue },
       subTypeNulled: null,
-      subTypeUndefinedData: { field: changedValue },
-      arrayChanged: [{ field: changedValue }],
+      subTypeUndefinedData: { field2: changedValue },
+      arrayChanged: [{ field2: changedValue }],
       arrayNulled: null,
-      arrayUndefinedData: [{ field: changedValue }],
+      arrayUndefinedData: [{ field2: changedValue }],
     }
 
     const updatedEntry: ContentEntry = {
@@ -184,21 +185,21 @@ type SubType {
         fieldNulled: null,
         fieldNotSpecified: originalValue,
         subTypeChanged: {
-          field: changedValue,
+          field2: changedValue,
         },
         subTypeNulled: null,
         subTypeNotSpecified: {
-          field: originalValue,
+          field1: originalValue,
         },
-        arrayChanged: [{ field: changedValue }],
+        arrayChanged: [{ field2: changedValue }],
         arrayNulled: null,
-        arrayNotSpecified: [{ field: originalValue }],
+        arrayNotSpecified: [{ field1: originalValue }],
         // we only do a dumb equality check using JSON below, so order matters and these fields were added
         fieldUndefinedData: changedValue,
         subTypeUndefinedData: {
-          field: changedValue,
+          field2: changedValue,
         },
-        arrayUndefinedData: [{ field: changedValue }],
+        arrayUndefinedData: [{ field2: changedValue }],
       },
     }
 

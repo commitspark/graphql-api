@@ -5,9 +5,15 @@ import {
 import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
 import { GraphQLError } from 'graphql/error/GraphQLError'
+import { ContentEntry, ContentEntryDraft } from '@commitspark/git-adapter'
+import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
+import { isObjectType } from 'graphql'
 
 export class MutationDeleteResolverGenerator {
-  constructor(private readonly persistence: PersistenceService) {}
+  constructor(
+    private readonly persistence: PersistenceService,
+    private readonly entryReferenceUtil: EntryReferenceUtil,
+  ) {}
 
   public createResolver(
     typeName: string,
@@ -18,35 +24,77 @@ export class MutationDeleteResolverGenerator {
       context: ApolloContext,
       info,
     ): Promise<Entry> => {
-      try {
-        await this.persistence.findByTypeId(
-          context.gitAdapter,
-          context.getCurrentRef(),
-          typeName,
-          args.id,
-        )
-      } catch (_) {
+      const entry: ContentEntry = await this.persistence.findByTypeId(
+        context.gitAdapter,
+        context.getCurrentRef(),
+        typeName,
+        args.id,
+      )
+
+      if (
+        entry.metadata.referencedBy &&
+        entry.metadata.referencedBy.length > 0
+      ) {
+        const otherIds = entry.metadata.referencedBy
+          .map((referenceId) => `"${referenceId}"`)
+          .join(', ')
         throw new GraphQLError(
-          `No entry of type "${typeName}" with id "${args.id}" exists`,
+          `Entry with id "${args.id}" is referenced by other entries: [${otherIds}]`,
           {
             extensions: {
-              code: 'BAD_USER_INPUT',
+              code: 'IN_USE',
               argumentName: 'id',
             },
           },
         )
       }
 
-      // TODO validate ID to delete is not referenced anywhere
-      const deleteResult = await this.persistence.deleteByTypeId(
-        context.gitAdapter,
-        context.branch,
-        context.getCurrentRef(),
-        typeName,
-        args.id,
-        args.message,
-      )
-      context.setCurrentRef(deleteResult.ref)
+      const entryType = info.schema.getType(typeName)
+      if (!isObjectType(entryType)) {
+        throw new Error('Expected to delete an ObjectType')
+      }
+
+      const referencedEntryIds =
+        await this.entryReferenceUtil.getReferencedEntryIds(
+          entryType,
+          context,
+          null,
+          entryType,
+          entry.data,
+        )
+      const referencedEntryUpdates: ContentEntryDraft[] = []
+      for (const referencedEntryId of referencedEntryIds) {
+        const noLongerReferencedEntry = await this.persistence.findById(
+          context.gitAdapter,
+          context.getCurrentRef(),
+          referencedEntryId,
+        )
+        referencedEntryUpdates.push({
+          ...noLongerReferencedEntry,
+          metadata: {
+            ...noLongerReferencedEntry.metadata,
+            referencedBy: noLongerReferencedEntry.metadata.referencedBy?.filter(
+              (entryId) => entryId !== args.id,
+            ),
+          },
+          deletion: false,
+        })
+      }
+
+      const commit = await context.gitAdapter.createCommit({
+        ref: context.branch,
+        parentSha: context.getCurrentRef(),
+        contentEntries: [
+          {
+            ...entry,
+            deletion: true,
+          },
+          ...referencedEntryUpdates,
+        ],
+        message: args.message,
+      })
+      context.setCurrentRef(commit.ref)
+
       return {
         id: args.id,
       }

@@ -79,7 +79,7 @@ type EntryA @Entry {
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: updateEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+        data: updateEntryA(id: $id, data: $mutationData, message: $commitMessage) {
           id
           name
         }
@@ -100,6 +100,152 @@ type EntryA @Entry {
         name: `${mutationData.name}2`,
       },
     })
+    expect(result.ref).toBe(postCommitHash)
+  })
+
+  it('should update an entry only where data was provided (partial update)', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    fieldChanged: String
+    fieldNulled: String
+    fieldNotSpecified: String
+    fieldUndefinedData: String
+    subTypeChanged: SubType
+    subTypeNulled: SubType
+    subTypeNotSpecified: SubType
+    subTypeUndefinedData: SubType
+    arrayChanged: [SubType!]
+    arrayNulled: [SubType!]
+    arrayNotSpecified: [SubType!]
+    arrayUndefinedData: [SubType!]
+}
+
+type SubType {
+    field1: String
+    field2: String
+}`
+
+    const commitMessage = 'My message'
+    const entryId = 'A'
+    const postCommitHash = 'ef01'
+
+    const originalValue = 'original'
+    const commitResult: Commit = {
+      ref: postCommitHash,
+    }
+    const originalEntry: ContentEntry = {
+      id: entryId,
+      metadata: {
+        type: 'EntryA',
+      },
+      data: {
+        fieldChanged: originalValue,
+        fieldNulled: originalValue,
+        fieldNotSpecified: originalValue,
+        subTypeChanged: {
+          field1: originalValue,
+        },
+        subTypeNulled: {
+          field1: originalValue,
+        },
+        subTypeNotSpecified: {
+          field1: originalValue,
+        },
+        arrayChanged: [{ field1: originalValue }],
+        arrayNulled: [{ field1: originalValue }],
+        arrayNotSpecified: [{ field1: originalValue }],
+      },
+    }
+
+    const changedValue = 'changed'
+    const mutationData = {
+      fieldChanged: changedValue,
+      fieldNulled: null,
+      fieldUndefinedData: changedValue,
+      subTypeChanged: { field2: changedValue },
+      subTypeNulled: null,
+      subTypeUndefinedData: { field2: changedValue },
+      arrayChanged: [{ field2: changedValue }],
+      arrayNulled: null,
+      arrayUndefinedData: [{ field2: changedValue }],
+    }
+
+    const updatedEntry: ContentEntry = {
+      id: entryId,
+      metadata: {
+        type: 'EntryA',
+      },
+      data: {
+        fieldChanged: changedValue,
+        fieldNulled: null,
+        fieldNotSpecified: originalValue,
+        subTypeChanged: {
+          field2: changedValue,
+        },
+        subTypeNulled: null,
+        subTypeNotSpecified: {
+          field1: originalValue,
+        },
+        arrayChanged: [{ field2: changedValue }],
+        arrayNulled: null,
+        arrayNotSpecified: [{ field1: originalValue }],
+        // we only do a dumb equality check using JSON below, so order matters and these fields were added
+        fieldUndefinedData: changedValue,
+        subTypeUndefinedData: {
+          field2: changedValue,
+        },
+        arrayUndefinedData: [{ field2: changedValue }],
+      },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      contentEntries: [{ ...updatedEntry, deletion: false }],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue([originalEntry])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getContentEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([updatedEntry])
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
+        data: updateEntryA(id: $id, data: $mutationData, message: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: entryId,
+        mutationData: mutationData,
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({ data: { id: entryId } })
     expect(result.ref).toBe(postCommitHash)
   })
 
@@ -128,7 +274,7 @@ type EntryA @Entry {
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: updateEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+        data: updateEntryA(id: $id, data: $mutationData, message: $commitMessage) {
           id
           name
         }
@@ -147,5 +293,252 @@ type EntryA @Entry {
     ])
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
+  })
+
+  it('should update reference metadata of other entries when updating an entry', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type Item @Entry {
+    id: ID!
+    box: Box!
+}
+
+type Box @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const box1Id = 'box1'
+    const box2Id = 'box2'
+    const item1Id = 'item1'
+    const item2Id = 'item2'
+    const postCommitHash = 'ef01'
+
+    const commitResult: Commit = {
+      ref: postCommitHash,
+    }
+    const box1: ContentEntry = {
+      id: box1Id,
+      metadata: {
+        type: 'Box',
+        referencedBy: [item1Id],
+      },
+    }
+    const box2: ContentEntry = {
+      id: box2Id,
+      metadata: {
+        type: 'Box',
+        referencedBy: [item2Id],
+      },
+    }
+    const item1: ContentEntry = {
+      id: item1Id,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: box1Id },
+      },
+    }
+    const item2: ContentEntry = {
+      id: item2Id,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: box2Id },
+      },
+    }
+    const updatedItem1: ContentEntry = {
+      id: item1Id,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: box2Id },
+      },
+    }
+    const updatedBox1: ContentEntry = {
+      id: box1Id,
+      metadata: {
+        type: 'Box',
+        referencedBy: [],
+      },
+    }
+    const updatedBox2: ContentEntry = {
+      id: box2Id,
+      metadata: {
+        type: 'Box',
+        referencedBy: [item1Id, item2Id],
+      },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      contentEntries: [
+        { ...updatedItem1, deletion: false },
+        { ...updatedBox1, deletion: false },
+        { ...updatedBox2, deletion: false },
+      ],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue([box1, box2, item1, item2])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getContentEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([updatedBox1, updatedBox2, updatedItem1, item2])
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!){
+        data: updateItem(id: $id, data: $mutationData, message: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: item1Id,
+        mutationData: {
+          box: { id: box2Id },
+        },
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: item1Id,
+      },
+    })
+    expect(result.ref).toBe(postCommitHash)
+  })
+
+  it('should not add more than one reference in metadata of other entries when updating an entry', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type Item @Entry {
+    id: ID!
+    box: Box
+    boxAlias: Box
+}
+
+type Box @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const boxId = 'box'
+    const itemId = 'item'
+    const postCommitHash = 'ef01'
+
+    const commitResult: Commit = {
+      ref: postCommitHash,
+    }
+    const box: ContentEntry = {
+      id: boxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: [itemId],
+      },
+    }
+    const item: ContentEntry = {
+      id: itemId,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: boxId },
+      },
+    }
+    const updatedItem: ContentEntry = {
+      id: itemId,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: boxId },
+        boxAlias: { id: boxId },
+      },
+    }
+    const updatedBox: ContentEntry = {
+      id: boxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: [itemId],
+      },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      contentEntries: [{ ...updatedItem, deletion: false }],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getContentEntries
+      .calledWith(commitHash)
+      .mockResolvedValue([box, item])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getContentEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([updatedBox, updatedItem])
+
+    const apiService = await getApiService()
+    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!){
+        data: updateItem(id: $id, data: $mutationData, message: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: itemId,
+        mutationData: {
+          boxAlias: { id: boxId },
+        },
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: itemId,
+      },
+    })
+    expect(result.ref).toBe(postCommitHash)
   })
 })

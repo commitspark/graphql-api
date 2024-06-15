@@ -20,26 +20,35 @@ import { EntryReferenceUtil } from './graphql/schema-utils/entry-reference-util'
 import { ObjectTypeFieldDefaultValueResolverGenerator } from './graphql/resolver-generators/object-type-field-default-value-resolver-generator'
 import { FieldDefaultValueResolver } from './graphql/field-resolver/field-default-value-resolver'
 import { EntryReferenceResolver } from './graphql/field-resolver/entry-reference-resolver'
+import { UnionTypeUtil } from './graphql/schema-utils/union-type-util'
+import { EntryTypeUtil } from './graphql/schema-utils/entry-type-util'
 
 // we used to have a DI container here, however that doesn't work well with webpack & co, so doing it by hand for now
 
-const entryReferenceUtil = new EntryReferenceUtil()
 const schemaValidator = new SchemaValidator()
 const persistenceService = new PersistenceService()
+const entryTypeUtil = new EntryTypeUtil()
+const unionTypeUtil = new UnionTypeUtil()
+const entryReferenceUtil = new EntryReferenceUtil(
+  persistenceService,
+  entryTypeUtil,
+  unionTypeUtil,
+)
 const schemaRootTypeGeneratorService = new SchemaRootTypeGeneratorService()
 
-const inputTypeGeneratorService = new InputTypeGeneratorService(
-  entryReferenceUtil,
-)
+const inputTypeGeneratorService = new InputTypeGeneratorService(entryTypeUtil)
 const schemaAnalyzerService = new SchemaAnalyzerService()
 const mutationCreateResolverGenerator = new MutationCreateResolverGenerator(
   persistenceService,
+  entryReferenceUtil,
 )
 const mutationDeleteResolverGenerator = new MutationDeleteResolverGenerator(
   persistenceService,
+  entryReferenceUtil,
 )
 const mutationUpdateResolverGenerator = new MutationUpdateResolverGenerator(
   persistenceService,
+  entryReferenceUtil,
 )
 const queryAllResolverGenerator = new QueryAllResolverGenerator(
   persistenceService,
@@ -55,12 +64,12 @@ const queryTypeByIdResolverGenerator = new QueryTypeByIdResolverGenerator(
 )
 const unionTypeResolverGenerator = new UnionTypeResolverGenerator(
   persistenceService,
-  entryReferenceUtil,
+  entryTypeUtil,
 )
-const unionValueResolver = new UnionValueResolver()
+const unionValueResolver = new UnionValueResolver(unionTypeUtil)
 const entryReferenceResolver = new EntryReferenceResolver(persistenceService)
 const fieldDefaultValueResolver = new FieldDefaultValueResolver(
-  entryReferenceUtil,
+  entryTypeUtil,
   unionValueResolver,
   entryReferenceResolver,
 )

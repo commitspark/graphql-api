@@ -5,6 +5,7 @@ import {
   ResolvedEntryData,
   FieldResolverContext,
 } from './fieldResolver'
+import { UnionTypeUtil } from '../schema-utils/union-type-util'
 
 export class UnionValueResolver implements FieldResolver<any> {
   resolve: GraphQLFieldResolver<
@@ -14,7 +15,7 @@ export class UnionValueResolver implements FieldResolver<any> {
     Promise<ResolvedEntryData<Entry | Entry[] | null>>
   >
 
-  constructor() {
+  constructor(private readonly unionTypeUtil: UnionTypeUtil) {
     this.resolve = (
       fieldValue,
       args,
@@ -27,20 +28,19 @@ export class UnionValueResolver implements FieldResolver<any> {
   private resolveFieldValue(
     fieldValue: any,
   ): Promise<ResolvedEntryData<Entry | Entry[] | null>> {
-    // Based on our @oneOf directive, we expect only one field whose name
-    // corresponds to the concrete type's name.
-    const firstKey = Object.keys(fieldValue)[0]
-    if (Array.isArray(fieldValue)) {
-      throw new Error('Did not expect array value')
-    }
+    const typeName =
+      this.unionTypeUtil.getUnionTypeNameFromFieldValue(fieldValue)
+    const unionValue = this.unionTypeUtil.getUnionValue(fieldValue)
 
-    // We replace the above name field that nests our concrete data directly
-    // with the data and a `__typename` field, so that our output data
+    // We replace the helper type name field that holds our field's actual data
+    // with this actual data and add a `__typename` field, so that our output data
     // corresponds to the output schema provided by the user (i.e. there is
     // no additional nesting level there).
-    return {
-      ...fieldValue[firstKey],
-      __typename: firstKey.slice(0, 1).toUpperCase() + firstKey.slice(1),
+    const res: Entry = {
+      ...unionValue,
+      __typename: typeName,
     }
+
+    return new Promise((resolve) => resolve(res))
   }
 }

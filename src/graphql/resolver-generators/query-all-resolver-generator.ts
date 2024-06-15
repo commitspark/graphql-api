@@ -17,11 +17,15 @@ export class QueryAllResolverGenerator {
       context: ApolloContext,
       info,
     ): Promise<Entry[]> => {
-      return this.persistence.findByType(
+      const entries = await this.persistence.findByType(
         context.gitAdapter,
         context.getCurrentRef(),
         typeName,
       )
+
+      return entries.map((entry) => {
+        return { ...entry.data, id: entry.id }
+      })
     }
   }
 }

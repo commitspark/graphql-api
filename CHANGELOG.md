@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] 
+### Added
+- Add referential integrity by tracking and validating references between entries
+- Add support of partial updates
+
 ### Fixed
 - [#18](https://github.com/commitspark/graphql-api/issues/18), [#25](https://github.com/commitspark/graphql-api/issues/25)
   Fix handling of entries that only have an `id` field

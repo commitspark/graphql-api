@@ -1,7 +1,7 @@
 import {
   Commit,
   CommitDraft,
-  ContentEntry,
+  Entry,
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
@@ -29,7 +29,7 @@ type EntryA @Entry {
     const commitResult: Commit = {
       ref: postCommitHash,
     }
-    const newEntry: ContentEntry = {
+    const newEntry: Entry = {
       id: entryAId,
       metadata: {
         type: 'EntryA',
@@ -43,7 +43,7 @@ type EntryA @Entry {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [{ ...newEntry, deletion: false }],
+      entries: [{ ...newEntry, deletion: false }],
       message: commitMessage,
     }
 
@@ -55,11 +55,11 @@ type EntryA @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getContentEntries.calledWith(commitHash).mockResolvedValue([])
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([newEntry])
 
@@ -200,7 +200,7 @@ type CircularReferenceEntry @Entry {
       },
     }
 
-    const existingEntries: ContentEntry[] = [
+    const existingEntries: Entry[] = [
       {
         id: optionalReference2EntryId,
         metadata: { type: 'OptionalReference2' },
@@ -220,7 +220,7 @@ type CircularReferenceEntry @Entry {
       },
       existingCircularReference2Entry,
     ]
-    const newEntryA: ContentEntry = {
+    const newEntryA: Entry = {
       id: entryAId,
       metadata: {
         type: 'EntryA',
@@ -228,49 +228,49 @@ type CircularReferenceEntry @Entry {
       },
       data: mutationData,
     }
-    const updatedOptionalReference2: ContentEntry = {
+    const updatedOptionalReference2: Entry = {
       id: optionalReference2EntryId,
       metadata: {
         type: 'OptionalReference2',
         referencedBy: [entryAId],
       },
     }
-    const updatedNonNullReference: ContentEntry = {
+    const updatedNonNullReference: Entry = {
       id: nonNullReferenceEntryId,
       metadata: {
         type: 'NonNullReference',
         referencedBy: [entryAId],
       },
     }
-    const updatedArrayReference1: ContentEntry = {
+    const updatedArrayReference1: Entry = {
       id: arrayReferenceEntry1Id,
       metadata: {
         type: 'ArrayReference',
         referencedBy: [entryAId],
       },
     }
-    const updatedArrayReference2: ContentEntry = {
+    const updatedArrayReference2: Entry = {
       id: arrayReferenceEntry2Id,
       metadata: {
         type: 'ArrayReference',
         referencedBy: [entryAId],
       },
     }
-    const updatedUnionEntryType2: ContentEntry = {
+    const updatedUnionEntryType2: Entry = {
       id: unionEntryType2Id,
       metadata: {
         type: 'UnionEntryType2',
         referencedBy: [entryAId],
       },
     }
-    const updatedUnionNestedEntry: ContentEntry = {
+    const updatedUnionNestedEntry: Entry = {
       id: unionNestedEntryId,
       metadata: {
         type: 'UnionNestedEntry',
         referencedBy: [entryAId],
       },
     }
-    const updatedCircularReference1Entry: ContentEntry = {
+    const updatedCircularReference1Entry: Entry = {
       id: circularReferenceEntry1Id,
       metadata: {
         type: 'CircularReferenceEntry',
@@ -281,7 +281,7 @@ type CircularReferenceEntry @Entry {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [
+      entries: [
         { ...newEntryA, deletion: false },
         { ...updatedOptionalReference2, deletion: false },
         { ...updatedNonNullReference, deletion: false },
@@ -302,13 +302,13 @@ type CircularReferenceEntry @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(commitHash)
       .mockResolvedValue(existingEntries)
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([
         newEntryA,
@@ -364,7 +364,7 @@ type EntryB @Entry {
     const entryAId = 'A'
     const entryBId = 'B'
 
-    const existingEntries: ContentEntry[] = [
+    const existingEntries: Entry[] = [
       { id: entryBId, metadata: { type: 'EntryB' } },
     ]
 
@@ -372,7 +372,7 @@ type EntryB @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(commitHash)
       .mockResolvedValue(existingEntries)
 
@@ -421,7 +421,7 @@ type OtherEntry @Entry {
     const entryBId = 'B'
     const otherEntryId = 'otherEntryId'
 
-    const existingEntries: ContentEntry[] = [
+    const existingEntries: Entry[] = [
       { id: entryBId, metadata: { type: 'EntryB' } },
       { id: otherEntryId, metadata: { type: 'OtherEntry' } },
     ]
@@ -430,7 +430,7 @@ type OtherEntry @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(commitHash)
       .mockResolvedValue(existingEntries)
 

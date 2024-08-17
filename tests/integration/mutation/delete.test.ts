@@ -1,7 +1,7 @@
 import {
   Commit,
   CommitDraft,
-  ContentEntry,
+  Entry,
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
@@ -26,7 +26,7 @@ type EntryA @Entry {
     const commitResult: Commit = {
       ref: postCommitHash,
     }
-    const entry: ContentEntry = {
+    const entry: Entry = {
       id: entryAId,
       metadata: {
         type: 'EntryA',
@@ -39,7 +39,7 @@ type EntryA @Entry {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [
+      entries: [
         {
           ...entry,
           deletion: true,
@@ -58,9 +58,7 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([entry])
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([entry])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
@@ -107,7 +105,7 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries.calledWith(commitHash).mockResolvedValue([])
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -148,7 +146,7 @@ type EntryB @Entry {
     const entryAId = 'A'
     const entryBId = 'B'
 
-    const entries: ContentEntry[] = [
+    const entries: Entry[] = [
       {
         id: entryAId,
         metadata: {
@@ -175,9 +173,7 @@ type EntryB @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -223,14 +219,14 @@ type Box @Entry {
     const commitResult: Commit = {
       ref: postCommitHash,
     }
-    const box: ContentEntry = {
+    const box: Entry = {
       id: boxId,
       metadata: {
         type: 'Box',
         referencedBy: [item1Id, item2Id],
       },
     }
-    const item1: ContentEntry = {
+    const item1: Entry = {
       id: item1Id,
       metadata: {
         type: 'Item',
@@ -239,7 +235,7 @@ type Box @Entry {
         box: { id: boxId },
       },
     }
-    const item2: ContentEntry = {
+    const item2: Entry = {
       id: item2Id,
       metadata: {
         type: 'Item',
@@ -248,7 +244,7 @@ type Box @Entry {
         box: { id: boxId },
       },
     }
-    const updatedBox: ContentEntry = {
+    const updatedBox: Entry = {
       id: boxId,
       metadata: {
         type: 'Box',
@@ -259,7 +255,7 @@ type Box @Entry {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [
+      entries: [
         { ...item1, deletion: true },
         { ...updatedBox, deletion: false },
       ],
@@ -276,13 +272,13 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(commitHash)
       .mockResolvedValue([box, item1, item2])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox, item2])
 

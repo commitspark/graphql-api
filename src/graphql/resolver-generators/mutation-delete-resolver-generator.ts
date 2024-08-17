@@ -1,11 +1,8 @@
-import {
-  Entry,
-  PersistenceService,
-} from '../../persistence/persistence.service'
+import { PersistenceService } from '../../persistence/persistence.service'
 import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
 import { GraphQLError } from 'graphql/error/GraphQLError'
-import { ContentEntry, ContentEntryDraft } from '@commitspark/git-adapter'
+import { Entry, EntryData, EntryDraft } from '@commitspark/git-adapter'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import { isObjectType } from 'graphql'
 
@@ -17,14 +14,14 @@ export class MutationDeleteResolverGenerator {
 
   public createResolver(
     typeName: string,
-  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<Entry>> {
+  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<EntryData>> {
     return async (
       source,
       args,
       context: ApolloContext,
       info,
-    ): Promise<Entry> => {
-      const entry: ContentEntry = await this.persistence.findByTypeId(
+    ): Promise<EntryData> => {
+      const entry: Entry = await this.persistence.findByTypeId(
         context.gitAdapter,
         context.getCurrentRef(),
         typeName,
@@ -62,7 +59,7 @@ export class MutationDeleteResolverGenerator {
           entryType,
           entry.data,
         )
-      const referencedEntryUpdates: ContentEntryDraft[] = []
+      const referencedEntryUpdates: EntryDraft[] = []
       for (const referencedEntryId of referencedEntryIds) {
         const noLongerReferencedEntry = await this.persistence.findById(
           context.gitAdapter,
@@ -84,7 +81,7 @@ export class MutationDeleteResolverGenerator {
       const commit = await context.gitAdapter.createCommit({
         ref: context.branch,
         parentSha: context.getCurrentRef(),
-        contentEntries: [
+        entries: [
           {
             ...entry,
             deletion: true,

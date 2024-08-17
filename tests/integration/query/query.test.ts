@@ -1,4 +1,4 @@
-import { ContentEntry, GitAdapter } from '@commitspark/git-adapter'
+import { Entry, GitAdapter } from '@commitspark/git-adapter'
 import { mock } from 'jest-mock-extended'
 import { getApiService } from '../../../src'
 
@@ -32,7 +32,7 @@ type EntryB @Entry {
         data: {
           name: 'My name',
         },
-      } as ContentEntry,
+      } as Entry,
       {
         id: entryBId,
         metadata: {
@@ -48,7 +48,7 @@ type EntryB @Entry {
             },
           ],
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -57,9 +57,7 @@ type EntryB @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -136,7 +134,7 @@ type TypeB {
             },
           },
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -145,9 +143,7 @@ type TypeB {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -211,7 +207,7 @@ type TypeB {
         data: {
           union: null,
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -220,9 +216,7 @@ type TypeB {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -280,7 +274,7 @@ type TypeB {
         data: {
           union: [],
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -289,9 +283,7 @@ type TypeB {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -383,7 +375,7 @@ type EntryB @Entry {
             },
           ],
         },
-      } as ContentEntry,
+      } as Entry,
       {
         id: entryBId,
         metadata: {
@@ -392,7 +384,7 @@ type EntryB @Entry {
         data: {
           field2: field2Value,
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -401,9 +393,7 @@ type EntryB @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -529,7 +519,7 @@ type NestedType {
           oldField: 'Old value',
           // we pretend that this entry was committed when only `id` and `oldField` existed in the schema
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -538,9 +528,7 @@ type NestedType {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -600,7 +588,7 @@ type NestedType {
           oldField: 'Old value',
           // we pretend that this entry was committed when only `id` and `oldField` existed in the schema
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -609,9 +597,7 @@ type NestedType {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -669,7 +655,7 @@ type NestedType {
           oldField: 'Old value',
           // we pretend that this entry was committed when only `id` and `oldField` existed in the schema
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -678,9 +664,7 @@ type NestedType {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -729,7 +713,7 @@ enum EnumType {
           oldField: 'Old value',
           // we pretend that this entry was committed when only `id` and `oldField` existed in the schema
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -738,9 +722,7 @@ enum EnumType {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -792,7 +774,7 @@ enum EnumType {
           oldField: 'Old value',
           // we pretend that this entry was committed when only `id` and `oldField` existed in the schema
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -801,9 +783,7 @@ enum EnumType {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -857,7 +837,7 @@ type TypeB {
           oldField: 'Old value',
           // we pretend that this entry was committed when only `id` and `oldField` existed in the schema
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -866,9 +846,7 @@ type TypeB {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -906,7 +884,7 @@ type MyEntry @Entry {
         metadata: {
           type: 'MyEntry',
         },
-      } as ContentEntry,
+      } as Entry,
     ]
 
     gitAdapter.getLatestCommitHash
@@ -915,9 +893,7 @@ type MyEntry @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(entries)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {

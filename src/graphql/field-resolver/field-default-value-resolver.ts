@@ -3,7 +3,7 @@ import {
   ResolvedEntryData,
   FieldResolverContext,
 } from './fieldResolver'
-import { Entry } from '../../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
 import {
   GraphQLFieldResolver,
   GraphQLOutputType,
@@ -26,7 +26,7 @@ export class FieldDefaultValueResolver implements FieldResolver<any> {
     any,
     FieldResolverContext,
     any,
-    Promise<ResolvedEntryData<Entry | Entry[] | null>>
+    Promise<ResolvedEntryData<EntryData | EntryData[] | null>>
   >
 
   constructor(
@@ -39,7 +39,7 @@ export class FieldDefaultValueResolver implements FieldResolver<any> {
       args,
       context,
       info,
-    ): Promise<ResolvedEntryData<Entry | Entry[] | null>> =>
+    ): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> =>
       this.resolveFieldValue(
         fieldValue,
         args,
@@ -57,7 +57,7 @@ export class FieldDefaultValueResolver implements FieldResolver<any> {
     info: GraphQLResolveInfo,
     currentType: GraphQLOutputType,
     hasNonNullParent: boolean,
-  ): Promise<ResolvedEntryData<Entry | Entry[] | null>> {
+  ): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> {
     if (isNonNullType(currentType)) {
       return this.resolveFieldValue(
         fieldValue,

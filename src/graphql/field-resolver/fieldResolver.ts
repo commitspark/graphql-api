@@ -1,5 +1,5 @@
 import { GraphQLFieldResolver } from 'graphql/type/definition'
-import { Entry } from '../../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
 import { GitAdapter } from '@commitspark/git-adapter'
 
 export interface FieldResolverContext {
@@ -11,7 +11,7 @@ export interface FieldResolver<
   TSource,
   TContext = FieldResolverContext,
   TArgs = any,
-  TResult = Promise<ResolvedEntryData<Entry | Entry[] | null>>,
+  TResult = Promise<ResolvedEntryData<EntryData | EntryData[] | null>>,
 > {
   resolve: GraphQLFieldResolver<TSource, TContext, TArgs, TResult>
 }

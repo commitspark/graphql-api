@@ -1,4 +1,4 @@
-import { ContentEntry, GitAdapter } from '@commitspark/git-adapter'
+import { Entry, GitAdapter } from '@commitspark/git-adapter'
 import { GraphQLError } from 'graphql/error/GraphQLError'
 
 export class PersistenceService {
@@ -7,10 +7,8 @@ export class PersistenceService {
     commitHash: string,
     id: string,
   ): Promise<string> {
-    const allEntries = await gitAdapter.getContentEntries(commitHash)
-    const requestedEntry = allEntries.find(
-      (contentEntry: ContentEntry) => contentEntry.id === id,
-    )
+    const allEntries = await gitAdapter.getEntries(commitHash)
+    const requestedEntry = allEntries.find((entry: Entry) => entry.id === id)
     if (requestedEntry === undefined) {
       throw new GraphQLError(`Not found: ${id}`, {
         extensions: {
@@ -26,11 +24,9 @@ export class PersistenceService {
     gitAdapter: GitAdapter,
     commitHash: string,
     id: string,
-  ): Promise<ContentEntry> {
-    const allEntries = await gitAdapter.getContentEntries(commitHash)
-    const requestedEntry = allEntries.find(
-      (contentEntry: ContentEntry) => contentEntry.id === id,
-    )
+  ): Promise<Entry> {
+    const allEntries = await gitAdapter.getEntries(commitHash)
+    const requestedEntry = allEntries.find((entry: Entry) => entry.id === id)
     if (requestedEntry === undefined) {
       throw new GraphQLError(`Not found: ${id}`, {
         extensions: {
@@ -46,11 +42,9 @@ export class PersistenceService {
     gitAdapter: GitAdapter,
     commitHash: string,
     type: string,
-  ): Promise<ContentEntry[]> {
-    const allEntries = await gitAdapter.getContentEntries(commitHash)
-    return allEntries.filter(
-      (contentEntry: ContentEntry) => contentEntry.metadata.type === type,
-    )
+  ): Promise<Entry[]> {
+    const allEntries = await gitAdapter.getEntries(commitHash)
+    return allEntries.filter((entry: Entry) => entry.metadata.type === type)
   }
 
   public async findByTypeId(
@@ -58,11 +52,10 @@ export class PersistenceService {
     commitHash: string,
     type: string,
     id: string,
-  ): Promise<ContentEntry> {
-    const allEntries = await gitAdapter.getContentEntries(commitHash)
+  ): Promise<Entry> {
+    const allEntries = await gitAdapter.getEntries(commitHash)
     const requestedEntry = allEntries.find(
-      (contentEntry: ContentEntry) =>
-        contentEntry.id === id && contentEntry.metadata.type === type,
+      (entry: Entry) => entry.id === id && entry.metadata.type === type,
     )
     if (requestedEntry === undefined) {
       throw new GraphQLError(
@@ -79,9 +72,3 @@ export class PersistenceService {
     return requestedEntry
   }
 }
-
-export interface CommitResult {
-  ref: string // commit sha
-}
-
-export type Entry = Record<string, unknown>

@@ -1,7 +1,7 @@
 import {
   Commit,
   CommitDraft,
-  ContentEntry,
+  Entry,
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
@@ -29,7 +29,7 @@ type EntryA @Entry {
     const commitResult: Commit = {
       ref: postCommitHash,
     }
-    const originalEntry: ContentEntry = {
+    const originalEntry: Entry = {
       id: entryAId,
       metadata: {
         type: 'EntryA',
@@ -39,7 +39,7 @@ type EntryA @Entry {
       },
     }
 
-    const updatedEntry: ContentEntry = {
+    const updatedEntry: Entry = {
       id: entryAId,
       metadata: {
         type: 'EntryA',
@@ -52,7 +52,7 @@ type EntryA @Entry {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [{ ...updatedEntry, deletion: false }],
+      entries: [{ ...updatedEntry, deletion: false }],
       message: commitMessage,
     }
 
@@ -66,13 +66,13 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(commitHash)
       .mockResolvedValue([originalEntry])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedEntry])
 
@@ -138,7 +138,7 @@ type SubType {
     const commitResult: Commit = {
       ref: postCommitHash,
     }
-    const originalEntry: ContentEntry = {
+    const originalEntry: Entry = {
       id: entryId,
       metadata: {
         type: 'EntryA',
@@ -175,7 +175,7 @@ type SubType {
       arrayUndefinedData: [{ field2: changedValue }],
     }
 
-    const updatedEntry: ContentEntry = {
+    const updatedEntry: Entry = {
       id: entryId,
       metadata: {
         type: 'EntryA',
@@ -206,7 +206,7 @@ type SubType {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [{ ...updatedEntry, deletion: false }],
+      entries: [{ ...updatedEntry, deletion: false }],
       message: commitMessage,
     }
 
@@ -220,13 +220,13 @@ type SubType {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(commitHash)
       .mockResolvedValue([originalEntry])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedEntry])
 
@@ -269,7 +269,7 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries.calledWith(commitHash).mockResolvedValue([])
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
@@ -320,21 +320,21 @@ type Box @Entry {
     const commitResult: Commit = {
       ref: postCommitHash,
     }
-    const box1: ContentEntry = {
+    const box1: Entry = {
       id: box1Id,
       metadata: {
         type: 'Box',
         referencedBy: [item1Id],
       },
     }
-    const box2: ContentEntry = {
+    const box2: Entry = {
       id: box2Id,
       metadata: {
         type: 'Box',
         referencedBy: [item2Id],
       },
     }
-    const item1: ContentEntry = {
+    const item1: Entry = {
       id: item1Id,
       metadata: {
         type: 'Item',
@@ -343,7 +343,7 @@ type Box @Entry {
         box: { id: box1Id },
       },
     }
-    const item2: ContentEntry = {
+    const item2: Entry = {
       id: item2Id,
       metadata: {
         type: 'Item',
@@ -352,7 +352,7 @@ type Box @Entry {
         box: { id: box2Id },
       },
     }
-    const updatedItem1: ContentEntry = {
+    const updatedItem1: Entry = {
       id: item1Id,
       metadata: {
         type: 'Item',
@@ -361,14 +361,14 @@ type Box @Entry {
         box: { id: box2Id },
       },
     }
-    const updatedBox1: ContentEntry = {
+    const updatedBox1: Entry = {
       id: box1Id,
       metadata: {
         type: 'Box',
         referencedBy: [],
       },
     }
-    const updatedBox2: ContentEntry = {
+    const updatedBox2: Entry = {
       id: box2Id,
       metadata: {
         type: 'Box',
@@ -379,7 +379,7 @@ type Box @Entry {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [
+      entries: [
         { ...updatedItem1, deletion: false },
         { ...updatedBox1, deletion: false },
         { ...updatedBox2, deletion: false },
@@ -397,13 +397,13 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(commitHash)
       .mockResolvedValue([box1, box2, item1, item2])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox1, updatedBox2, updatedItem1, item2])
 
@@ -456,14 +456,14 @@ type Box @Entry {
     const commitResult: Commit = {
       ref: postCommitHash,
     }
-    const box: ContentEntry = {
+    const box: Entry = {
       id: boxId,
       metadata: {
         type: 'Box',
         referencedBy: [itemId],
       },
     }
-    const item: ContentEntry = {
+    const item: Entry = {
       id: itemId,
       metadata: {
         type: 'Item',
@@ -472,7 +472,7 @@ type Box @Entry {
         box: { id: boxId },
       },
     }
-    const updatedItem: ContentEntry = {
+    const updatedItem: Entry = {
       id: itemId,
       metadata: {
         type: 'Item',
@@ -482,7 +482,7 @@ type Box @Entry {
         boxAlias: { id: boxId },
       },
     }
-    const updatedBox: ContentEntry = {
+    const updatedBox: Entry = {
       id: boxId,
       metadata: {
         type: 'Box',
@@ -493,7 +493,7 @@ type Box @Entry {
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      contentEntries: [{ ...updatedItem, deletion: false }],
+      entries: [{ ...updatedItem, deletion: false }],
       message: commitMessage,
     }
 
@@ -507,13 +507,11 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getContentEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([box, item])
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([box, item])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getContentEntries
+    gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox, updatedItem])
 

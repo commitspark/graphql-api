@@ -1,4 +1,4 @@
-import { Entry } from '../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
 import { ApolloContext } from '../app/api.service'
 import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { GraphQLObjectType } from 'graphql/type'
@@ -33,7 +33,7 @@ export class QueriesMutationsGeneratorService {
         any,
         ApolloContext,
         any,
-        Promise<Entry[]>
+        Promise<EntryData[]>
       > = this.queryAllResolverGenerator.createResolver(typeName)
 
       const queryAllMetaName = `_${queryAllName}Meta`
@@ -51,7 +51,7 @@ export class QueriesMutationsGeneratorService {
         any,
         ApolloContext,
         any,
-        Promise<Entry>
+        Promise<EntryData>
       > = this.queryByIdResolverGenerator.createResolver(typeName)
 
       const inputTypeName = `${typeName}Input`
@@ -61,7 +61,7 @@ export class QueriesMutationsGeneratorService {
         any,
         ApolloContext,
         any,
-        Promise<Entry>
+        Promise<EntryData>
       > = this.mutationCreateResolverGenerator.createResolver(typeName)
 
       const updateMutationName = `update${typeName}`
@@ -70,7 +70,7 @@ export class QueriesMutationsGeneratorService {
         any,
         ApolloContext,
         any,
-        Promise<Entry>
+        Promise<EntryData>
       > = this.mutationUpdateResolverGenerator.createResolver(typeName)
 
       const deleteMutationName = `delete${typeName}`
@@ -79,7 +79,7 @@ export class QueriesMutationsGeneratorService {
         any,
         ApolloContext,
         any,
-        Promise<Entry>
+        Promise<EntryData>
       > = this.mutationDeleteResolverGenerator.createResolver(typeName)
 
       return {
@@ -118,9 +118,9 @@ export class QueriesMutationsGeneratorService {
   }
 
   public generateTypeNameQuery(): IGeneratedQuery<Promise<string>> {
-    const contentTypeQueryName = '_typeName'
-    const contentTypeQueryString = `${contentTypeQueryName}(id: ID!): String`
-    const contentTypeQueryResolver: GraphQLFieldResolver<
+    const entryTypeQueryName = '_typeName'
+    const entryTypeQueryString = `${entryTypeQueryName}(id: ID!): String`
+    const entryTypeQueryResolver: GraphQLFieldResolver<
       any,
       ApolloContext,
       any,
@@ -128,20 +128,20 @@ export class QueriesMutationsGeneratorService {
     > = this.queryTypeByIdResolverGenerator.createResolver()
 
     return {
-      name: contentTypeQueryName,
-      schemaString: contentTypeQueryString,
-      resolver: contentTypeQueryResolver,
+      name: entryTypeQueryName,
+      schemaString: entryTypeQueryString,
+      resolver: entryTypeQueryResolver,
     }
   }
 }
 
 export interface IGeneratedSchema {
-  queryAll: IGeneratedQuery<Promise<Entry[]>>
+  queryAll: IGeneratedQuery<Promise<EntryData[]>>
   queryAllMeta: IGeneratedQuery<Promise<TypeCount>>
-  queryById: IGeneratedQuery<Promise<Entry>>
-  createMutation: IGeneratedQuery<Promise<Entry>>
-  updateMutation: IGeneratedQuery<Promise<Entry>>
-  deleteMutation: IGeneratedQuery<Promise<Entry>>
+  queryById: IGeneratedQuery<Promise<EntryData>>
+  createMutation: IGeneratedQuery<Promise<EntryData>>
+  updateMutation: IGeneratedQuery<Promise<EntryData>>
+  deleteMutation: IGeneratedQuery<Promise<EntryData>>
 }
 
 export interface IGeneratedQuery<T> {

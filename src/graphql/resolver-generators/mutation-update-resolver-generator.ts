@@ -1,12 +1,9 @@
-import {
-  Entry,
-  PersistenceService,
-} from '../../persistence/persistence.service'
+import { PersistenceService } from '../../persistence/persistence.service'
 import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import { isObjectType } from 'graphql'
-import { ContentEntryData, ContentEntryDraft } from '@commitspark/git-adapter'
+import { EntryData, EntryDraft } from '@commitspark/git-adapter'
 
 export class MutationUpdateResolverGenerator {
   constructor(
@@ -16,13 +13,13 @@ export class MutationUpdateResolverGenerator {
 
   public createResolver(
     typeName: string,
-  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<Entry>> {
+  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<EntryData>> {
     return async (
       source,
       args,
       context: ApolloContext,
       info,
-    ): Promise<Entry> => {
+    ): Promise<EntryData> => {
       if (!isObjectType(info.returnType)) {
         throw new Error('Expected to update an ObjectType')
       }
@@ -60,7 +57,7 @@ export class MutationUpdateResolverGenerator {
         (entryId) => !existingReferencedEntryIds.includes(entryId),
       )
 
-      const referencedEntryUpdates: ContentEntryDraft[] = []
+      const referencedEntryUpdates: EntryDraft[] = []
       for (const noLongerReferencedEntryId of noLongerReferencedIds) {
         const noLongerReferencedEntry = await this.persistence.findById(
           context.gitAdapter,
@@ -101,7 +98,7 @@ export class MutationUpdateResolverGenerator {
       const commit = await context.gitAdapter.createCommit({
         ref: context.branch,
         parentSha: context.getCurrentRef(),
-        contentEntries: [
+        entries: [
           { ...existingEntry, data: mergedData, deletion: false },
           ...referencedEntryUpdates,
         ],
@@ -120,9 +117,9 @@ export class MutationUpdateResolverGenerator {
   }
 
   private mergeData(
-    existingEntryData: ContentEntryData,
-    updateData: ContentEntryData,
-  ): ContentEntryData {
+    existingEntryData: EntryData,
+    updateData: EntryData,
+  ): EntryData {
     return {
       ...existingEntryData,
       ...updateData,

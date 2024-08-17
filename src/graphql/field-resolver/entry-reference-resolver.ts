@@ -8,17 +8,15 @@ import {
   GraphQLOutputType,
   GraphQLResolveInfo,
 } from 'graphql/type/definition'
-import {
-  Entry,
-  PersistenceService,
-} from '../../persistence/persistence.service'
+import { PersistenceService } from '../../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
 
 export class EntryReferenceResolver implements FieldResolver<any> {
   resolve: GraphQLFieldResolver<
     any,
     FieldResolverContext,
     any,
-    Promise<ResolvedEntryData<Entry | Entry[] | null>>
+    Promise<ResolvedEntryData<EntryData | EntryData[] | null>>
   >
 
   constructor(private readonly persistence: PersistenceService) {
@@ -27,7 +25,7 @@ export class EntryReferenceResolver implements FieldResolver<any> {
       args: any,
       context: FieldResolverContext,
       info,
-    ): Promise<ResolvedEntryData<Entry | Entry[] | null>> =>
+    ): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> =>
       this.resolveFieldValue(fieldValue, args, context, info, info.returnType)
   }
 
@@ -37,7 +35,7 @@ export class EntryReferenceResolver implements FieldResolver<any> {
     context: FieldResolverContext,
     info: GraphQLResolveInfo,
     currentType: GraphQLOutputType,
-  ): Promise<ResolvedEntryData<Entry | Entry[] | null>> {
+  ): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> {
     const entry = await this.persistence.findById(
       context.gitAdapter,
       context.getCurrentRef(),

@@ -14,7 +14,7 @@ import {
   GraphQLTypeResolver,
 } from 'graphql/type/definition'
 import { SchemaValidator } from './schema-validator'
-import { Entry } from '../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
 import { ObjectTypeFieldDefaultValueResolverGenerator } from './resolver-generators/object-type-field-default-value-resolver-generator'
 
 export class SchemaGeneratorService {
@@ -65,7 +65,7 @@ export class SchemaGeneratorService {
           Record<string, any>,
           ApolloContext,
           any,
-          Promise<Entry | Entry[] | null>
+          Promise<EntryData | EntryData[] | null>
         >
       >
     > = {}

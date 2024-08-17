@@ -1,14 +1,12 @@
 import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
-import {
-  Entry,
-  PersistenceService,
-} from '../../persistence/persistence.service'
+import { PersistenceService } from '../../persistence/persistence.service'
 import { GraphQLError } from 'graphql/error/GraphQLError'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import { isObjectType } from 'graphql'
 import {
-  ContentEntryDraft,
+  EntryDraft,
+  EntryData,
   ENTRY_ID_INVALID_CHARACTERS,
 } from '@commitspark/git-adapter'
 
@@ -20,13 +18,13 @@ export class MutationCreateResolverGenerator {
 
   public createResolver(
     typeName: string,
-  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<Entry>> {
+  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<EntryData>> {
     return async (
       source,
       args,
       context: ApolloContext,
       info,
-    ): Promise<Entry> => {
+    ): Promise<EntryData> => {
       if (!isObjectType(info.returnType)) {
         throw new Error('Expected to create an ObjectType')
       }
@@ -70,7 +68,7 @@ export class MutationCreateResolverGenerator {
           args.data,
         )
 
-      const referencedEntryUpdates: ContentEntryDraft[] = []
+      const referencedEntryUpdates: EntryDraft[] = []
       for (const referencedEntryId of referencedEntryIds) {
         const referencedEntry = await this.persistence.findById(
           context.gitAdapter,
@@ -81,7 +79,7 @@ export class MutationCreateResolverGenerator {
           ...(referencedEntry.metadata.referencedBy ?? []),
           args.id,
         ].sort()
-        const newReferencedEntryDraft: ContentEntryDraft = {
+        const newReferencedEntryDraft: EntryDraft = {
           ...referencedEntry,
           metadata: {
             ...referencedEntry.metadata,
@@ -92,7 +90,7 @@ export class MutationCreateResolverGenerator {
         referencedEntryUpdates.push(newReferencedEntryDraft)
       }
 
-      const newEntryDraft: ContentEntryDraft = {
+      const newEntryDraft: EntryDraft = {
         id: args.id,
         metadata: {
           type: typeName,
@@ -105,7 +103,7 @@ export class MutationCreateResolverGenerator {
       const commit = await context.gitAdapter.createCommit({
         ref: context.branch,
         parentSha: context.getCurrentRef(),
-        contentEntries: [newEntryDraft, ...referencedEntryUpdates],
+        entries: [newEntryDraft, ...referencedEntryUpdates],
         message: args.message,
       })
       context.setCurrentRef(commit.ref)

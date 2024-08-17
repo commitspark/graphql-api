@@ -1,8 +1,6 @@
 import { ApolloContext } from '../../app/api.service'
-import {
-  Entry,
-  PersistenceService,
-} from '../../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
+import { PersistenceService } from '../../persistence/persistence.service'
 import { GraphQLFieldResolver } from 'graphql/type/definition'
 
 export class QueryAllResolverGenerator {
@@ -10,13 +8,13 @@ export class QueryAllResolverGenerator {
 
   public createResolver(
     typeName: string,
-  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<Entry[]>> {
+  ): GraphQLFieldResolver<any, ApolloContext, any, Promise<EntryData[]>> {
     return async (
       obj,
       args,
       context: ApolloContext,
       info,
-    ): Promise<Entry[]> => {
+    ): Promise<EntryData[]> => {
       const entries = await this.persistence.findByType(
         context.gitAdapter,
         context.getCurrentRef(),

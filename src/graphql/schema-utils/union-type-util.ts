@@ -1,4 +1,4 @@
-import { Entry } from '../../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
 
 export class UnionTypeUtil {
   public getUnionTypeNameFromFieldValue(fieldValue: any): string {
@@ -12,7 +12,7 @@ export class UnionTypeUtil {
     return firstKey.slice(0, 1).toUpperCase() + firstKey.slice(1)
   }
 
-  public getUnionValue(fieldValue: any): Entry {
+  public getUnionValue(fieldValue: any): EntryData {
     if (typeof fieldValue !== 'object') {
       throw new Error('Expected object as union value')
     }

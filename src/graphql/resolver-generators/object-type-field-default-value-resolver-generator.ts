@@ -3,7 +3,7 @@ import {
   GraphQLOutputType,
 } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
-import { Entry } from '../../persistence/persistence.service'
+import { EntryData } from '@commitspark/git-adapter'
 import {
   GraphQLField,
   GraphQLObjectType,
@@ -31,7 +31,7 @@ export class ObjectTypeFieldDefaultValueResolverGenerator {
         any,
         ApolloContext,
         any,
-        Promise<ResolvedEntryData<Entry | Entry[] | null>>
+        Promise<ResolvedEntryData<EntryData | EntryData[] | null>>
       >
     >
   > {
@@ -43,7 +43,7 @@ export class ObjectTypeFieldDefaultValueResolverGenerator {
           any,
           ApolloContext,
           any,
-          Promise<ResolvedEntryData<Entry | Entry[] | null>>
+          Promise<ResolvedEntryData<EntryData | EntryData[] | null>>
         >
       >
     > = {}
@@ -62,7 +62,7 @@ export class ObjectTypeFieldDefaultValueResolverGenerator {
           any,
           ApolloContext,
           any,
-          Promise<ResolvedEntryData<Entry | Entry[] | null>>
+          Promise<ResolvedEntryData<EntryData | EntryData[] | null>>
         >
       > = {}
       for (const field of fieldsForCustomDefaultValueResolver) {
@@ -71,7 +71,7 @@ export class ObjectTypeFieldDefaultValueResolverGenerator {
           args,
           context,
           info,
-        ): Promise<ResolvedEntryData<Entry | Entry[] | null>> =>
+        ): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> =>
           this.fieldDefaultValueResolver.resolve(
             field.name in obj ? obj[field.name] : undefined,
             args,

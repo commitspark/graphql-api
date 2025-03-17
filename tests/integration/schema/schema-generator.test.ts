@@ -386,8 +386,8 @@ input TypeBInput {
 }
 
 input MyUnionInput @oneOf {
-  typeA: TypeAInput
-  typeB: TypeBInput
+  TypeA: TypeAInput
+  TypeB: TypeBInput
 }
 
 directive @oneOf on INPUT_OBJECT

@@ -129,7 +129,7 @@ type TypeB {
         },
         data: {
           union: {
-            typeB: {
+            TypeB: {
               field2: field2Value,
             },
           },

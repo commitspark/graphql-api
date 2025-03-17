@@ -177,7 +177,7 @@ type CircularReferenceEntry @Entry {
         id: unionEntryType2Id,
       },
       unionNestedReference: {
-        unionType2: {
+        UnionType2: {
           nestedReference: {
             id: unionNestedEntryId,
           },

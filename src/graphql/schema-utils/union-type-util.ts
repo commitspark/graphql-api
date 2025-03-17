@@ -8,8 +8,7 @@ export class UnionTypeUtil {
 
     // Based on our @oneOf directive, we expect only one field whose name
     // corresponds to the concrete type's name.
-    const firstKey = Object.keys(fieldValue)[0]
-    return firstKey.slice(0, 1).toUpperCase() + firstKey.slice(1)
+    return Object.keys(fieldValue)[0]
   }
 
   public getUnionValue(fieldValue: any): EntryData {

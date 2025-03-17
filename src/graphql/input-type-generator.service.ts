@@ -112,9 +112,7 @@ export class InputTypeGeneratorService {
       // see https://github.com/graphql/graphql-spec/pull/825
       let unionInputType = `input ${unionType.name}Input @oneOf {\n`
       for (const innerType of unionType.getTypes()) {
-        const fieldName =
-          innerType.name.toLowerCase().at(0) + innerType.name.substring(1)
-        unionInputType += `  ${fieldName}: ${innerType.name}Input\n`
+        unionInputType += `  ${innerType.name}: ${innerType.name}Input\n`
       }
       unionInputType += '}\n'
       return unionInputType

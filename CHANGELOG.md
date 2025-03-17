@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stop transforming field name case for concrete union types so that relationship to concrete type is more clear in
   serialized data
+- Upgrade dependencies
 
 ## [0.11.1] - 2024-12-29
 

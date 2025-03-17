@@ -214,7 +214,7 @@ type Text {
 ```
 
 During serialization, concrete type instances are represented through an additional nested level of data, using the
-instance's type name with a lowercase first character as field name:
+concrete instance's type name as field name:
 
 ```yaml
 metadata:
@@ -222,9 +222,9 @@ metadata:
   referencedBy: [ ]
 data:
   contentElements:
-    - hero: # represents type `Hero`
+    - Hero:
         heroText: "..."
-    - text: # represents type `Text`
+    - Text:
         bodyText: "..."
 ```
 

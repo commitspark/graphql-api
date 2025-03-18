@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix README content to match changes in 0.12.0
 
+### Changed
+
+- Rewrite README for clarity
+
 ## [0.12.0] - 2025-03-17
 
 ### Changed

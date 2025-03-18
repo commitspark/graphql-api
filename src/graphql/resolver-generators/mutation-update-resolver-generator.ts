@@ -2,7 +2,7 @@ import { PersistenceService } from '../../persistence/persistence.service'
 import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
-import { isObjectType } from 'graphql'
+import { getNamedType, isObjectType } from 'graphql'
 import { EntryData, EntryDraft } from '@commitspark/git-adapter'
 
 export class MutationUpdateResolverGenerator {
@@ -20,7 +20,8 @@ export class MutationUpdateResolverGenerator {
       context: ApolloContext,
       info,
     ): Promise<EntryData> => {
-      if (!isObjectType(info.returnType)) {
+      const namedType = getNamedType(info.returnType)
+      if (!isObjectType(namedType)) {
         throw new Error('Expected to update an ObjectType')
       }
 
@@ -33,20 +34,20 @@ export class MutationUpdateResolverGenerator {
 
       const existingReferencedEntryIds =
         await this.entryReferenceUtil.getReferencedEntryIds(
-          info.returnType,
+          namedType,
           context,
           null,
-          info.returnType,
+          namedType,
           existingEntry.data,
         )
 
       const mergedData = this.mergeData(existingEntry.data ?? null, args.data)
       const updatedReferencedEntryIds =
         await this.entryReferenceUtil.getReferencedEntryIds(
-          info.returnType,
+          namedType,
           context,
           null,
-          info.returnType,
+          namedType,
           mergedData,
         )
 
@@ -102,7 +103,7 @@ export class MutationUpdateResolverGenerator {
           { ...existingEntry, data: mergedData, deletion: false },
           ...referencedEntryUpdates,
         ],
-        message: args.message,
+        message: args.commitMessage,
       })
       context.setCurrentRef(commit.ref)
 

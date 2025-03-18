@@ -76,15 +76,15 @@ schema {
 }
 
 type Query {
-    allRocketFlights: [RocketFlight!]!
-    RocketFlight(id: ID!): RocketFlight!
+    allRocketFlights: [RocketFlight!]
+    RocketFlight(id: ID!): RocketFlight
     _typeName(id: ID!): String
 }
 
 type Mutation {
-    createRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight!
-    updateRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight!
-    deleteRocketFlight(id: ID!, commitMessage: String): ID!
+    createRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight
+    updateRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight
+    deleteRocketFlight(id: ID!, commitMessage: String): ID
 }
 
 input RocketFlightInput {

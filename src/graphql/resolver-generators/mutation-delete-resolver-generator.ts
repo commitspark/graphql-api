@@ -88,13 +88,11 @@ export class MutationDeleteResolverGenerator {
           },
           ...referencedEntryUpdates,
         ],
-        message: args.message,
+        message: args.commitMessage,
       })
       context.setCurrentRef(commit.ref)
 
-      return {
-        id: args.id,
-      }
+      return args.id
     }
   }
 }

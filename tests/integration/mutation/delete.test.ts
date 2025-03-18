@@ -65,10 +65,8 @@ type EntryA @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!){
-        data: deleteEntryA(id: $id, message: $commitMessage) {
-          id
-        }
+      query: `mutation ($id: ID!, $commitMessage: String!) {
+        data: deleteEntryA(id: $id, commitMessage: $commitMessage)
       }`,
       variables: {
         id: entryAId,
@@ -78,9 +76,7 @@ type EntryA @Entry {
 
     expect(result.errors).toBeUndefined()
     expect(result.data).toEqual({
-      data: {
-        id: entryAId,
-      },
+      data: entryAId,
     })
     expect(result.ref).toBe(postCommitHash)
   })
@@ -109,10 +105,8 @@ type EntryA @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!){
-        data: deleteEntryA(id: $id, message:$commitMessage) {
-          id
-        }
+      query: `mutation ($id: ID!, $commitMessage: String!) {
+        data: deleteEntryA(id: $id, commitMessage: $commitMessage)
       }`,
       variables: {
         id: entryAId,
@@ -178,9 +172,7 @@ type EntryB @Entry {
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
-        data: deleteEntryB(id: $id, message: $commitMessage) {
-          id
-        }
+        data: deleteEntryB(id: $id, commitMessage: $commitMessage)
       }`,
       variables: {
         id: entryBId,
@@ -284,10 +276,8 @@ type Box @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!){
-        data: deleteItem(id: $id, message: $commitMessage) {
-          id
-        }
+      query: `mutation ($id: ID!, $commitMessage: String!) {
+        data: deleteItem(id: $id, commitMessage: $commitMessage)
       }`,
       variables: {
         id: item1Id,
@@ -297,9 +287,7 @@ type Box @Entry {
 
     expect(result.errors).toBeUndefined()
     expect(result.data).toEqual({
-      data: {
-        id: item1Id,
-      },
+      data: item1Id,
     })
     expect(result.ref).toBe(postCommitHash)
   })

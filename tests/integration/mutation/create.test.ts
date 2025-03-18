@@ -65,8 +65,8 @@ type EntryA @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: createEntryA(id: $id, data: $mutationData, message: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
         }
       }`,
@@ -324,8 +324,8 @@ type CircularReferenceEntry @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: createEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
         }
       }`,
@@ -378,8 +378,8 @@ type EntryB @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: createEntryA(id: $id, data: $mutationData, message: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
         }
       }`,
@@ -436,8 +436,8 @@ type OtherEntry @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: createEntryA(id: $id, data: $mutationData, message:$commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
         }
       }`,

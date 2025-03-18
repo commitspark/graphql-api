@@ -13,6 +13,11 @@ directive @Ui(visibleList:Boolean) on FIELD_DEFINITION
 type MyEntry @Entry {
     id: ID!
     name: String @Ui(visibleList:true)
+    nestedType: NestedType
+}
+
+type NestedType {
+    nestedField: String
 }`
 
     gitAdapter.getLatestCommitHash
@@ -32,6 +37,11 @@ directive @Ui(visibleList: Boolean) on FIELD_DEFINITION
 type MyEntry @Entry {
   id: ID!
   name: String @Ui(visibleList: true)
+  nestedType: NestedType
+}
+
+type NestedType {
+  nestedField: String
 }
 
 schema {
@@ -40,24 +50,20 @@ schema {
 }
 
 type Query {
-  allMyEntrys: [MyEntry]
+  allMyEntrys: [MyEntry!]
   _allMyEntrysMeta: ListMetadata
   MyEntry(id: ID!): MyEntry
-  _typeName(id: ID!): String
+  _typeName(id: ID!): String!
 }
 
 type Mutation {
-  createMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
-  updateMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
-  deleteMyEntry(id: ID!, message:String): DeletionResult
+  createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
+  updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
+  deleteMyEntry(id: ID!, commitMessage: String): ID
 }
 
 type ListMetadata {
   count: Int!
-}
-
-type DeletionResult {
-  id: ID
 }
 
 input MyEntryIdInput {
@@ -66,6 +72,11 @@ input MyEntryIdInput {
 
 input MyEntryInput {
   name: String
+  nestedType: NestedTypeInput
+}
+
+input NestedTypeInput {
+  nestedField: String
 }
 `
 
@@ -117,30 +128,26 @@ schema {
 }
 
 type Query {
-  allEntryAs: [EntryA]
-  allEntryBs: [EntryB]
+  allEntryAs: [EntryA!]
+  allEntryBs: [EntryB!]
   _allEntryAsMeta: ListMetadata
   _allEntryBsMeta: ListMetadata
   EntryA(id: ID!): EntryA
   EntryB(id: ID!): EntryB
-  _typeName(id: ID!): String
+  _typeName(id: ID!): String!
 }
 
 type Mutation {
-  createEntryA(id: ID!, data:EntryAInput, message:String): EntryA
-  createEntryB(id: ID!, data:EntryBInput, message:String): EntryB
-  updateEntryA(id: ID!, data:EntryAInput, message:String): EntryA
-  updateEntryB(id: ID!, data:EntryBInput, message:String): EntryB
-  deleteEntryA(id: ID!, message:String): DeletionResult
-  deleteEntryB(id: ID!, message:String): DeletionResult
+  createEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
+  createEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
+  updateEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
+  updateEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
+  deleteEntryA(id: ID!, commitMessage: String): ID
+  deleteEntryB(id: ID!, commitMessage: String): ID
 }
 
 type ListMetadata {
   count: Int!
-}
-
-type DeletionResult {
-  id: ID
 }
 
 input EntryAIdInput {
@@ -224,36 +231,32 @@ schema {
 }
 
 type Query {
-  allMyEntrys: [MyEntry]
-  allEntryAs: [EntryA]
-  allEntryBs: [EntryB]
+  allMyEntrys: [MyEntry!]
+  allEntryAs: [EntryA!]
+  allEntryBs: [EntryB!]
   _allMyEntrysMeta: ListMetadata
   _allEntryAsMeta: ListMetadata
   _allEntryBsMeta: ListMetadata
   MyEntry(id: ID!): MyEntry
   EntryA(id: ID!): EntryA
   EntryB(id: ID!): EntryB
-  _typeName(id: ID!): String
+  _typeName(id: ID!): String!
 }
 
 type Mutation {
-  createMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
-  createEntryA(id: ID!, data:EntryAInput, message:String): EntryA
-  createEntryB(id: ID!, data:EntryBInput, message:String): EntryB
-  updateMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
-  updateEntryA(id: ID!, data:EntryAInput, message:String): EntryA
-  updateEntryB(id: ID!, data:EntryBInput, message:String): EntryB
-  deleteMyEntry(id: ID!, message:String): DeletionResult
-  deleteEntryA(id: ID!, message:String): DeletionResult
-  deleteEntryB(id: ID!, message:String): DeletionResult
+  createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
+  createEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
+  createEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
+  updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
+  updateEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
+  updateEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
+  deleteMyEntry(id: ID!, commitMessage: String): ID
+  deleteEntryA(id: ID!, commitMessage: String): ID
+  deleteEntryB(id: ID!, commitMessage: String): ID
 }
 
 type ListMetadata {
   count: Int!
-}
-
-type DeletionResult {
-  id: ID
 }
 
 input MyEntryIdInput {
@@ -345,24 +348,20 @@ schema {
 }
 
 type Query {
-  allMyEntrys: [MyEntry]
+  allMyEntrys: [MyEntry!]
   _allMyEntrysMeta: ListMetadata
   MyEntry(id: ID!): MyEntry
-  _typeName(id: ID!): String
+  _typeName(id: ID!): String!
 }
 
 type Mutation {
-  createMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
-  updateMyEntry(id: ID!, data:MyEntryInput, message:String): MyEntry
-  deleteMyEntry(id: ID!, message:String): DeletionResult
+  createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
+  updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
+  deleteMyEntry(id: ID!, commitMessage: String): ID
 }
 
 type ListMetadata {
   count: Int!
-}
-
-type DeletionResult {
-  id: ID
 }
 
 input MyEntryIdInput {

@@ -28,7 +28,7 @@ export class QueriesMutationsGeneratorService {
       const typeName = objectType.name
 
       const queryAllName = `all${typeName}s`
-      const queryAllString = `${queryAllName}: [${objectType.name}]`
+      const queryAllString = `${queryAllName}: [${objectType.name}!]`
       const queryAllResolver: GraphQLFieldResolver<
         any,
         ApolloContext,
@@ -56,7 +56,7 @@ export class QueriesMutationsGeneratorService {
 
       const inputTypeName = `${typeName}Input`
       const createMutationName = `create${typeName}`
-      const createMutationString = `${createMutationName}(id: ID!, data:${inputTypeName}, message:String): ${typeName}`
+      const createMutationString = `${createMutationName}(id: ID!, data: ${inputTypeName}!, commitMessage: String): ${typeName}`
       const createMutationResolver: GraphQLFieldResolver<
         any,
         ApolloContext,
@@ -65,7 +65,7 @@ export class QueriesMutationsGeneratorService {
       > = this.mutationCreateResolverGenerator.createResolver(typeName)
 
       const updateMutationName = `update${typeName}`
-      const updateMutationString = `${updateMutationName}(id: ID!, data:${inputTypeName}, message:String): ${typeName}`
+      const updateMutationString = `${updateMutationName}(id: ID!, data: ${inputTypeName}!, commitMessage: String): ${typeName}`
       const updateMutationResolver: GraphQLFieldResolver<
         any,
         ApolloContext,
@@ -74,7 +74,7 @@ export class QueriesMutationsGeneratorService {
       > = this.mutationUpdateResolverGenerator.createResolver(typeName)
 
       const deleteMutationName = `delete${typeName}`
-      const deleteMutationString = `${deleteMutationName}(id: ID!, message:String): DeletionResult`
+      const deleteMutationString = `${deleteMutationName}(id: ID!, commitMessage: String): ID`
       const deleteMutationResolver: GraphQLFieldResolver<
         any,
         ApolloContext,
@@ -119,7 +119,7 @@ export class QueriesMutationsGeneratorService {
 
   public generateTypeNameQuery(): IGeneratedQuery<Promise<string>> {
     const entryTypeQueryName = '_typeName'
-    const entryTypeQueryString = `${entryTypeQueryName}(id: ID!): String`
+    const entryTypeQueryString = `${entryTypeQueryName}(id: ID!): String!`
     const entryTypeQueryResolver: GraphQLFieldResolver<
       any,
       ApolloContext,

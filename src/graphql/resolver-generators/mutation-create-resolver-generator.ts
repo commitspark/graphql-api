@@ -3,7 +3,7 @@ import { ApolloContext } from '../../app/api.service'
 import { PersistenceService } from '../../persistence/persistence.service'
 import { GraphQLError } from 'graphql/error/GraphQLError'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
-import { isObjectType } from 'graphql'
+import { isObjectType, getNamedType } from 'graphql'
 import {
   EntryDraft,
   EntryData,
@@ -25,7 +25,8 @@ export class MutationCreateResolverGenerator {
       context: ApolloContext,
       info,
     ): Promise<EntryData> => {
-      if (!isObjectType(info.returnType)) {
+      const namedType = getNamedType(info.returnType)
+      if (!isObjectType(namedType)) {
         throw new Error('Expected to create an ObjectType')
       }
 
@@ -61,10 +62,10 @@ export class MutationCreateResolverGenerator {
 
       const referencedEntryIds =
         await this.entryReferenceUtil.getReferencedEntryIds(
-          info.returnType,
+          namedType,
           context,
           null,
-          info.returnType,
+          namedType,
           args.data,
         )
 
@@ -104,7 +105,7 @@ export class MutationCreateResolverGenerator {
         ref: context.branch,
         parentSha: context.getCurrentRef(),
         entries: [newEntryDraft, ...referencedEntryUpdates],
-        message: args.message,
+        message: args.commitMessage,
       })
       context.setCurrentRef(commit.ref)
 

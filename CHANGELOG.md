@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rewrite README for clarity
 - Remove superfluous `DeletionResult` type and replace with `ID` scalar in order to simplify API
 - Rename mutation `message` argument to `commitMessage` for more intuitive API use
-- Make mutation `data` argument and `all...` query array content result non-null for more intuitive API use
+- Make mutation `data` argument result non-null for more intuitive API use
 
 ## [0.12.0] - 2025-03-17
 

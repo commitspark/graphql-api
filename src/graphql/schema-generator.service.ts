@@ -92,9 +92,6 @@ export class SchemaGeneratorService {
       '\n' +
       'type ListMetadata {\n' +
       '  count: Int!\n' +
-      '}\n\n' +
-      'type DeletionResult {\n' +
-      '  id: ID\n' +
       '}\n'
 
     const generatedUnionTypeResolvers: Record<string, UnionTypeResolver> = {}

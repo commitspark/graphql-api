@@ -102,7 +102,7 @@ export class MutationUpdateResolverGenerator {
           { ...existingEntry, data: mergedData, deletion: false },
           ...referencedEntryUpdates,
         ],
-        message: args.message,
+        message: args.commitMessage,
       })
       context.setCurrentRef(commit.ref)
 

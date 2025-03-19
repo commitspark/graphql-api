@@ -78,8 +78,8 @@ type EntryA @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: updateEntryA(id: $id, data: $mutationData, message: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
           name
         }
@@ -232,8 +232,8 @@ type SubType {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: updateEntryA(id: $id, data: $mutationData, message: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
         }
       }`,
@@ -273,8 +273,8 @@ type EntryA @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!){
-        data: updateEntryA(id: $id, data: $mutationData, message: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
           name
         }
@@ -409,8 +409,8 @@ type Box @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!){
-        data: updateItem(id: $id, data: $mutationData, message: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!) {
+        data: updateItem(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
         }
       }`,
@@ -517,8 +517,8 @@ type Box @Entry {
 
     const apiService = await getApiService()
     const result = await apiService.postGraphQL(gitAdapter, gitRef, {
-      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!){
-        data: updateItem(id: $id, data: $mutationData, message: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!) {
+        data: updateItem(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
         }
       }`,

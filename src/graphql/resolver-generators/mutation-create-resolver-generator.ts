@@ -5,9 +5,9 @@ import { GraphQLError } from 'graphql/error/GraphQLError'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import { isObjectType } from 'graphql'
 import {
-  EntryDraft,
-  EntryData,
   ENTRY_ID_INVALID_CHARACTERS,
+  EntryData,
+  EntryDraft,
 } from '@commitspark/git-adapter'
 
 export class MutationCreateResolverGenerator {
@@ -104,7 +104,7 @@ export class MutationCreateResolverGenerator {
         ref: context.branch,
         parentSha: context.getCurrentRef(),
         entries: [newEntryDraft, ...referencedEntryUpdates],
-        message: args.message,
+        message: args.commitMessage,
       })
       context.setCurrentRef(commit.ref)
 

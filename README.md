@@ -2,96 +2,186 @@
 
 [Commitspark](https://commitspark.com) is a set of tools to manage structured data with Git through a GraphQL API.
 
-This library dynamically generates the GraphQL API that allows reading and writing structured data (entries) to and from
-a Git repository.
+The library found in this repository provides the GraphQL API that allows reading and writing structured data (entries)
+from and to a Git repository.
 
-Queries and mutations offered by the generated API are determined by a standard GraphQL type definition file (schema)
-inside the Git repository.
+Queries and mutations offered by the API are determined by a standard GraphQL type definition file (schema) inside the
+Git repository.
 
 Entries (data) are stored using plain YAML text files in the same Git repository. No other data store is needed.
 
-# Running the GraphQL API
+# Installation
 
-There are two common ways to run this library:
+There are two common ways to use this library:
 
-1. By making GraphQL calls directly against the library as a code dependency in your own JavaScript / TypeScript /
-   NodeJS application (NPM package name `@commitspark/graphql-api`)
-2. By making GraphQL calls over HTTP to the library wrapped in a webserver or Lambda function of choice
-   (see the [NodeJS Express server example](https://github.com/commitspark/example-http-express) or
-   [Lambda function example](https://github.com/commitspark/example-code-serverless))
+1. By making GraphQL calls directly to the library as a code dependency in your own JavaScript / TypeScript /
+   Node.js application.
 
-# Git repository hosting
+   To do this, simply install the library with
 
-This library follows an adapter pattern to allow reading from and writing to Git repositories in various locations,
-either hosted or locally. When calling the library, pass an adapter instance as needed by your project.
+   ```shell
+   npm i @commitspark/graphql-api
+   ```
+2. By making GraphQL calls over HTTP to this library wrapped in a webserver or Lambda function of choice.
 
-The following pre-built adapters exist:
+   Please see the [Node.js Express server example](https://github.com/commitspark/example-http-express)
+   or [Lambda function example](https://github.com/commitspark/example-code-serverless) for details.
 
-| Adapter                                                             | Description                                                | NPM package name                      |
-|---------------------------------------------------------------------|------------------------------------------------------------|---------------------------------------|
-| [GitHub](https://github.com/commitspark/git-adapter-github)         | Provides access to Git repositories hosted on github.com   | `@commitspark/git-adapter-github`     |
-| [GitLab (SaaS)](https://github.com/commitspark/git-adapter-gitlab)  | Provides access to Git repositories hosted on gitlab.com   | `@commitspark/git-adapter-gitlab`     |
-| [Filesystem](https://github.com/commitspark/git-adapter-filesystem) | Provides read-only access to files on the filesystem level | `@commitspark/git-adapter-filesystem` |
+## Installing Git provider support
 
-In case you want to build your own adapter, implement the interfaces found
+This library is agnostic to where a Git repository is stored and relies on separate adapters for repository access. To
+access a Git repository, use one of the pre-built adapters listed below or build your own using the interfaces
 in [this repository](https://github.com/commitspark/git-adapter).
+
+| Adapter                                                             | Description                                                | Install with                                |
+|---------------------------------------------------------------------|------------------------------------------------------------|---------------------------------------------|
+| [GitHub](https://github.com/commitspark/git-adapter-github)         | Provides support for Git repositories hosted on github.com | `npm i @commitspark/git-adapter-github`     |
+| [GitLab (SaaS)](https://github.com/commitspark/git-adapter-gitlab)  | Provides support for Git repositories hosted on gitlab.com | `npm i @commitspark/git-adapter-gitlab`     |
+| [Filesystem](https://github.com/commitspark/git-adapter-filesystem) | Provides read-only access to files on the filesystem level | `npm i @commitspark/git-adapter-filesystem` |
+
+# Building your GraphQL API
+
+Commitspark builds a GraphQL data management API with create, read, update, and delete (CRUD) functionality that is
+solely driven by data types you define in a standard GraphQL schema file in your Git repository.
+
+Commitspark achieves this by extending the types in your schema file at runtime with queries, mutations, and additional
+helper types.
+
+Let's assume you want to manage information about rocket flights and have already defined the following simple GraphQL
+schema in your Git repository:
+
+```graphql
+# commitspark/schema/schema.graphql
+
+directive @Entry on OBJECT
+
+type RocketFlight @Entry {
+    id: ID!
+    vehicleName: String!
+    payloads: [Payload!]
+}
+
+type Payload {
+    weight: Int!
+}
+```
+
+At runtime, when sending a GraphQL request to Commitspark, these are the queries, mutations and helper types that are
+added by Commitspark to your schema for the duration of request execution:
+
+```graphql
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type Query {
+    allRocketFlights: [RocketFlight!]
+    RocketFlight(id: ID!): RocketFlight
+    _typeName(id: ID!): String
+}
+
+type Mutation {
+    createRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight
+    updateRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight
+    deleteRocketFlight(id: ID!, commitMessage: String): ID
+}
+
+input RocketFlightInput {
+    vehicleName: String!
+    payloads: [PayloadInput!]
+}
+
+input PayloadInput {
+    weight: Int!
+}
+```
 
 # Making GraphQL calls
 
+Let's now assume your repository is located on GitHub and you want to query for a single rocket flight.
+
+The code to do so could look like this:
+
+```typescript
+import {
+    createAdapter,
+    GitHubRepositoryOptions,
+} from '@commitspark/git-adapter-github'
+import {getApiService} from '@commitspark/graphql-api'
+
+const gitHubAdapter = createAdapter()
+await gitHubAdapter.setRepositoryOptions({
+    repositoryOwner: process.env.GITHUB_REPOSITORY_OWNER,
+    repositoryName: process.env.GITHUB_REPOSITORY_NAME,
+    accessToken: process.env.GITHUB_ACCESS_TOKEN,
+} as GitHubRepositoryOptions)
+
+const apiService = await getApiService()
+
+const response = await apiService.postGraphQL(
+    gitHubAdapter,
+    process.env.GIT_BRANCH ?? 'main',
+    {
+        query: `query ($rocketFlightId: ID!) {
+          rocketFlight: RocketFlight(id: $rocketFlightId) {
+            vehicleName
+            payloads {
+              weight
+            }
+          }
+        }`,
+        variables: {
+            rocketFlightId: 'VA256',
+        }
+    },
+)
+
+const rocketFlight = response.data.rocketFlight
+// ...
+```
+
+# Technical documentation
+
+## API
+
+### ApiService
+
+#### postGraphQL()
+
+This function is used to make GraphQL requests.
+
+Request execution is handled by ApolloServer behind the scenes.
+
+Argument `request` expects a conventional GraphQL query and supports query variables as well as introspection.
+
+#### getSchema()
+
+This function allows retrieving the GraphQL schema extended by Commitspark as a string.
+
+Compared to schema data obtained through GraphQL introspection, the schema returned by this function also includes
+directive declarations and annotations, allowing for development of additional tools that require this information.
+
 ## Picking from the Git tree
 
-As Commitspark is Git-based, all queries and mutations support traversing the Git commit tree by setting the `ref`
-argument in library calls to a
+As Commitspark is Git-based, all GraphQL requests support traversing the Git commit tree by setting the `ref` argument
+in library calls to a
 
 * ref (i.e. commit hash),
 * branch name, or
 * tag name (light or regular)
 
-This enables great flexibility, e.g. to retrieve always the same entries of a specific (historic) commit, to have
-different branches with different entries, or to retrieve entries by tag such as one that marks the latest approved
-data in a repository.
+This enables great flexibility, e.g. to use branches in order to enable data (entry) development workflows, to retrieve
+a specific (historic) commit where it is guaranteed that entries are immutable, or to retrieve entries by tag such as
+one that marks the latest reviewed and approved version in a repository.
 
-## Obtaining the generated GraphQL schema
+### Writing data
 
-At runtime, Commitspark dynamically extends the GraphQL schema found in the schema file with additional
-types as well as queries and mutations. This extended schema can be retrieved by calling `getSchema()`.
+Mutation operations work on branch names only and (when successful) each append a new commit on
+HEAD in the given branch.
 
-Compared to schema data obtained through GraphQL introspection, the schema returned by this function also includes
-directive declarations and annotations, allowing for development of additional tools that require this information.
-
-## Reading data
-
-The `request` argument of `postGraphQL()` expects a conventional GraphQL query and supports query variables as well as
-introspection. Commitspark also transparently resolves references to other @Entry-annotated GraphQL types (see below),
-allowing for retrieval of complex data in a single query as nested result data.
-
-### Generated queries
-
-For each GraphQL type annotated with `@Entry` in the schema (see below), e.g. `MyType`, the following queries are
-generated:
-
-* Query a single entry of a type by ID, e.g. `MyType(id: "..."): MyType`
-* Query all entries of a type, e.g. `allMyTypes: [MyType]`
-
-## Writing data
-
-The `request` argument of `postGraphQL()` expects a conventional GraphQL mutation and supports mutation variables as
-well as introspection. Mutation operations work on branch names only and (when successful) each append a new commit on
-HEAD in the given branch. To avoid race conditions, mutations in calls with multiple mutations are processed
-sequentially (see the [GraphQL documentation](https://graphql.org/learn/queries/#multiple-fields-in-mutations)).
-
-### Generated mutations
-
-For each GraphQL type annotated with `@Entry` (see below), the following mutations are generated:
-
-* Create a single entry of a type, e.g.
-  `createMyType(id: "...", message: "Commit message", data: {...}): MyType`
-* Mutate a single entry of a type by ID, e.g.
-  `updateMyType(id: "...", message: "Commit message", data: {...}): MyType`
-* Delete a single entry of a type by ID, e.g.
-  `deleteMyType(id: "...", message: "Commit message"): { id }`
-
-# Technical documentation
+To guarantee deterministic results, mutations in calls with multiple mutations are processed sequentially (see
+the [official GraphQL documentation](https://graphql.org/learn/queries/#multiple-fields-in-mutations) for details).
 
 ## Data model
 
@@ -109,33 +199,30 @@ Commitspark currently supports the following GraphQL types:
 
 ### Data entries
 
-To denote which data is to be given a unique identity for referencing, a directive `@Entry` is
-to be declared (this must be done right in the schema file so that the schema remains valid).
-
-To define the `@Entry` directive, simply add this line to the schema file:
+To denote which data is to be given a unique identity for referencing, Commitspark expects type annotation with
+directive `@Entry`:
 
 ```graphql
-directive @Entry on OBJECT
-```
+directive @Entry on OBJECT # Important: You must declare this for your schema to be valid
 
-To promote a data type to Entry, annotate the type as follows:
-
-```graphql
 type MyType @Entry {
-    id: ID!
+    id: ID! # Important: Any type annotated with `@Entry` must have such a field
     # ...
 }
 ```
 
-**Important:** Any type annotated with `@Entry` must have a field `id` of type `ID!`.
+**Note:** As a general guideline, you should only apply `@Entry` to data types that meet one of the following
+conditions:
 
-**Note:** Only apply `@Entry` to data types that you actually want to reference or link to from other entries. This
-keeps the number of entries low and performance up.
+* You want to independently create and query instances of this type
+* You want to reference or link to an instance of such a type from multiple other entries
+
+This keeps the number of entries low and performance up.
 
 ## Entry storage
 
 Entries, i.e. instances of data types annotated with `@Entry`, are stored as `.yaml` YAML text files inside
-a folder `commitspark/entries/` in the repository (unless otherwise configured in your Git adapter).
+folder `commitspark/entries/` in the given Git repository (unless otherwise configured in your Git adapter).
 
 The filename (excluding file extension) constitutes the entry ID.
 
@@ -149,72 +236,103 @@ data:
 #   ... fields of the type as defined in your schema
 ```
 
-### Serialization
+### Serialization / Deserialization
 
 #### References
 
-References to types annotated with `@Entry` are stored using a sub-field `id`.
+References to types annotated with `@Entry` are serialized using a sub-field `id`.
 
-For example, consider the following schema:
+For example, consider this variation of our rocket flight schema above:
 
 ```graphql
-type Page @Entry {
+type RocketFlight @Entry {
     id: ID!
+    operator: Operator
 }
 
-type Link @Entry {
+type Operator @Entry {
     id: ID!
-    target: Page
+    fullName: String!
 }
 ```
 
-An entry YAML file for a `Link` with ID `myLink` referencing a `Page` with ID `myPage` will look like this:
+An entry YAML file for a `RocketFlight` with ID `VA256` referencing an `Operator` with ID `Arianespace` will look
+like this:
 
 ```yaml
+# commitspark/entries/VA256.yaml
 metadata:
-  type: Link
+  type: RocketFlight
   referencedBy: [ ]
 data:
-  target:
-    id: myPage
+  operator:
+    id: Arianespace
 ```
 
-The entry YAML file of referenced `Page` `myPage` will then look like this:
+The YAML file of referenced `Operator` with ID `Arianespace` will then look like this:
 
 ```yaml
+# commitspark/entries/Arianespace.yaml
 metadata:
-  type: Page
+  type: Operator
   referencedBy:
-    - myLink
-data: ~
+    - VA256
+data:
+  fullName: Arianespace SA
+```
+
+When this data is deserialized, Commitspark transparently resolves references to other `@Entry` instances, allowing for
+retrieval of complex, linked data in a single query such as this one:
+
+```graphql
+query {
+    RocketFlight(id: "VA256") {
+        id
+        operator {
+            fullName
+        }
+    }
+}
+```
+
+This returns the following data:
+
+```json
+{
+  "id": "VA256",
+  "operator": {
+    "fullName": "Arianespace SA"
+  }
+}
 ```
 
 #### Unions
 
-Consider the following schema where field `contentElements` is an array of Union type `ContentElement`, allowing
-different concrete types `Hero` or `Text` to be applied:
+Consider this example of a schema for storing content for a marketing website built out of modular content elements,
+where field `contentElements` is an array of Union type `ContentElement`, allowing different concrete types `Hero` or
+`Text` to be applied:
 
 ```graphql
 type Page @Entry {
-  id: ID!
-  contentElements: [ContentElement!]
+    id: ID!
+    contentElements: [ContentElement!]
 }
 
 union ContentElement =
-  | Hero
-  | Text
+    | Hero
+    | Text
 
 type Hero {
-  heroText: String!
+    heroText: String!
 }
 
 type Text {
-  bodyText: String!
+    bodyText: String!
 }
 ```
 
 During serialization, concrete type instances are represented through an additional nested level of data, using the
-instance's type name with a lowercase first character as field name:
+concrete instance's type name as field name:
 
 ```yaml
 metadata:
@@ -222,9 +340,9 @@ metadata:
   referencedBy: [ ]
 data:
   contentElements:
-    - hero: # represents type `Hero`
+    - Hero:
         heroText: "..."
-    - text: # represents type `Text`
+    - Text:
         bodyText: "..."
 ```
 

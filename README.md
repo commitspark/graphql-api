@@ -164,8 +164,8 @@ directive declarations and annotations, allowing for development of additional t
 
 ## Picking from the Git tree
 
-As Commitspark is Git-based, all queries and mutations support traversing the Git commit tree by setting the `ref`
-argument in library calls to a
+As Commitspark is Git-based, all GraphQL requests support traversing the Git commit tree by setting the `ref` argument
+in library calls to a
 
 * ref (i.e. commit hash),
 * branch name, or

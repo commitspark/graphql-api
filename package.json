@@ -5,7 +5,15 @@
   "license": "ISC",
   "private": false,
   "main": "dist/index.js",
+  "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist/**",
     "src/**",
@@ -15,7 +23,9 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc --project tsconfig.build.json",
+    "build:esm": "tsc --project tsconfig.esm.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,tests}/**/*.ts\"",
     "test": "jest"

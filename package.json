@@ -4,8 +4,10 @@
   "version": "0.80.0",
   "license": "ISC",
   "private": false,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/cjs/index.d.ts",
   "files": [
     "dist/**",
     "src/**",
@@ -14,8 +16,17 @@
     "package.json",
     "CHANGELOG.md"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/cjs/index.d.js",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc --project tsconfig.build.cjs.json",
+    "build:esm": "tsc --project tsconfig.build.esm.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,tests}/**/*.ts\"",
     "test": "jest"

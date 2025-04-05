@@ -1,4 +1,5 @@
 import {
+  GraphQLError,
   GraphQLNullableType,
   GraphQLObjectType,
   isListType,
@@ -6,9 +7,8 @@ import {
   isObjectType,
   isUnionType,
 } from 'graphql'
-import { ApolloContext } from '../../app/api.service'
-import { GraphQLError } from 'graphql/error/GraphQLError'
-import { PersistenceService } from '../../persistence/persistence.service'
+import { ApolloContext } from '@/app/api.service'
+import { PersistenceService } from '@/persistence/persistence.service'
 import { UnionTypeUtil } from './union-type-util'
 import { EntryTypeUtil } from './entry-type-util'
 

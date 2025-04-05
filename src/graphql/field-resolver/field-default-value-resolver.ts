@@ -1,23 +1,21 @@
 import {
   FieldResolver,
-  ResolvedEntryData,
   FieldResolverContext,
+  ResolvedEntryData,
 } from './fieldResolver'
 import { EntryData } from '@commitspark/git-adapter'
 import {
   GraphQLFieldResolver,
+  GraphQLNonNull,
   GraphQLOutputType,
   GraphQLResolveInfo,
-} from 'graphql/type/definition'
-import {
-  GraphQLNonNull,
   GraphQLUnionType,
   isListType,
   isNonNullType,
   isObjectType,
   isUnionType,
 } from 'graphql'
-import { EntryTypeUtil } from '../schema-utils/entry-type-util'
+import { EntryTypeUtil } from '@/graphql/schema-utils/entry-type-util'
 import { UnionValueResolver } from './union-value-resolver'
 import { EntryReferenceResolver } from './entry-reference-resolver'
 

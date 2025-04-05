@@ -10,11 +10,11 @@ import {
   isListType,
   isNonNullType,
   isObjectType,
+  isScalarType,
   isUnionType,
 } from 'graphql'
 import { ISchemaAnalyzerResult } from './schema-analyzer.service'
 import { EntryTypeUtil } from './schema-utils/entry-type-util'
-import { isScalarType } from 'graphql/type/definition'
 
 export class InputTypeGeneratorService {
   constructor(private readonly entryTypeUtil: EntryTypeUtil) {}

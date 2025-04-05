@@ -1,6 +1,6 @@
-import { PersistenceService } from '../../persistence/persistence.service'
-import { GraphQLFieldResolver } from 'graphql/type/definition'
-import { ApolloContext } from '../../app/api.service'
+import { PersistenceService } from '@/persistence/persistence.service'
+import { GraphQLFieldResolver } from 'graphql'
+import { ApolloContext } from '@/app/api.service'
 
 export class QueryTypeByIdResolverGenerator {
   constructor(private readonly persistence: PersistenceService) {}

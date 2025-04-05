@@ -1,6 +1,4 @@
-import { GraphQLSchema } from 'graphql'
-import { Kind } from 'graphql/language/kinds'
-import { GraphQLUnionType } from 'graphql/type/definition'
+import { GraphQLSchema, GraphQLUnionType, Kind } from 'graphql'
 
 export class SchemaValidator {
   public getValidationResult(schema: GraphQLSchema): string[] {

@@ -1,6 +1,5 @@
 import { GraphQLFieldResolver } from 'graphql/type/definition'
-import { EntryData } from '@commitspark/git-adapter'
-import { GitAdapter } from '@commitspark/git-adapter'
+import { EntryData, GitAdapter } from '@commitspark/git-adapter'
 
 export interface FieldResolverContext {
   gitAdapter: GitAdapter

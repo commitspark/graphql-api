@@ -1,11 +1,11 @@
-import { ApolloContext } from '../../app/api.service'
-import { PersistenceService } from '../../persistence/persistence.service'
+import { ApolloContext } from '@/app/api.service'
+import { PersistenceService } from '@/persistence/persistence.service'
 import {
   GraphQLAbstractType,
   GraphQLResolveInfo,
   GraphQLTypeResolver,
 } from 'graphql'
-import { EntryTypeUtil } from '../schema-utils/entry-type-util'
+import { EntryTypeUtil } from '@/graphql/schema-utils/entry-type-util'
 
 export class UnionTypeResolverGenerator {
   constructor(

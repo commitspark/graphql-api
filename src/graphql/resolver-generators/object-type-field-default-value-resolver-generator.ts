@@ -1,18 +1,16 @@
 import {
-  GraphQLFieldResolver,
-  GraphQLOutputType,
-} from 'graphql/type/definition'
-import { ApolloContext } from '../../app/api.service'
-import { EntryData } from '@commitspark/git-adapter'
-import {
   GraphQLField,
+  GraphQLFieldResolver,
   GraphQLObjectType,
+  GraphQLOutputType,
   GraphQLSchema,
   isListType,
   isNonNullType,
   isObjectType,
   isUnionType,
 } from 'graphql'
+import { ApolloContext } from '@/app/api.service'
+import { EntryData } from '@commitspark/git-adapter'
 import { ResolvedEntryData } from '../field-resolver/fieldResolver'
 import { FieldDefaultValueResolver } from '../field-resolver/field-default-value-resolver'
 

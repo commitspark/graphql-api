@@ -1,7 +1,7 @@
-import { PersistenceService } from '../../persistence/persistence.service'
-import { GraphQLFieldResolver } from 'graphql/type/definition'
-import { ApolloContext } from '../../app/api.service'
-import { TypeCount } from '../queries-mutations-generator.service'
+import { PersistenceService } from '@/persistence/persistence.service'
+import { GraphQLFieldResolver } from 'graphql'
+import { ApolloContext } from '@/app/api.service'
+import { TypeCount } from '@/graphql/queries-mutations-generator.service'
 
 export class QueryCountAllResolverGenerator {
   constructor(private readonly persistence: PersistenceService) {}

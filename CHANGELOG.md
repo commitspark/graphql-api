@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Refactor library packaging to support ESM and CJS
-- Clean up dependency imports
+- Clean up dependencies and relax version constraints
 
 ## [0.80.0] - 2025-03-19
 

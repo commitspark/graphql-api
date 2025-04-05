@@ -1,0 +1,1 @@
+ignores: ["ts-node"] # needed for jest

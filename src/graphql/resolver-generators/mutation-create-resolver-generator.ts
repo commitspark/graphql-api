@@ -47,7 +47,9 @@ export class MutationCreateResolverGenerator {
           context.getCurrentRef(),
           args.id,
         )
-      } catch (_) {}
+      } catch (_) {
+        /* empty */
+      }
       if (existingEntry) {
         throw new GraphQLError(`An entry with id "${args.id}" already exists`, {
           extensions: {

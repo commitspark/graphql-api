@@ -15,7 +15,7 @@ import {
   isObjectType,
   isUnionType,
 } from 'graphql'
-import { EntryTypeUtil } from '@/graphql/schema-utils/entry-type-util'
+import { EntryTypeUtil } from '../schema-utils/entry-type-util'
 import { UnionValueResolver } from './union-value-resolver'
 import { EntryReferenceResolver } from './entry-reference-resolver'
 

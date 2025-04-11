@@ -5,7 +5,7 @@ import {
   FieldResolverContext,
   ResolvedEntryData,
 } from './fieldResolver'
-import { UnionTypeUtil } from '@/graphql/schema-utils/union-type-util'
+import { UnionTypeUtil } from '../schema-utils/union-type-util'
 
 export class UnionValueResolver implements FieldResolver<any> {
   resolve: GraphQLFieldResolver<

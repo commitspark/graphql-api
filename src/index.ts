@@ -1,5 +1,5 @@
-import { ApiService, GraphQLResponse, SchemaResponse } from '@/app/api.service'
-import { apiService } from '@/container'
+import { ApiService, GraphQLResponse, SchemaResponse } from './app/api.service'
+import { apiService } from './container'
 
 export { ApiService, GraphQLResponse, SchemaResponse }
 

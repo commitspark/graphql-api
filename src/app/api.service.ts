@@ -1,5 +1,5 @@
-import { ApolloConfigFactoryService } from '@/graphql/apollo-config-factory.service'
-import { SchemaGeneratorService } from '@/graphql/schema-generator.service'
+import { ApolloConfigFactoryService } from '../graphql/apollo-config-factory.service'
+import { SchemaGeneratorService } from '../graphql/schema-generator.service'
 import {
   DocumentNode,
   GraphQLFormattedError,

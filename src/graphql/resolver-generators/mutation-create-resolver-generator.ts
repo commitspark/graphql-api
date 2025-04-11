@@ -1,7 +1,7 @@
-import { ApolloContext } from '@/app/api.service'
-import { PersistenceService } from '@/persistence/persistence.service'
+import { ApolloContext } from '../../app/api.service'
+import { PersistenceService } from '../../persistence/persistence.service'
 import { GraphQLError, GraphQLFieldResolver, isObjectType } from 'graphql'
-import { EntryReferenceUtil } from '@/graphql/schema-utils/entry-reference-util'
+import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import {
   ENTRY_ID_INVALID_CHARACTERS,
   EntryData,

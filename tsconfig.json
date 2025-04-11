@@ -15,11 +15,6 @@
     "declarationMap": true,
 
     "rootDir": "./src",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    },
     "outDir": "./dist"
   },
   "include": [

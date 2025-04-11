@@ -1,5 +1,5 @@
 import { EntryData } from '@commitspark/git-adapter'
-import { ApolloContext } from '@/app/api.service'
+import { ApolloContext } from '../app/api.service'
 import { GraphQLFieldResolver, GraphQLObjectType } from 'graphql'
 import { QueryAllResolverGenerator } from './resolver-generators/query-all-resolver-generator'
 import { QueryByIdResolverGenerator } from './resolver-generators/query-by-id-resolver-generator'

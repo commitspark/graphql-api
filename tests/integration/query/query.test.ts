@@ -1,6 +1,6 @@
 import { Entry, GitAdapter } from '@commitspark/git-adapter'
 import { mock } from 'jest-mock-extended'
-import { getApiService } from '@/index'
+import { getApiService } from '../../../src'
 
 describe('Query resolvers', () => {
   it('should resolve references to a second @Entry', async () => {

@@ -1,7 +1,7 @@
-import { PersistenceService } from '@/persistence/persistence.service'
-import { ApolloContext } from '@/app/api.service'
+import { PersistenceService } from '../../persistence/persistence.service'
+import { ApolloContext } from '../../app/api.service'
 import { Entry, EntryData, EntryDraft } from '@commitspark/git-adapter'
-import { EntryReferenceUtil } from '@/graphql/schema-utils/entry-reference-util'
+import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
 import { GraphQLError, GraphQLFieldResolver, isObjectType } from 'graphql'
 
 export class MutationDeleteResolverGenerator {

@@ -5,7 +5,7 @@ import {
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
-import { getApiService } from '@/index'
+import { getApiService } from '../../../src'
 
 describe('"Create" mutation resolvers', () => {
   it('should create an entry', async () => {

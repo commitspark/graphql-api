@@ -12,7 +12,6 @@
     "incremental": true,
     "declaration": true,
     "sourceMap": true,
-    "declarationMap": true,
 
     "rootDir": "./src",
     "outDir": "./dist"

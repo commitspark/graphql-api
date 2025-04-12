@@ -9,11 +9,6 @@ const jestConfig: Config = {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
-  moduleNameMapper: {
-    // must match `tsconfig.json` compilerOptions.paths
-    // see also https://kulshekhar.github.io/ts-jest/docs/getting-started/paths-mapping/
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
 }
 
 export default jestConfig

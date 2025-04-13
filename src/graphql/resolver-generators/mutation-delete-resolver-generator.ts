@@ -1,10 +1,8 @@
 import { PersistenceService } from '../../persistence/persistence.service'
-import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
-import { GraphQLError } from 'graphql/error/GraphQLError'
 import { Entry, EntryData, EntryDraft } from '@commitspark/git-adapter'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
-import { isObjectType } from 'graphql'
+import { GraphQLError, GraphQLFieldResolver, isObjectType } from 'graphql'
 
 export class MutationDeleteResolverGenerator {
   constructor(

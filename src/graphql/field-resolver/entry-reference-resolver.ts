@@ -1,13 +1,13 @@
 import {
   FieldResolver,
-  ResolvedEntryData,
   FieldResolverContext,
+  ResolvedEntryData,
 } from './fieldResolver'
 import {
   GraphQLFieldResolver,
   GraphQLOutputType,
   GraphQLResolveInfo,
-} from 'graphql/type/definition'
+} from 'graphql'
 import { PersistenceService } from '../../persistence/persistence.service'
 import { EntryData } from '@commitspark/git-adapter'
 

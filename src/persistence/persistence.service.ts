@@ -1,5 +1,5 @@
 import { Entry, GitAdapter } from '@commitspark/git-adapter'
-import { GraphQLError } from 'graphql/error/GraphQLError'
+import { GraphQLError } from 'graphql'
 
 export class PersistenceService {
   public async getTypeById(

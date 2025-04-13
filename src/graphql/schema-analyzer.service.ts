@@ -1,12 +1,13 @@
 import {
+  GraphQLInterfaceType,
   GraphQLObjectType,
   GraphQLSchema,
+  GraphQLUnionType,
   isInterfaceType,
   isObjectType,
   isUnionType,
 } from 'graphql'
 import { getDirective } from '@graphql-tools/utils'
-import { GraphQLInterfaceType, GraphQLUnionType } from 'graphql/type/definition'
 
 export class SchemaAnalyzerService {
   public analyzeSchema(schema: GraphQLSchema): ISchemaAnalyzerResult {

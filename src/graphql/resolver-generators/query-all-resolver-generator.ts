@@ -1,7 +1,7 @@
 import { ApolloContext } from '../../app/api.service'
 import { EntryData } from '@commitspark/git-adapter'
 import { PersistenceService } from '../../persistence/persistence.service'
-import { GraphQLFieldResolver } from 'graphql/type/definition'
+import { GraphQLFieldResolver } from 'graphql'
 
 export class QueryAllResolverGenerator {
   constructor(private readonly persistence: PersistenceService) {}

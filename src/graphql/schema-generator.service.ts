@@ -9,10 +9,7 @@ import { SchemaRootTypeGeneratorService } from './schema-root-type-generator.ser
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { UnionTypeResolverGenerator } from './resolver-generators/union-type-resolver-generator'
 import { ApolloContext } from '../app/api.service'
-import {
-  GraphQLFieldResolver,
-  GraphQLTypeResolver,
-} from 'graphql/type/definition'
+import { GraphQLFieldResolver, GraphQLTypeResolver } from 'graphql'
 import { SchemaValidator } from './schema-validator'
 import { EntryData } from '@commitspark/git-adapter'
 import { ObjectTypeFieldDefaultValueResolverGenerator } from './resolver-generators/object-type-field-default-value-resolver-generator'

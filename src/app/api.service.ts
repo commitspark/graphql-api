@@ -1,11 +1,18 @@
 import { ApolloConfigFactoryService } from '../graphql/apollo-config-factory.service'
 import { SchemaGeneratorService } from '../graphql/schema-generator.service'
-import { GraphQLFormattedError } from 'graphql'
+import {
+  DocumentNode,
+  GraphQLFormattedError,
+  TypedQueryDocumentNode,
+} from 'graphql'
 import { GitAdapter } from '@commitspark/git-adapter'
-import { ApolloServer, ApolloServerOptions } from '@apollo/server'
-import { VariableValues } from '@apollo/server/src/externalTypes/graphql'
-import { GraphQLRequest } from '@apollo/server/src/externalTypes'
-import { DocumentNode, TypedQueryDocumentNode } from 'graphql/index'
+import {
+  ApolloServer,
+  ApolloServerOptions,
+  GraphQLRequest,
+} from '@apollo/server'
+
+type VariableValues = { [name: string]: any }
 
 export class ApiService {
   constructor(
@@ -19,8 +26,7 @@ export class ApiService {
   >(
     gitAdapter: GitAdapter,
     ref: string,
-    // omit 'http' due to packaging incompatibility
-    request: Omit<Omit<GraphQLRequest<TVariables>, 'query'>, 'http'> & {
+    request: Omit<GraphQLRequest<TVariables>, 'query'> & {
       query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
     },
   ): Promise<GraphQLResponse<TData | null>> {

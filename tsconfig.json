@@ -1,22 +1,23 @@
 {
+   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "module": "commonjs",
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "es2017",
-    "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
-    "incremental": true,
-    "skipLibCheck": true,
+    "module": "ES2015",
+    "target": "ES2022",
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "strict": true
+    "resolveJsonModule": true,
+
+    "composite": true,
+    "strict": true,
+    "incremental": true,
+    "declaration": true,
+    "sourceMap": true,
+
+    "rootDir": "./src",
+    "outDir": "./dist"
   },
   "include": [
-    "./src/",
-    "./tests/"
+    "./src/**/*.ts",
+    "./tests/**/*.ts"
   ]
 }

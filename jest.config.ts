@@ -2,13 +2,13 @@
  * For a detailed explanation regarding each configuration property and type check, visit:
  * https://jestjs.io/docs/configuration
  */
+import type { Config } from 'jest'
 
-export default {
-  moduleFileExtensions: [
-    "js",
-    "ts",
-  ],
+const jestConfig: Config = {
+  moduleFileExtensions: ['js', 'ts'],
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
 }
+
+export default jestConfig

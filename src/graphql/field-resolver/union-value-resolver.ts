@@ -2,8 +2,8 @@ import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { EntryData } from '@commitspark/git-adapter'
 import {
   FieldResolver,
-  ResolvedEntryData,
   FieldResolverContext,
+  ResolvedEntryData,
 } from './fieldResolver'
 import { UnionTypeUtil } from '../schema-utils/union-type-util'
 

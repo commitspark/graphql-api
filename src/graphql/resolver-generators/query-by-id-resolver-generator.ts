@@ -1,6 +1,6 @@
 import { EntryData } from '@commitspark/git-adapter'
 import { PersistenceService } from '../../persistence/persistence.service'
-import { GraphQLFieldResolver } from 'graphql/type/definition'
+import { GraphQLFieldResolver } from 'graphql'
 import { ApolloContext } from '../../app/api.service'
 
 export class QueryByIdResolverGenerator {

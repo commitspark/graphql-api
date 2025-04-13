@@ -1,9 +1,7 @@
-import { GraphQLFieldResolver } from 'graphql/type/definition'
 import { ApolloContext } from '../../app/api.service'
 import { PersistenceService } from '../../persistence/persistence.service'
-import { GraphQLError } from 'graphql/error/GraphQLError'
+import { GraphQLError, GraphQLFieldResolver, isObjectType } from 'graphql'
 import { EntryReferenceUtil } from '../schema-utils/entry-reference-util'
-import { isObjectType } from 'graphql'
 import {
   ENTRY_ID_INVALID_CHARACTERS,
   EntryData,
@@ -49,7 +47,9 @@ export class MutationCreateResolverGenerator {
           context.getCurrentRef(),
           args.id,
         )
-      } catch (_) {}
+      } catch (_) {
+        /* empty */
+      }
       if (existingEntry) {
         throw new GraphQLError(`An entry with id "${args.id}" already exists`, {
           extensions: {

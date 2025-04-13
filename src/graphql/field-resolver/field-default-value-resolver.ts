@@ -1,16 +1,14 @@
 import {
   FieldResolver,
-  ResolvedEntryData,
   FieldResolverContext,
+  ResolvedEntryData,
 } from './fieldResolver'
 import { EntryData } from '@commitspark/git-adapter'
 import {
   GraphQLFieldResolver,
+  GraphQLNonNull,
   GraphQLOutputType,
   GraphQLResolveInfo,
-} from 'graphql/type/definition'
-import {
-  GraphQLNonNull,
   GraphQLUnionType,
   isListType,
   isNonNullType,

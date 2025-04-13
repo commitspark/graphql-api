@@ -1,7 +1,7 @@
 {
   "name": "@commitspark/graphql-api",
   "description": "GraphQL API for Commitspark",
-  "version": "0.80.0",
+  "version": "0.81.0",
   "license": "ISC",
   "private": false,
   "type": "module",

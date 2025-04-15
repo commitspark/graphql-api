@@ -4,7 +4,9 @@
   "version": "0.81.0",
   "license": "ISC",
   "private": false,
-  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "files": [
     "dist/**",
     "src/**",
@@ -15,10 +17,9 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.js",
+      "types": "./dist/types/index.d.ts",
       "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.js",
-      "default": "./dist/esm/index.js"
+      "import": "./dist/esm/index.js"
     }
   },
   "scripts": {
@@ -55,3 +56,4 @@
     "typescript-eslint": "^8.29.0"
   }
 }
+

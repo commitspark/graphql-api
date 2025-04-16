@@ -30,7 +30,8 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,tests}/**/*.ts\"",
     "test": "jest",
-    "knip": "knip"
+    "knip": "knip",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@apollo/server": "^4.0.0",

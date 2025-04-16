@@ -15,7 +15,7 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.js",
+      "types": "./dist/types/index.d.ts",
       "require": "./dist/cjs/index.js",
       "import": "./dist/esm/index.js",
       "default": "./dist/esm/index.js"

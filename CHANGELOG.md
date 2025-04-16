@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix incorrect types export
 
+### Changed
+
+- Improve library exports
+
 ## [0.81.0] - 2025-04-13
 
 ### Changed

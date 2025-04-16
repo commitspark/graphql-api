@@ -4,7 +4,6 @@
   "version": "0.81.0",
   "license": "ISC",
   "private": false,
-  "type": "module",
   "files": [
     "dist/**",
     "src/**",
@@ -13,12 +12,15 @@
     "package.json",
     "CHANGELOG.md"
   ],
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.js",
-      "default": "./dist/esm/index.js"
+      "import": "./dist/esm/index.js"
     }
   },
   "scripts": {

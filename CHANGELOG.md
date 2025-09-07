@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Upgrade to supported Apollo Server 5
+- Upgrade dependencies
 
 ## [0.81.2] - 2025-04-16
 

@@ -108,7 +108,7 @@ import {
     createAdapter,
     GitHubRepositoryOptions,
 } from '@commitspark/git-adapter-github'
-import {getApiService} from '@commitspark/graphql-api'
+import {getClient} from '@commitspark/graphql-api'
 
 const gitHubAdapter = createAdapter()
 await gitHubAdapter.setRepositoryOptions({
@@ -117,9 +117,9 @@ await gitHubAdapter.setRepositoryOptions({
     accessToken: process.env.GITHUB_ACCESS_TOKEN,
 } as GitHubRepositoryOptions)
 
-const apiService = await getApiService()
+const client = await getClient()
 
-const response = await apiService.postGraphQL(
+const response = await client.postGraphQL(
     gitHubAdapter,
     process.env.GIT_BRANCH ?? 'main',
     {
@@ -145,7 +145,7 @@ const rocketFlight = response.data.rocketFlight
 
 ## API
 
-### ApiService
+### Client
 
 #### postGraphQL()
 

@@ -1,8 +1,17 @@
-import { ApiService, GraphQLResponse, SchemaResponse } from './app/api.service'
-import { apiService } from './container'
+import {
+  getSchema,
+  GraphQLResponse,
+  postGraphQL,
+  SchemaResponse,
+} from './app/api.service'
 
-export { ApiService, GraphQLResponse, SchemaResponse }
+interface Client {
+  postGraphQL: typeof postGraphQL
+  getSchema: typeof getSchema
+}
 
-export async function getApiService(): Promise<ApiService> {
-  return apiService
+export { Client, GraphQLResponse, SchemaResponse }
+
+export async function createClient(): Promise<Client> {
+  return { postGraphQL, getSchema }
 }

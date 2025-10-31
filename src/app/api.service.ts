@@ -1,5 +1,5 @@
-import { ApolloConfigFactoryService } from '../graphql/apollo-config-factory.service'
-import { SchemaGeneratorService } from '../graphql/schema-generator.service'
+import { createApolloConfig } from '../graphql/apollo-config-factory'
+import { generateSchema } from '../graphql/schema-generator'
 import {
   DocumentNode,
   GraphQLFormattedError,
@@ -14,91 +14,79 @@ import {
 
 type VariableValues = { [name: string]: any }
 
-export class ApiService {
-  constructor(
-    private readonly apolloConfigFactory: ApolloConfigFactoryService,
-    private readonly schemaGenerator: SchemaGeneratorService,
-  ) {}
-
-  async postGraphQL<
-    TData = Record<string, unknown>,
-    TVariables extends VariableValues = VariableValues,
-  >(
-    gitAdapter: GitAdapter,
-    ref: string,
-    request: Omit<GraphQLRequest<TVariables>, 'query'> & {
-      query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
+export async function postGraphQL<
+  TData = Record<string, unknown>,
+  TVariables extends VariableValues = VariableValues,
+>(
+  gitAdapter: GitAdapter,
+  ref: string,
+  request: Omit<GraphQLRequest<TVariables>, 'query'> & {
+    query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
+  },
+): Promise<GraphQLResponse<TData | null>> {
+  let currentRef = await gitAdapter.getLatestCommitHash(ref)
+  const context: ApolloContext = {
+    branch: ref,
+    gitAdapter: gitAdapter,
+    getCurrentRef(): string {
+      return currentRef
     },
-  ): Promise<GraphQLResponse<TData | null>> {
-    let currentRef = await gitAdapter.getLatestCommitHash(ref)
-    const context: ApolloContext = {
-      branch: ref,
-      gitAdapter: gitAdapter,
-      getCurrentRef(): string {
-        return currentRef
-      },
-      setCurrentRef(refArg: string) {
-        currentRef = refArg
-      },
-    }
-
-    const apolloDriverConfig: ApolloServerOptions<ApolloContext> =
-      await this.apolloConfigFactory.createGqlOptions(context)
-
-    const apolloServer = new ApolloServer<ApolloContext>({
-      ...apolloDriverConfig,
-    })
-
-    const result = await apolloServer.executeOperation<TData, TVariables>(
-      request,
-      {
-        contextValue: context,
-      },
-    )
-
-    await apolloServer.stop()
-
-    return {
-      ref: context.getCurrentRef(),
-      data:
-        result.body.kind === 'single'
-          ? result.body.singleResult.data
-          : undefined,
-      errors:
-        result.body.kind === 'single'
-          ? result.body.singleResult.errors
-          : undefined,
-    }
+    setCurrentRef(refArg: string) {
+      currentRef = refArg
+    },
   }
 
-  async getSchema(
-    gitAdapter: GitAdapter,
-    ref: string,
-  ): Promise<SchemaResponse> {
-    let currentRef = await gitAdapter.getLatestCommitHash(ref)
-    const contextGenerator = () =>
-      ({
-        branch: ref,
-        gitAdapter: gitAdapter,
-        getCurrentRef(): string {
-          return currentRef
-        },
-        setCurrentRef(refArg: string) {
-          currentRef = refArg
-        },
-      } as ApolloContext)
+  const apolloDriverConfig: ApolloServerOptions<ApolloContext> =
+    await createApolloConfig(context)
 
-    const typeDefinitionStrings = (
-      await this.schemaGenerator.generateSchema(contextGenerator())
-    ).typeDefs
-    if (!Array.isArray(typeDefinitionStrings)) {
-      throw new Error('Unknown element')
-    }
+  const apolloServer = new ApolloServer<ApolloContext>({
+    ...apolloDriverConfig,
+  })
 
-    return {
-      ref: contextGenerator().getCurrentRef(),
-      data: typeDefinitionStrings.join('\n'),
-    }
+  const result = await apolloServer.executeOperation<TData, TVariables>(
+    request,
+    {
+      contextValue: context,
+    },
+  )
+
+  await apolloServer.stop()
+
+  return {
+    ref: context.getCurrentRef(),
+    data:
+      result.body.kind === 'single' ? result.body.singleResult.data : undefined,
+    errors:
+      result.body.kind === 'single'
+        ? result.body.singleResult.errors
+        : undefined,
+  }
+}
+
+export async function getSchema(
+  gitAdapter: GitAdapter,
+  ref: string,
+): Promise<SchemaResponse> {
+  let currentRef = await gitAdapter.getLatestCommitHash(ref)
+  const context: ApolloContext = {
+    branch: ref,
+    gitAdapter: gitAdapter,
+    getCurrentRef(): string {
+      return currentRef
+    },
+    setCurrentRef(refArg: string) {
+      currentRef = refArg
+    },
+  }
+
+  const typeDefinitionStrings = (await generateSchema(context)).typeDefs
+  if (!Array.isArray(typeDefinitionStrings)) {
+    throw new Error('Unknown element')
+  }
+
+  return {
+    ref: context.getCurrentRef(),
+    data: typeDefinitionStrings.join('\n'),
   }
 }
 

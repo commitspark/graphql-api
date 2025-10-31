@@ -1,0 +1,12 @@
+import { getTypeById } from '../../../persistence/persistence.service'
+import { GraphQLFieldResolver } from 'graphql'
+import { ApolloContext } from '../../../app/api.service'
+
+export const queryTypeByIdResolver: GraphQLFieldResolver<
+  any,
+  ApolloContext,
+  any,
+  Promise<string>
+> = async (source, args, context, info) => {
+  return getTypeById(context.gitAdapter, context.getCurrentRef(), args.id)
+}

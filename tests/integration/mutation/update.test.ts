@@ -5,7 +5,7 @@ import {
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
-import { getApiService } from '../../../src'
+import { createClient } from '../../../src'
 
 describe('"Update" mutation resolvers', () => {
   it('should update an entry', async () => {
@@ -76,8 +76,8 @@ type EntryA @Entry {
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedEntry])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient()
+    const result = await api.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -230,8 +230,8 @@ type SubType {
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedEntry])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient()
+    const result = await api.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -271,8 +271,8 @@ type EntryA @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient()
+    const result = await api.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -407,8 +407,8 @@ type Box @Entry {
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox1, updatedBox2, updatedItem1, item2])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient()
+    const result = await api.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!) {
         data: updateItem(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -515,8 +515,8 @@ type Box @Entry {
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox, updatedItem])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient()
+    const result = await api.postGraphQL(gitAdapter, gitRef, {
       query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!) {
         data: updateItem(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id

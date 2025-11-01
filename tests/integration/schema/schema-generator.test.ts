@@ -27,8 +27,8 @@ type NestedType {
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
 
-    const api = await createClient()
-    const result = await api.getSchema(gitAdapter, gitRef)
+    const api = await createClient(gitAdapter)
+    const result = await api.getSchema(gitRef)
 
     const expectedSchema = `directive @Entry on OBJECT
 
@@ -107,8 +107,8 @@ type EntryB @Entry {
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
 
-    const api = await createClient()
-    const result = await api.getSchema(gitAdapter, gitRef)
+    const api = await createClient(gitAdapter)
+    const result = await api.getSchema(gitRef)
 
     const expectedSchema = `directive @Entry on OBJECT
 
@@ -203,8 +203,8 @@ type EntryB @Entry {
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
 
-    const api = await createClient()
-    const result = await api.getSchema(gitAdapter, gitRef)
+    const api = await createClient(gitAdapter)
+    const result = await api.getSchema(gitRef)
 
     const expectedSchema = `directive @Entry on OBJECT
 
@@ -322,8 +322,8 @@ type TypeB {
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
 
-    const api = await createClient()
-    const result = await api.getSchema(gitAdapter, gitRef)
+    const api = await createClient(gitAdapter)
+    const result = await api.getSchema(gitRef)
 
     const expectedSchema = `directive @Entry on OBJECT
 

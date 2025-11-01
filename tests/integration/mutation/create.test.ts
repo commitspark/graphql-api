@@ -63,8 +63,8 @@ type EntryA @Entry {
       .calledWith(postCommitHash)
       .mockResolvedValue([newEntry])
 
-    const api = await createClient()
-    const result = await api.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient(gitAdapter)
+    const result = await api.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -322,8 +322,8 @@ type CircularReferenceEntry @Entry {
         existingCircularReference2Entry,
       ])
 
-    const api = await createClient()
-    const result = await api.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient(gitAdapter)
+    const result = await api.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -376,8 +376,8 @@ type EntryB @Entry {
       .calledWith(commitHash)
       .mockResolvedValue(existingEntries)
 
-    const api = await createClient()
-    const result = await api.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient(gitAdapter)
+    const result = await api.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -434,8 +434,8 @@ type OtherEntry @Entry {
       .calledWith(commitHash)
       .mockResolvedValue(existingEntries)
 
-    const api = await createClient()
-    const result = await api.postGraphQL(gitAdapter, gitRef, {
+    const api = await createClient(gitAdapter)
+    const result = await api.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id

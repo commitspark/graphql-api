@@ -12,18 +12,23 @@ import {
   GraphQLRequest,
 } from '@apollo/server'
 
-type VariableValues = { [name: string]: any }
+export type VariableValues = { [name: string]: unknown }
 
-export async function postGraphQL<
+export type ApolloExecuteOperationRequest<
+  TData = Record<string, unknown>,
+  TVariables extends VariableValues = VariableValues,
+> = Omit<GraphQLRequest<TVariables>, 'query'> & {
+  query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
+}
+
+export const postGraphQL = async <
   TData = Record<string, unknown>,
   TVariables extends VariableValues = VariableValues,
 >(
   gitAdapter: GitAdapter,
   ref: string,
-  request: Omit<GraphQLRequest<TVariables>, 'query'> & {
-    query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
-  },
-): Promise<GraphQLResponse<TData | null>> {
+  request: ApolloExecuteOperationRequest<TData, TVariables>,
+): Promise<GraphQLResponse<TData | null>> => {
   let currentRef = await gitAdapter.getLatestCommitHash(ref)
   const context: ApolloContext = {
     branch: ref,
@@ -63,10 +68,10 @@ export async function postGraphQL<
   }
 }
 
-export async function getSchema(
+export const getSchema = async (
   gitAdapter: GitAdapter,
   ref: string,
-): Promise<SchemaResponse> {
+): Promise<SchemaResponse> => {
   let currentRef = await gitAdapter.getLatestCommitHash(ref)
   const context: ApolloContext = {
     branch: ref,

@@ -1,6 +1,6 @@
 import { getTypeById } from '../../../persistence/persistence.service'
 import { GraphQLFieldResolver } from 'graphql'
-import { ApolloContext } from '../../../app/api.service'
+import { ApolloContext } from '../../../app/client'
 
 export const queryTypeByIdResolver: GraphQLFieldResolver<
   any,

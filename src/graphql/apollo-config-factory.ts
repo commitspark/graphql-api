@@ -1,6 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { generateSchema } from './schema-generator'
-import { ApolloContext } from '../app/api.service'
+import { ApolloContext } from '../app/client'
 import { ApolloServerOptions } from '@apollo/server'
 import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
 

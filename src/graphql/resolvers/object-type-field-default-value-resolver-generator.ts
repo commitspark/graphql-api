@@ -12,7 +12,7 @@ import {
 import { EntryData } from '@commitspark/git-adapter'
 import { ResolvedEntryData } from './field-resolvers/types'
 import { resolveFieldDefaultValue } from './field-resolvers/field-default-value-resolver'
-import { ApolloContext } from '../../app/api.service'
+import { ApolloContext } from '../../app/client'
 
 function requiresCustomDefaultValueResolver(type: GraphQLOutputType): boolean {
   if (isNonNullType(type)) {

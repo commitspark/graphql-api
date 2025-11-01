@@ -7,7 +7,7 @@ import {
   isObjectType,
   isUnionType,
 } from 'graphql'
-import { ApolloContext } from '../../app/api.service'
+import { ApolloContext } from '../../app/client'
 import { getTypeById } from '../../persistence/persistence.service'
 import {
   getUnionTypeNameFromFieldValue,
@@ -101,7 +101,13 @@ export async function getReferencedEntryIds(
   data: any,
 ): Promise<string[]> {
   if (isNonNullType(type)) {
-    return getReferencedEntryIds(rootType, context, fieldName, type.ofType, data)
+    return getReferencedEntryIds(
+      rootType,
+      context,
+      fieldName,
+      type.ofType,
+      data,
+    )
   } else if (isListType(type)) {
     let referencedEntryIds: string[] = []
     for (const element of data) {

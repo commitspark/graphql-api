@@ -66,7 +66,7 @@ type Payload {
 }
 ```
 
-At runtime, when sending a GraphQL request to Commitspark, these are the queries, mutations and helper types that are
+At runtime, when sending a GraphQL request to Commitspark, these are the queries, mutations, and helper types that are
 added by Commitspark to your schema for the duration of request execution:
 
 ```graphql
@@ -108,7 +108,7 @@ import {
     createAdapter,
     GitHubRepositoryOptions,
 } from '@commitspark/git-adapter-github'
-import {getClient} from '@commitspark/graphql-api'
+import { createClient } from '@commitspark/graphql-api'
 
 const gitHubAdapter = createAdapter()
 await gitHubAdapter.setRepositoryOptions({
@@ -117,10 +117,9 @@ await gitHubAdapter.setRepositoryOptions({
     accessToken: process.env.GITHUB_ACCESS_TOKEN,
 } as GitHubRepositoryOptions)
 
-const client = await getClient()
+const client = await createClient(gitHubAdapter)
 
 const response = await client.postGraphQL(
-    gitHubAdapter,
     process.env.GIT_BRANCH ?? 'main',
     {
         query: `query ($rocketFlightId: ID!) {

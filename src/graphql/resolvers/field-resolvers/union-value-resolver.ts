@@ -5,7 +5,7 @@ import {
   getUnionValue,
 } from '../../schema-utils/union-type-util'
 
-export const resolveUnionValue: FieldResolver<any> = (
+export const resolveUnionValue: FieldResolver<any> = async (
   fieldValue: any,
 ): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> => {
   const typeName = getUnionTypeNameFromFieldValue(fieldValue)

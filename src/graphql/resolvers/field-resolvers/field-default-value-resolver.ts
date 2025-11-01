@@ -16,7 +16,7 @@ import {
 import { resolveEntryReference } from './entry-reference-resolver'
 import { resolveUnionValue } from './union-value-resolver'
 
-export const resolveFieldDefaultValue: FieldResolver<any> = (
+export const resolveFieldDefaultValue: FieldResolver<any> = async (
   fieldValue: any,
   args: any,
   context: FieldResolverContext,

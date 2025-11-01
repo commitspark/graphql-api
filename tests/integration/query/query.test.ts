@@ -61,8 +61,8 @@ type EntryB @Entry {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: EntryB(id:"${entryBId}") {
+      query: `query ($entryId: ID!) {
+        data: EntryB(id: $entryId) {
           id
           entryA {
             id
@@ -74,6 +74,9 @@ type EntryB @Entry {
           }
         }
       }`,
+      variables: {
+        entryId: entryBId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -147,8 +150,8 @@ type TypeB {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           union {
             __typename
@@ -158,6 +161,9 @@ type TypeB {
           }
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -220,14 +226,17 @@ type TypeB {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           union {
             __typename
           }
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -287,14 +296,17 @@ type TypeB {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           union {
             __typename
           }
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -397,8 +409,8 @@ type EntryB @Entry {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${myEntryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           union {
             __typename
@@ -444,6 +456,9 @@ type EntryB @Entry {
           }
         }
       }`,
+      variables: {
+        entryId: myEntryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -532,8 +547,8 @@ type NestedType {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           oldField
           newField
@@ -542,6 +557,9 @@ type NestedType {
           }
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -601,8 +619,8 @@ type NestedType {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           oldField
           newNestedTypeArrayField {
@@ -613,6 +631,9 @@ type NestedType {
           }
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -668,8 +689,8 @@ type NestedType {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           oldField
           newNestedTypeField {
@@ -677,6 +698,9 @@ type NestedType {
           }
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toHaveLength(1)
@@ -726,13 +750,16 @@ enum EnumType {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           oldField
           newEnumField
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()
@@ -787,13 +814,16 @@ enum EnumType {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           oldField
           newEnumField
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toHaveLength(1)
@@ -850,8 +880,8 @@ type TypeB {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
           oldField
           newUnionField {
@@ -859,6 +889,9 @@ type TypeB {
           }
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toHaveLength(1)
@@ -897,11 +930,14 @@ type MyEntry @Entry {
 
     const api = await createClient(gitAdapter)
     const result = await api.postGraphQL(gitRef, {
-      query: `query {
-        data: MyEntry(id:"${entryId}") {
+      query: `query ($entryId: ID!) {
+        data: MyEntry(id: $entryId) {
           id
         }
       }`,
+      variables: {
+        entryId: entryId,
+      },
     })
 
     expect(result.errors).toBeUndefined()

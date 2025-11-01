@@ -59,8 +59,8 @@ type EntryB @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: EntryB(id: $entryId) {
           id
@@ -148,8 +148,8 @@ type TypeB {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -224,8 +224,8 @@ type TypeB {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -294,8 +294,8 @@ type TypeB {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -407,8 +407,8 @@ type EntryB @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -545,8 +545,8 @@ type NestedType {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -617,8 +617,8 @@ type NestedType {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -687,8 +687,8 @@ type NestedType {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -748,8 +748,8 @@ enum EnumType {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -812,8 +812,8 @@ enum EnumType {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -878,8 +878,8 @@ type TypeB {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id
@@ -928,8 +928,8 @@ type MyEntry @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `query ($entryId: ID!) {
         data: MyEntry(id: $entryId) {
           id

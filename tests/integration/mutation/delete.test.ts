@@ -63,8 +63,8 @@ type EntryA @Entry {
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteEntryA(id: $id, commitMessage: $commitMessage)
       }`,
@@ -103,8 +103,8 @@ type EntryA @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteEntryA(id: $id, commitMessage: $commitMessage)
       }`,
@@ -169,8 +169,8 @@ type EntryB @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteEntryB(id: $id, commitMessage: $commitMessage)
       }`,
@@ -274,8 +274,8 @@ type Box @Entry {
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox, item2])
 
-    const api = await createClient(gitAdapter)
-    const result = await api.postGraphQL(gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteItem(id: $id, commitMessage: $commitMessage)
       }`,

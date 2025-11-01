@@ -1,5 +1,5 @@
 import { EntryData } from '@commitspark/git-adapter'
-import { findByTypeId } from '../../../persistence/persistence.service'
+import { findByTypeId } from '../../../persistence/persistence'
 import { GraphQLFieldResolver } from 'graphql'
 import { QueryMutationResolverContext } from '../types'
 

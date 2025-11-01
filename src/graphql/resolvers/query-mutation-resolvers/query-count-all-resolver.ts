@@ -1,4 +1,4 @@
-import { findByType } from '../../../persistence/persistence.service'
+import { findByType } from '../../../persistence/persistence'
 import { GraphQLFieldResolver } from 'graphql'
 import { TypeCount } from '../../queries-mutations-generator'
 import { QueryMutationResolverContext } from '../types'

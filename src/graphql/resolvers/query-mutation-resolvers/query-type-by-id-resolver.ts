@@ -1,4 +1,4 @@
-import { getTypeById } from '../../../persistence/persistence.service'
+import { getTypeById } from '../../../persistence/persistence'
 import { GraphQLFieldResolver } from 'graphql'
 import { ApolloContext } from '../../../client'
 

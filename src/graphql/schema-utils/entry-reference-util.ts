@@ -8,7 +8,7 @@ import {
   isUnionType,
 } from 'graphql'
 import { ApolloContext } from '../../client'
-import { getTypeById } from '../../persistence/persistence.service'
+import { getTypeById } from '../../persistence/persistence'
 import {
   getUnionTypeNameFromFieldValue,
   getUnionValue,

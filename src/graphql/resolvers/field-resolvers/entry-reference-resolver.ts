@@ -1,6 +1,6 @@
 import { FieldResolver, FieldResolverContext } from './types'
 import { GraphQLResolveInfo, isNamedType } from 'graphql'
-import { findById } from '../../../persistence/persistence.service'
+import { findById } from '../../../persistence/persistence'
 
 export const resolveEntryReference: FieldResolver<any> = async (
   fieldValue: any,

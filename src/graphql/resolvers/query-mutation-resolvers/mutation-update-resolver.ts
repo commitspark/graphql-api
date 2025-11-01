@@ -1,7 +1,4 @@
-import {
-  findById,
-  findByTypeId,
-} from '../../../persistence/persistence.service'
+import { findById, findByTypeId } from '../../../persistence/persistence'
 import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util'
 import { GraphQLFieldResolver, isObjectType } from 'graphql'
 import { EntryData, EntryDraft } from '@commitspark/git-adapter'

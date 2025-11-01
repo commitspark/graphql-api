@@ -1,5 +1,5 @@
-import { createApolloConfig } from '../graphql/apollo-config-factory'
-import { generateSchema } from '../graphql/schema-generator'
+import { createApolloConfig } from './graphql/apollo-config-factory'
+import { generateSchema } from './graphql/schema-generator'
 import {
   DocumentNode,
   GraphQLFormattedError,

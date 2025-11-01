@@ -1,4 +1,4 @@
-import { ApolloContext } from '../../app/client'
+import { ApolloContext } from '../../client'
 import { GraphQLNamedType } from 'graphql/type'
 import { GraphQLFieldResolver } from 'graphql'
 

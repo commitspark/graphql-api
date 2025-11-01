@@ -1,5 +1,5 @@
 import { EntryData } from '@commitspark/git-adapter'
-import { ApolloContext } from '../app/client'
+import { ApolloContext } from '../client'
 import { GraphQLFieldResolver, GraphQLObjectType } from 'graphql'
 import { queryAllResolver } from './resolvers/query-mutation-resolvers/query-all-resolver'
 import { queryByIdResolver } from './resolvers/query-mutation-resolvers/query-by-id-resolver'

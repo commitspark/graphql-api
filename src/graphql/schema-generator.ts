@@ -15,7 +15,7 @@ import {
 import { generateSchemaRootTypeStrings } from './schema-root-type-generator'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver'
-import { ApolloContext } from '../app/client'
+import { ApolloContext } from '../client'
 import { GraphQLFieldResolver, GraphQLTypeResolver } from 'graphql'
 import { getValidationResult } from './schema-validator'
 import { EntryData } from '@commitspark/git-adapter'

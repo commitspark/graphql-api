@@ -5,7 +5,7 @@ import {
   postGraphQL,
   SchemaResponse,
   VariableValues,
-} from './app/client'
+} from './client'
 import { GitAdapter } from '@commitspark/git-adapter'
 
 interface Client {

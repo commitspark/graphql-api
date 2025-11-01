@@ -1,4 +1,4 @@
-import { ApolloContext } from '../../../app/client'
+import { ApolloContext } from '../../../client'
 import { getTypeById } from '../../../persistence/persistence.service'
 import { GraphQLTypeResolver } from 'graphql'
 import { buildsOnTypeWithEntryDirective } from '../../schema-utils/entry-type-util'

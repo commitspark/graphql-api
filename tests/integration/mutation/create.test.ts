@@ -5,7 +5,7 @@ import {
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
-import { getApiService } from '../../../src'
+import { createClient } from '../../../src'
 
 describe('"Create" mutation resolvers', () => {
   it('should create an entry', async () => {
@@ -63,8 +63,8 @@ type EntryA @Entry {
       .calledWith(postCommitHash)
       .mockResolvedValue([newEntry])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -322,8 +322,8 @@ type CircularReferenceEntry @Entry {
         existingCircularReference2Entry,
       ])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -376,8 +376,8 @@ type EntryB @Entry {
       .calledWith(commitHash)
       .mockResolvedValue(existingEntries)
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id
@@ -434,8 +434,8 @@ type OtherEntry @Entry {
       .calledWith(commitHash)
       .mockResolvedValue(existingEntries)
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
         data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
           id

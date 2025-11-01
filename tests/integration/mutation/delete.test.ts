@@ -5,7 +5,7 @@ import {
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
-import { getApiService } from '../../../src'
+import { createClient } from '../../../src'
 
 describe('"Delete" mutation resolvers', () => {
   it('should delete an entry', async () => {
@@ -63,8 +63,8 @@ type EntryA @Entry {
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteEntryA(id: $id, commitMessage: $commitMessage)
       }`,
@@ -103,8 +103,8 @@ type EntryA @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteEntryA(id: $id, commitMessage: $commitMessage)
       }`,
@@ -169,8 +169,8 @@ type EntryB @Entry {
       .mockResolvedValue(originalSchema)
     gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteEntryB(id: $id, commitMessage: $commitMessage)
       }`,
@@ -274,8 +274,8 @@ type Box @Entry {
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox, item2])
 
-    const apiService = await getApiService()
-    const result = await apiService.postGraphQL(gitAdapter, gitRef, {
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
       query: `mutation ($id: ID!, $commitMessage: String!) {
         data: deleteItem(id: $id, commitMessage: $commitMessage)
       }`,

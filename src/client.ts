@@ -86,7 +86,7 @@ export const getSchema = async (
 
   const typeDefinitionStrings = (await generateSchema(context)).typeDefs
   if (!Array.isArray(typeDefinitionStrings)) {
-    throw new Error('Unknown element')
+    throw new Error('Expected array of typeDefinition strings.')
   }
 
   return {

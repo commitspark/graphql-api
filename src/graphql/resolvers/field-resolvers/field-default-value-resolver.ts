@@ -15,6 +15,7 @@ import {
 } from '../../schema-utils/entry-type-util'
 import { resolveEntryReference } from './entry-reference-resolver'
 import { resolveUnionValue } from './union-value-resolver'
+import { createError, ErrorCode } from '../../errors'
 
 export const resolveFieldDefaultValue: FieldResolver<any> = async (
   fieldValue: any,
@@ -44,8 +45,13 @@ export const resolveFieldDefaultValue: FieldResolver<any> = async (
     }
 
     if (!Array.isArray(fieldValue)) {
-      throw new Error(
+      throw createError(
         `Expected array while resolving value for field "${info.fieldName}".`,
+        ErrorCode.SCHEMA_DATA_MISMATCH,
+        {
+          fieldName: info.fieldName,
+          fieldValue: fieldValue,
+        },
       )
     }
 
@@ -68,12 +74,17 @@ export const resolveFieldDefaultValue: FieldResolver<any> = async (
   } else if (isUnionType(context.currentType)) {
     if (fieldValue === undefined || fieldValue === null) {
       if (context.hasNonNullParent) {
-        throw new Error(
+        throw createError(
           `Cannot generate a default value for NonNull field "${
             info.parentType.name
           }.${info.fieldName}" because it is a union field of type "${
             (info.returnType as GraphQLNonNull<GraphQLUnionType>).ofType.name
-          }".`,
+          }". Set a value in your repository data or remove the NonNull declaration in your schema.`,
+          ErrorCode.BAD_REPOSITORY_DATA,
+          {
+            typeName: info.parentType.name,
+            fieldName: info.fieldName,
+          },
         )
       } else {
         return new Promise((resolve) => resolve(null))
@@ -88,8 +99,15 @@ export const resolveFieldDefaultValue: FieldResolver<any> = async (
   } else if (isObjectType(context.currentType)) {
     if (fieldValue === undefined || fieldValue === null) {
       if (context.hasNonNullParent) {
-        throw new Error(
-          `Cannot generate a default value for NonNull field "${info.fieldName}" of type "${info.parentType.name}".`,
+        throw createError(
+          `Cannot generate a default value for NonNull field "${info.fieldName}" of type ` +
+            `"${info.parentType.name}". Set a value in your repository data or remove the NonNull ` +
+            `declaration in your schema.`,
+          ErrorCode.BAD_REPOSITORY_DATA,
+          {
+            typeName: info.parentType.name,
+            fieldName: info.fieldName,
+          },
         )
       } else {
         return new Promise((resolve) => resolve(null))

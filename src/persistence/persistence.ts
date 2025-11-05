@@ -1,5 +1,5 @@
 import { Entry, GitAdapter } from '@commitspark/git-adapter'
-import { GraphQLError } from 'graphql'
+import { createError, ErrorCode } from '../graphql/errors'
 
 export async function getTypeById(
   gitAdapter: GitAdapter,
@@ -9,10 +9,9 @@ export async function getTypeById(
   const allEntries = await gitAdapter.getEntries(commitHash)
   const requestedEntry = allEntries.find((entry: Entry) => entry.id === id)
   if (requestedEntry === undefined) {
-    throw new GraphQLError(`Not found: ${id}`, {
-      extensions: {
-        code: 'NOT_FOUND',
-      },
+    throw createError(`No entry with id "${id}" exists.`, ErrorCode.NOT_FOUND, {
+      argumentName: 'id',
+      argumentValue: id,
     })
   }
 
@@ -27,10 +26,9 @@ export async function findById(
   const allEntries = await gitAdapter.getEntries(commitHash)
   const requestedEntry = allEntries.find((entry: Entry) => entry.id === id)
   if (requestedEntry === undefined) {
-    throw new GraphQLError(`Not found: ${id}`, {
-      extensions: {
-        code: 'NOT_FOUND',
-      },
+    throw createError(`No entry with id "${id}" exists.`, ErrorCode.NOT_FOUND, {
+      argumentName: 'id',
+      argumentValue: id,
     })
   }
 
@@ -57,13 +55,13 @@ export async function findByTypeId(
     (entry: Entry) => entry.id === id && entry.metadata.type === type,
   )
   if (requestedEntry === undefined) {
-    throw new GraphQLError(
-      `No entry of type "${type}" with id "${id}" exists`,
+    throw createError(
+      `No entry of type "${type}" with id "${id}" exists.`,
+      ErrorCode.NOT_FOUND,
       {
-        extensions: {
-          code: 'BAD_USER_INPUT',
-          argumentName: 'id',
-        },
+        typeName: type,
+        argumentName: 'id',
+        argumentValue: id,
       },
     )
   }

@@ -1,5 +1,4 @@
 import {
-  GraphQLError,
   GraphQLNullableType,
   GraphQLObjectType,
   isListType,
@@ -14,6 +13,7 @@ import {
   getUnionValue,
 } from './union-type-util'
 import { hasEntryDirective, isUnionOfEntryTypes } from './entry-type-util'
+import { createError, ErrorCode } from '../errors'
 
 function isPermittedReferenceType(
   referencedTypeName: string,
@@ -45,7 +45,14 @@ async function validateReference(
     return
   } else if (isListType(fieldType)) {
     if (!Array.isArray(fieldValue)) {
-      throw new Error(`Expected array value in field "${fieldName}"`)
+      throw createError(
+        `Expected array while validation references for field "${fieldName}".`,
+        ErrorCode.SCHEMA_DATA_MISMATCH,
+        {
+          fieldName: fieldName,
+          fieldValue: fieldValue,
+        },
+      )
     }
     for (const fieldListElement of fieldValue) {
       await validateReference(
@@ -58,7 +65,14 @@ async function validateReference(
     return
   } else if (isUnionType(fieldType) || isObjectType(fieldType)) {
     if (!('id' in fieldValue)) {
-      throw new Error('Expected key "id"')
+      throw createError(
+        `Expected key "id" in data while validating reference for field "${fieldName}".`,
+        ErrorCode.SCHEMA_DATA_MISMATCH,
+        {
+          fieldName: fieldName,
+          fieldValue: fieldValue,
+        },
+      )
     }
     const referencedId = fieldValue.id
     let referencedTypeName
@@ -69,24 +83,22 @@ async function validateReference(
         referencedId,
       )
     } catch (error) {
-      throw new GraphQLError(
-        `Reference with id "${referencedId}" points to non-existing entry`,
+      throw createError(
+        `Failed to resolve entry reference "${referencedId}".`,
+        ErrorCode.BAD_USER_INPUT,
         {
-          extensions: {
-            code: 'BAD_USER_INPUT',
-            fieldName: fieldName,
-          },
+          fieldName: fieldName,
+          fieldValue: referencedId,
         },
       )
     }
     if (!isPermittedReferenceType(referencedTypeName, fieldType)) {
-      throw new GraphQLError(
-        `Reference with id "${referencedId}" points to entry of incompatible type`,
+      throw createError(
+        `Reference with ID "${referencedId}" points to entry of incompatible type "${referencedTypeName}".`,
+        ErrorCode.BAD_USER_INPUT,
         {
-          extensions: {
-            code: 'BAD_USER_INPUT',
-            fieldName: fieldName,
-          },
+          fieldName: fieldName,
+          fieldValue: referencedId,
         },
       )
     }
@@ -131,13 +143,23 @@ export async function getReferencedEntryIds(
       return [data.id]
     }
 
-    const unionTypeName = getUnionTypeNameFromFieldValue(data)
-    const unionType = type
+    const requestedUnionTypeName = getUnionTypeNameFromFieldValue(data)
+    const concreteFieldUnionType = type
       .getTypes()
-      .find((type) => type.name === unionTypeName)
-    if (!unionType) {
-      throw new Error(
-        `Type "${unionTypeName}" found in field data is not a valid type for union type "${type.name}".`,
+      .find(
+        (concreteFieldType) =>
+          concreteFieldType.name === requestedUnionTypeName,
+      )
+    if (!concreteFieldUnionType) {
+      throw createError(
+        `Type "${requestedUnionTypeName}" found in field data is not a valid type for ` +
+          `union type "${type.name}".`,
+        ErrorCode.BAD_REPOSITORY_DATA,
+        {
+          typeName: type.name,
+          fieldName: fieldName ? fieldName : undefined,
+          fieldValue: data,
+        },
       )
     }
     const unionValue = getUnionValue(data)
@@ -145,7 +167,7 @@ export async function getReferencedEntryIds(
       rootType,
       context,
       fieldName,
-      unionType,
+      concreteFieldUnionType,
       unionValue,
     )
   } else if (isObjectType(type)) {

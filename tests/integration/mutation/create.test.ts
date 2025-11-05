@@ -391,7 +391,15 @@ type EntryB @Entry {
     })
 
     expect(result.errors).toMatchObject([
-      { extensions: { fieldName: 'reference', code: 'BAD_USER_INPUT' } },
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: {
+            fieldName: 'reference',
+            fieldValue: 'someUnknownId',
+          },
+        },
+      },
     ])
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
@@ -449,7 +457,15 @@ type OtherEntry @Entry {
     })
 
     expect(result.errors).toMatchObject([
-      { extensions: { fieldName: 'reference', code: 'BAD_USER_INPUT' } },
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: {
+            fieldName: 'reference',
+            fieldValue: 'otherEntryId',
+          },
+        },
+      },
     ])
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)

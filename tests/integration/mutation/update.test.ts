@@ -432,7 +432,7 @@ type Box @Entry {
     expect(result.ref).toBe(postCommitHash)
   })
 
-  it('should not add more than one reference in metadata of other entries when updating an entry', async () => {
+  it('should not add more than one reference in metadata of referenced entries when setting a second reference from an entry already having a reference in place', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'
@@ -470,6 +470,7 @@ type Box @Entry {
       },
       data: {
         box: { id: boxId },
+        // boxAlias is intentionally not referencing anything
       },
     }
     const updatedItem: Entry = {
@@ -479,14 +480,14 @@ type Box @Entry {
       },
       data: {
         box: { id: boxId },
-        boxAlias: { id: boxId },
+        boxAlias: { id: boxId }, // now reference same box as `box` field
       },
     }
     const updatedBox: Entry = {
       id: boxId,
       metadata: {
         type: 'Box',
-        referencedBy: [itemId],
+        referencedBy: [itemId], // expect a single record per incoming reference
       },
     }
 
@@ -514,6 +515,135 @@ type Box @Entry {
     gitAdapter.getEntries
       .calledWith(postCommitHash)
       .mockResolvedValue([updatedBox, updatedItem])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!) {
+        data: updateItem(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: itemId,
+        mutationData: {
+          boxAlias: { id: boxId },
+        },
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: itemId,
+      },
+    })
+    expect(result.ref).toBe(postCommitHash)
+  })
+
+  it('should not add more than one reference in metadata of referenced entries when changing an entry having two different references to now reference the same entry twice', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type Item @Entry {
+    id: ID!
+    box: Box
+    boxAlias: Box
+}
+
+type Box @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const boxId = 'box'
+    const otherBoxId = 'otherBox'
+    const itemId = 'item'
+    const postCommitHash = 'ef01'
+
+    const commitResult: Commit = {
+      ref: postCommitHash,
+    }
+    const box: Entry = {
+      id: boxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: [itemId],
+      },
+    }
+    const otherBox: Entry = {
+      id: otherBoxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: [itemId],
+      },
+    }
+    const item: Entry = {
+      id: itemId,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: boxId },
+        boxAlias: { id: otherBoxId },
+      },
+    }
+    const updatedItem: Entry = {
+      id: itemId,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: boxId },
+        boxAlias: { id: boxId },
+      },
+    }
+    const updatedBox: Entry = {
+      id: boxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: [itemId], // expect a single record per incoming reference
+      },
+    }
+    const updatedOtherBox: Entry = {
+      id: otherBoxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: [], // no longer referenced
+      },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      entries: [
+        { ...updatedItem, deletion: false },
+        { ...updatedOtherBox, deletion: false },
+      ],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getEntries
+      .calledWith(commitHash)
+      .mockResolvedValue([box, otherBox, item])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([updatedBox, updatedOtherBox, updatedItem])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {

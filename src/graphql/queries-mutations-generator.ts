@@ -6,7 +6,6 @@ import { queryByIdResolver } from './resolvers/query-mutation-resolvers/query-by
 import { mutationCreateResolver } from './resolvers/query-mutation-resolvers/mutation-create-resolver'
 import { mutationUpdateResolver } from './resolvers/query-mutation-resolvers/mutation-update-resolver'
 import { mutationDeleteResolver } from './resolvers/query-mutation-resolvers/mutation-delete-resolver'
-import { queryCountAllResolver } from './resolvers/query-mutation-resolvers/query-count-all-resolver'
 import { queryTypeByIdResolver } from './resolvers/query-mutation-resolvers/query-type-by-id-resolver'
 import { QueryMutationResolver } from './resolvers/types'
 
@@ -25,21 +24,6 @@ export function generateQueriesAndMutations(
       Promise<EntryData[]>
     > = (source, args, context, info) =>
       queryAllResolver(source, args, { ...context, type: objectType }, info)
-
-    const queryAllMetaName = `_${queryAllName}Meta`
-    const queryAllMetaString = `${queryAllMetaName}: ListMetadata`
-    const queryAllMetaResolverFunc: QueryMutationResolver<TypeCount> = (
-      source,
-      args,
-      context,
-      info,
-    ) =>
-      queryCountAllResolver(
-        source,
-        args,
-        { ...context, type: objectType },
-        info,
-      )
 
     const queryByIdName = typeName
     const queryByIdString = `${queryByIdName}(id: ID!): ${objectType.name}`
@@ -102,11 +86,6 @@ export function generateQueriesAndMutations(
         schemaString: queryAllString,
         resolver: queryAllResolverFunc,
       },
-      queryAllMeta: {
-        name: queryAllMetaName,
-        schemaString: queryAllMetaString,
-        resolver: queryAllMetaResolverFunc,
-      },
       queryById: {
         name: queryByIdName,
         schemaString: queryByIdString,
@@ -144,7 +123,6 @@ export function generateTypeNameQuery(): GeneratedQuery<Promise<string>> {
 
 export interface GeneratedSchema {
   queryAll: GeneratedQuery<Promise<EntryData[]>>
-  queryAllMeta: GeneratedQuery<Promise<TypeCount>>
   queryById: GeneratedQuery<Promise<EntryData>>
   createMutation: GeneratedQuery<Promise<EntryData>>
   updateMutation: GeneratedQuery<Promise<EntryData>>
@@ -155,8 +133,4 @@ export interface GeneratedQuery<T> {
   name: string
   schemaString: string
   resolver: GraphQLFieldResolver<any, ApolloContext, any, T>
-}
-
-export type TypeCount = {
-  count: number
 }

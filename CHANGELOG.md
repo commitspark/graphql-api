@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor implementation to drop dependency injection pattern
 - Rename main entry point `getApiService()` to `createClient()` to better match purpose
 - Move `gitAdapter` argument into `createClient()`
+- Remove query `_all...Meta` in favor of future pagination support
 
 ## [0.90.0] - 2025-09-07
 

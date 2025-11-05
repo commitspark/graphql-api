@@ -51,7 +51,6 @@ schema {
 
 type Query {
   allMyEntrys: [MyEntry!]
-  _allMyEntrysMeta: ListMetadata
   MyEntry(id: ID!): MyEntry
   _typeName(id: ID!): String!
 }
@@ -60,10 +59,6 @@ type Mutation {
   createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
   updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
   deleteMyEntry(id: ID!, commitMessage: String): ID
-}
-
-type ListMetadata {
-  count: Int!
 }
 
 input MyEntryIdInput {
@@ -130,8 +125,6 @@ schema {
 type Query {
   allEntryAs: [EntryA!]
   allEntryBs: [EntryB!]
-  _allEntryAsMeta: ListMetadata
-  _allEntryBsMeta: ListMetadata
   EntryA(id: ID!): EntryA
   EntryB(id: ID!): EntryB
   _typeName(id: ID!): String!
@@ -144,10 +137,6 @@ type Mutation {
   updateEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
   deleteEntryA(id: ID!, commitMessage: String): ID
   deleteEntryB(id: ID!, commitMessage: String): ID
-}
-
-type ListMetadata {
-  count: Int!
 }
 
 input EntryAIdInput {
@@ -234,9 +223,6 @@ type Query {
   allMyEntrys: [MyEntry!]
   allEntryAs: [EntryA!]
   allEntryBs: [EntryB!]
-  _allMyEntrysMeta: ListMetadata
-  _allEntryAsMeta: ListMetadata
-  _allEntryBsMeta: ListMetadata
   MyEntry(id: ID!): MyEntry
   EntryA(id: ID!): EntryA
   EntryB(id: ID!): EntryB
@@ -253,10 +239,6 @@ type Mutation {
   deleteMyEntry(id: ID!, commitMessage: String): ID
   deleteEntryA(id: ID!, commitMessage: String): ID
   deleteEntryB(id: ID!, commitMessage: String): ID
-}
-
-type ListMetadata {
-  count: Int!
 }
 
 input MyEntryIdInput {
@@ -349,7 +331,6 @@ schema {
 
 type Query {
   allMyEntrys: [MyEntry!]
-  _allMyEntrysMeta: ListMetadata
   MyEntry(id: ID!): MyEntry
   _typeName(id: ID!): String!
 }
@@ -358,10 +339,6 @@ type Mutation {
   createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
   updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
   deleteMyEntry(id: ID!, commitMessage: String): ID
-}
-
-type ListMetadata {
-  count: Int!
 }
 
 input MyEntryIdInput {

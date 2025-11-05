@@ -73,13 +73,12 @@ export async function generateSchema(
     generatedTypeNameQuery,
   )
 
-  const generatedSchemaString =
-    'schema {\n  query: Query\n  mutation: Mutation\n}\n\n' +
-    generatedSchemaRootTypeStrings +
-    '\n' +
-    'type ListMetadata {\n' +
-    '  count: Int!\n' +
-    '}\n'
+  const generatedSchemaString = `schema {
+  query: Query
+  mutation: Mutation
+}
+
+${generatedSchemaRootTypeStrings}`
 
   const generatedUnionTypeResolvers: Record<string, UnionTypeResolver> = {}
   for (const unionType of schemaAnalyzerResult.unionTypes) {
@@ -101,8 +100,6 @@ export async function generateSchema(
 
   for (const element of generatedQueriesMutations) {
     generatedQueryResolvers[element.queryAll.name] = element.queryAll.resolver
-    generatedQueryResolvers[element.queryAllMeta.name] =
-      element.queryAllMeta.resolver
     generatedQueryResolvers[element.queryById.name] = element.queryById.resolver
     generatedMutationResolvers[element.createMutation.name] =
       element.createMutation.resolver

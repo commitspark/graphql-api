@@ -11,10 +11,6 @@ export function generateSchemaRootTypeStrings(
       .join('\n') +
     '\n' +
     generatedSchemas
-      .map((generated) => '  ' + generated.queryAllMeta.schemaString)
-      .join('\n') +
-    '\n' +
-    generatedSchemas
       .map((generated) => '  ' + generated.queryById.schemaString)
       .join('\n') +
     '\n' +

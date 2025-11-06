@@ -1,7 +1,7 @@
 import { EntryData } from '@commitspark/git-adapter'
 import { ApolloContext } from '../client'
 import { GraphQLFieldResolver, GraphQLObjectType } from 'graphql'
-import { queryAllResolver } from './resolvers/query-mutation-resolvers/query-all-resolver'
+import { queryEveryResolver } from './resolvers/query-mutation-resolvers/query-every-resolver'
 import { queryByIdResolver } from './resolvers/query-mutation-resolvers/query-by-id-resolver'
 import { mutationCreateResolver } from './resolvers/query-mutation-resolvers/mutation-create-resolver'
 import { mutationUpdateResolver } from './resolvers/query-mutation-resolvers/mutation-update-resolver'
@@ -15,15 +15,17 @@ export function generateQueriesAndMutations(
   return entryDirectiveTypes.map((objectType): GeneratedSchema => {
     const typeName = objectType.name
 
-    const queryAllName = `all${typeName}s`
-    const queryAllString = `${queryAllName}: [${objectType.name}!]`
-    const queryAllResolverFunc: GraphQLFieldResolver<
+    // The semantics of `every` aren't a perfect replacement of `all` but this way we don't need to do non-trivial
+    // pluralization of user-provided typeName
+    const queryEveryName = `every${typeName}`
+    const queryEveryString = `${queryEveryName}: [${objectType.name}!]`
+    const queryEveryResolverFunc: GraphQLFieldResolver<
       any,
       ApolloContext,
       any,
       Promise<EntryData[]>
     > = (source, args, context, info) =>
-      queryAllResolver(source, args, { ...context, type: objectType }, info)
+      queryEveryResolver(source, args, { ...context, type: objectType }, info)
 
     const queryByIdName = typeName
     const queryByIdString = `${queryByIdName}(id: ID!): ${objectType.name}`
@@ -81,10 +83,10 @@ export function generateQueriesAndMutations(
       )
 
     return {
-      queryAll: {
-        name: queryAllName,
-        schemaString: queryAllString,
-        resolver: queryAllResolverFunc,
+      queryEvery: {
+        name: queryEveryName,
+        schemaString: queryEveryString,
+        resolver: queryEveryResolverFunc,
       },
       queryById: {
         name: queryByIdName,
@@ -122,7 +124,7 @@ export function generateTypeNameQuery(): GeneratedQuery<Promise<string>> {
 }
 
 export interface GeneratedSchema {
-  queryAll: GeneratedQuery<Promise<EntryData[]>>
+  queryEvery: GeneratedQuery<Promise<EntryData[]>>
   queryById: GeneratedQuery<Promise<EntryData>>
   createMutation: GeneratedQuery<Promise<EntryData>>
   updateMutation: GeneratedQuery<Promise<EntryData>>

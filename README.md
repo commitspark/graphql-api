@@ -76,7 +76,7 @@ schema {
 }
 
 type Query {
-    allRocketFlights: [RocketFlight!]
+    everyRocketFlight: [RocketFlight!]
     RocketFlight(id: ID!): RocketFlight
     _typeName(id: ID!): String
 }

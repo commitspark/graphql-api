@@ -50,7 +50,7 @@ schema {
 }
 
 type Query {
-  allMyEntrys: [MyEntry!]
+  everyMyEntry: [MyEntry!]
   MyEntry(id: ID!): MyEntry
   _typeName(id: ID!): String!
 }
@@ -123,8 +123,8 @@ schema {
 }
 
 type Query {
-  allEntryAs: [EntryA!]
-  allEntryBs: [EntryB!]
+  everyEntryA: [EntryA!]
+  everyEntryB: [EntryB!]
   EntryA(id: ID!): EntryA
   EntryB(id: ID!): EntryB
   _typeName(id: ID!): String!
@@ -220,9 +220,9 @@ schema {
 }
 
 type Query {
-  allMyEntrys: [MyEntry!]
-  allEntryAs: [EntryA!]
-  allEntryBs: [EntryB!]
+  everyMyEntry: [MyEntry!]
+  everyEntryA: [EntryA!]
+  everyEntryB: [EntryB!]
   MyEntry(id: ID!): MyEntry
   EntryA(id: ID!): EntryA
   EntryB(id: ID!): EntryB
@@ -330,7 +330,7 @@ schema {
 }
 
 type Query {
-  allMyEntrys: [MyEntry!]
+  everyMyEntry: [MyEntry!]
   MyEntry(id: ID!): MyEntry
   _typeName(id: ID!): String!
 }

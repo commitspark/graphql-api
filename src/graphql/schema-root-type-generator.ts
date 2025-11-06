@@ -7,7 +7,7 @@ export function generateSchemaRootTypeStrings(
   return (
     `type Query {\n` +
     generatedSchemas
-      .map((generated) => '  ' + generated.queryAll.schemaString)
+      .map((generated) => '  ' + generated.queryEvery.schemaString)
       .join('\n') +
     '\n' +
     generatedSchemas

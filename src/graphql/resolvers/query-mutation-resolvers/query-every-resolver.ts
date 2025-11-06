@@ -3,7 +3,7 @@ import { findByType } from '../../../persistence/persistence'
 import { GraphQLFieldResolver } from 'graphql'
 import { QueryMutationResolverContext } from '../types'
 
-export const queryAllResolver: GraphQLFieldResolver<
+export const queryEveryResolver: GraphQLFieldResolver<
   any,
   QueryMutationResolverContext,
   any,

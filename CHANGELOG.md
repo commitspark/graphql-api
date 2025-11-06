@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Expose errors explicitly and with metadata
+- Rename generated `all...` queries to `every...` to avoid having to pluralize entry type names
 
 ## [1.0.0-beta.1] - 2025-11-05
 

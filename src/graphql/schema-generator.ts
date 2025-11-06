@@ -103,7 +103,8 @@ ${generatedSchemaRootTypeStrings}`
   > = {}
 
   for (const element of generatedQueriesMutations) {
-    generatedQueryResolvers[element.queryAll.name] = element.queryAll.resolver
+    generatedQueryResolvers[element.queryEvery.name] =
+      element.queryEvery.resolver
     generatedQueryResolvers[element.queryById.name] = element.queryById.resolver
     generatedMutationResolvers[element.createMutation.name] =
       element.createMutation.resolver

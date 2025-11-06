@@ -3,6 +3,152 @@ import { mock } from 'jest-mock-extended'
 import { createClient } from '../../../src'
 
 describe('Query resolvers', () => {
+  it('should return every entry', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+}
+
+type EntryB @Entry {
+    id: ID!
+}`
+
+    const entryA1Id = 'A1'
+    const entryA2Id = 'A2'
+    const entryBId = 'B'
+
+    const entries = [
+      {
+        id: entryA1Id,
+        metadata: {
+          type: 'EntryA',
+        },
+        data: {},
+      } as Entry,
+      {
+        id: entryBId,
+        metadata: {
+          type: 'EntryB',
+        },
+        data: {},
+      } as Entry,
+      {
+        id: entryA2Id,
+        metadata: {
+          type: 'EntryA',
+        },
+        data: {},
+      } as Entry,
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `query {
+        data: everyEntryA {
+          id
+        }
+      }`,
+      variables: {},
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: [
+        {
+          id: entryA1Id,
+        },
+        {
+          id: entryA2Id,
+        },
+      ],
+    })
+    expect(result.ref).toBe(commitHash)
+  })
+
+  it('should return an entry with nested data', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type MyEntry @Entry {
+    id: ID!
+    firstField: NestedData
+    secondField: NestedData
+}
+
+type NestedData {
+    nested: String
+}`
+
+    const entryId = '1'
+
+    const entries = [
+      {
+        id: entryId,
+        metadata: {
+          type: 'MyEntry',
+        },
+        data: {
+          firstField: {
+            nested: 'value',
+          },
+          // second field is intentionally not set
+        },
+      } as Entry,
+    ]
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `query ($entryId: ID!) {
+        data: MyEntry (id: $entryId) {
+          id
+          firstField {
+            nested
+          }
+          secondField {
+            nested
+          }
+        }
+      }`,
+      variables: {
+        entryId: entryId,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: entryId,
+        firstField: {
+          nested: 'value',
+        },
+        secondField: null, // as it is a nullable field, expect silent fallback to null
+      },
+    })
+    expect(result.ref).toBe(commitHash)
+  })
+
   it('should resolve references to a second @Entry', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'

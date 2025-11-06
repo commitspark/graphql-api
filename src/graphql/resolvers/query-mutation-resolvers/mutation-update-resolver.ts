@@ -3,6 +3,7 @@ import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util'
 import { GraphQLFieldResolver, isObjectType } from 'graphql'
 import { EntryData, EntryDraft } from '@commitspark/git-adapter'
 import { QueryMutationResolverContext } from '../types'
+import { createError, ErrorCode } from '../../errors'
 
 function mergeData(
   existingEntryData: EntryData,
@@ -20,8 +21,12 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
   any,
   Promise<EntryData>
 > = async (source, args, context, info) => {
-  if (!isObjectType(info.returnType)) {
-    throw new Error('Expected to update an ObjectType')
+  if (!isObjectType(context.type)) {
+    throw createError(
+      `Type "${context.type.name}" cannot be mutated as is not an ObjectType.`,
+      ErrorCode.INTERNAL_ERROR,
+      {},
+    )
   }
 
   const existingEntry = await findByTypeId(
@@ -32,7 +37,7 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
   )
 
   const existingReferencedEntryIds = await getReferencedEntryIds(
-    info.returnType,
+    context.type,
     context,
     null,
     info.returnType,
@@ -41,7 +46,7 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
 
   const mergedData = mergeData(existingEntry.data ?? null, args.data)
   const updatedReferencedEntryIds = await getReferencedEntryIds(
-    info.returnType,
+    context.type,
     context,
     null,
     info.returnType,

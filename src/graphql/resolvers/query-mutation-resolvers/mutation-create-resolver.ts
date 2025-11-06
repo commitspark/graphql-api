@@ -1,5 +1,5 @@
 import { findById, findByTypeId } from '../../../persistence/persistence'
-import { GraphQLError, GraphQLFieldResolver, isObjectType } from 'graphql'
+import { GraphQLFieldResolver, isObjectType } from 'graphql'
 import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util'
 import {
   ENTRY_ID_INVALID_CHARACTERS,
@@ -7,6 +7,7 @@ import {
   EntryDraft,
 } from '@commitspark/git-adapter'
 import { QueryMutationResolverContext } from '../types'
+import { createError, ErrorCode } from '../../errors'
 
 export const mutationCreateResolver: GraphQLFieldResolver<
   any,
@@ -14,19 +15,24 @@ export const mutationCreateResolver: GraphQLFieldResolver<
   any,
   Promise<EntryData>
 > = async (source, args, context, info) => {
-  if (!isObjectType(info.returnType)) {
-    throw new Error('Expected to create an ObjectType')
+  if (!isObjectType(context.type)) {
+    throw createError(
+      `Entry of type "${context.type.name}" cannot be created as is not an ObjectType.`,
+      ErrorCode.INTERNAL_ERROR,
+      {},
+    )
   }
 
   const idValidationResult = args.id.match(ENTRY_ID_INVALID_CHARACTERS)
   if (idValidationResult) {
-    throw new GraphQLError(
-      `"id" contains invalid characters "${idValidationResult.join(', ')}"`,
+    throw createError(
+      `Field "id" contains invalid characters "${idValidationResult.join(
+        ', ',
+      )}".`,
+      ErrorCode.BAD_USER_INPUT,
       {
-        extensions: {
-          code: 'BAD_USER_INPUT',
-          argumentName: 'id',
-        },
+        argumentName: 'id',
+        argumentValue: args.id,
       },
     )
   }
@@ -42,16 +48,18 @@ export const mutationCreateResolver: GraphQLFieldResolver<
     /* empty */
   }
   if (existingEntry) {
-    throw new GraphQLError(`An entry with id "${args.id}" already exists`, {
-      extensions: {
-        code: 'BAD_USER_INPUT',
+    throw createError(
+      `An entry with id "${args.id}" already exists.`,
+      ErrorCode.BAD_USER_INPUT,
+      {
         argumentName: 'id',
+        argumentValue: args.id,
       },
-    })
+    )
   }
 
   const referencedEntryIds = await getReferencedEntryIds(
-    info.returnType,
+    context.type,
     context,
     null,
     info.returnType,

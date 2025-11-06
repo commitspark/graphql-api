@@ -7,6 +7,7 @@ import {
   VariableValues,
 } from './client'
 import { GitAdapter } from '@commitspark/git-adapter'
+import { ErrorCode, ErrorMetadata } from './graphql/errors'
 
 interface Client {
   postGraphQL<
@@ -19,7 +20,7 @@ interface Client {
   getSchema(ref: string): Promise<SchemaResponse>
 }
 
-export { Client, GraphQLResponse, SchemaResponse }
+export { Client, GraphQLResponse, SchemaResponse, ErrorCode, ErrorMetadata }
 
 export async function createClient(gitAdapter: GitAdapter): Promise<Client> {
   return {

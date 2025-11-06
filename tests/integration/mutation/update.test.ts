@@ -289,7 +289,16 @@ type EntryA @Entry {
     })
 
     expect(result.errors).toMatchObject([
-      { extensions: { argumentName: 'id', code: 'BAD_USER_INPUT' } },
+      {
+        extensions: {
+          code: 'NOT_FOUND',
+          commitspark: {
+            argumentName: 'id',
+            argumentValue: entryAId,
+            typeName: 'EntryA',
+          },
+        },
+      },
     ])
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)

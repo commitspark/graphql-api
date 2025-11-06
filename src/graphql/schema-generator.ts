@@ -20,6 +20,7 @@ import { GraphQLFieldResolver, GraphQLTypeResolver } from 'graphql'
 import { getValidationResult } from './schema-validator'
 import { EntryData } from '@commitspark/git-adapter'
 import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator'
+import { createError, ErrorCode } from './errors'
 
 export async function generateSchema(
   context: ApolloContext,
@@ -33,7 +34,10 @@ export async function generateSchema(
 
   const validationResult = getValidationResult(schema)
   if (validationResult.length > 0) {
-    throw new Error(validationResult.join('\n'))
+    throw createError(`Invalid schema.`, ErrorCode.BAD_SCHEMA, {
+      schema: printSchemaWithDirectives(schema),
+      argumentValue: validationResult.join('\n'),
+    })
   }
   const schemaAnalyzerResult = analyzeSchema(schema)
 

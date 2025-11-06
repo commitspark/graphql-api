@@ -1,8 +1,9 @@
 import { findById, findByTypeId } from '../../../persistence/persistence'
 import { Entry, EntryData, EntryDraft } from '@commitspark/git-adapter'
 import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util'
-import { GraphQLError, GraphQLFieldResolver, isObjectType } from 'graphql'
+import { GraphQLFieldResolver, isObjectType } from 'graphql'
 import { QueryMutationResolverContext } from '../types'
+import { createError, ErrorCode } from '../../errors'
 
 export const mutationDeleteResolver: GraphQLFieldResolver<
   any,
@@ -21,20 +22,23 @@ export const mutationDeleteResolver: GraphQLFieldResolver<
     const otherIds = entry.metadata.referencedBy
       .map((referenceId) => `"${referenceId}"`)
       .join(', ')
-    throw new GraphQLError(
-      `Entry with id "${args.id}" is referenced by other entries: [${otherIds}]`,
+    throw createError(
+      `Entry with ID "${args.id}" is still referenced by entries [${otherIds}].`,
+      ErrorCode.IN_USE,
       {
-        extensions: {
-          code: 'IN_USE',
-          argumentName: 'id',
-        },
+        argumentName: 'id',
+        argumentValue: args.id,
       },
     )
   }
 
   const entryType = info.schema.getType(context.type.name)
   if (!isObjectType(entryType)) {
-    throw new Error('Expected to delete an ObjectType')
+    throw createError(
+      `Type "${context.type.name}" is not an ObjectType.`,
+      ErrorCode.INTERNAL_ERROR,
+      {},
+    )
   }
 
   const referencedEntryIds = await getReferencedEntryIds(

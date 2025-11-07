@@ -2,8 +2,8 @@
 
 [Commitspark](https://commitspark.com) is a set of tools to manage structured data with Git through a GraphQL API.
 
-The library found in this repository provides the GraphQL API that allows reading and writing structured data (entries)
-from and to a Git repository.
+This library provides the GraphQL API that allows reading and writing structured data (entries) from and to a Git
+repository.
 
 Queries and mutations offered by the API are determined by a standard GraphQL type definition file (schema) inside the
 Git repository.

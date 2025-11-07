@@ -42,7 +42,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@apollo/server": "^5.0.0",
+    "@apollo/server": "~5.0.0",
     "@commitspark/git-adapter": "^0.13.0",
     "@graphql-tools/schema": "^9.0.0",
     "@graphql-tools/utils": "^9.0.0"

@@ -9,7 +9,7 @@
     "gitops",
     "api"
   ],
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "license": "ISC",
   "private": false,
   "files": [

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Restrict Apollo Server to version 5.0 due to build failures introduced by 5.1 when using this library in Next.js
   (see [apollographql/apollo-server #8159](https://github.com/apollographql/apollo-server/issues/8159))
+- Upgrade to `@commitspark/git-adapter` 0.20.0
 
 ## [1.0.0-beta.2] - 2025-11-07
 

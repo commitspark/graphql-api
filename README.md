@@ -104,8 +104,8 @@ Let's now assume your repository is located on GitHub and you want to query for 
 The code to do so could look like this:
 
 ```typescript
-import { createAdapter } from '@commitspark/git-adapter-github'
-import { createClient } from '@commitspark/graphql-api'
+import {createAdapter} from '@commitspark/git-adapter-github'
+import {createClient} from '@commitspark/graphql-api'
 
 const gitHubAdapter = createAdapter({
     repositoryOwner: process.env.GITHUB_REPOSITORY_OWNER,
@@ -342,6 +342,48 @@ data:
 ```
 
 When querying data through the API, this additional level of nesting is transparently removed and not visible.
+
+# Error handling
+
+Commitspark converts known errors into `GraphQLError` instances with standardized error codes in the `extensions.code`
+field. This allows API callers to determine the cause of errors and take appropriate action.
+
+This library returns the following error codes:
+
+| Error code             | Description                                                       |
+|------------------------|-------------------------------------------------------------------|
+| `BAD_USER_INPUT`       | Invalid input data provided by the caller                         |
+| `NOT_FOUND`            | Requested resource (entry, type, etc.) does not exist             |
+| `BAD_REPOSITORY_DATA`  | Data in the repository is malformed or invalid                    |
+| `SCHEMA_DATA_MISMATCH` | Data in the repository does not match the schema definition       |
+| `BAD_SCHEMA`           | Schema definition is malformed or invalid                         |
+| `IN_USE`               | Entry cannot be deleted because it is referenced by other entries |
+| `INTERNAL_ERROR`       | Internal processing error                                         |
+
+Errors thrown in GitAdapter instances return additional error codes that are also returned here. Available codes can
+be found [here](https://github.com/commitspark/git-adapter).
+
+Error details can be obtained from the `extensions.commitspark` field, such as affected type names, field
+names, or argument values, where available.
+
+Example error response:
+
+```json
+{
+  "errors": [
+    {
+      "message": "No entry with id \"INVALID_ID\" exists.",
+      "extensions": {
+        "code": "NOT_FOUND",
+        "commitspark": {
+          "argumentName": "id",
+          "argumentValue": "INVALID_ID"
+        }
+      }
+    }
+  ]
+}
+```
 
 # License
 

@@ -104,8 +104,8 @@ Let's now assume your repository is located on GitHub and you want to query for 
 The code to do so could look like this:
 
 ```typescript
-import {createAdapter} from '@commitspark/git-adapter-github'
-import {createClient} from '@commitspark/graphql-api'
+import { createAdapter } from '@commitspark/git-adapter-github'
+import { createClient } from '@commitspark/graphql-api'
 
 const gitHubAdapter = createAdapter({
     repositoryOwner: process.env.GITHUB_REPOSITORY_OWNER,

@@ -37,11 +37,11 @@ describe('Persistence', () => {
     try {
       await findById(adapter, commitHash, 'some-id')
       fail('Expected findById to throw')
-    } catch (err) {
-      expect(err).toBeInstanceOf(GraphQLError)
-      const gqlErr = err as GraphQLError
-      expect(gqlErr.message).toBe(errorMessage)
-      expect(gqlErr.extensions?.code).toBe(AdapterErrorCode.NOT_FOUND)
+    } catch (error) {
+      expect(error).toBeInstanceOf(GraphQLError)
+      const gqlError = error as GraphQLError
+      expect(gqlError.message).toBe(errorMessage)
+      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.NOT_FOUND)
     }
   })
 
@@ -55,11 +55,11 @@ describe('Persistence', () => {
     try {
       await findByType(adapter, commitHash, 'AnyType')
       fail('Expected findByType to throw')
-    } catch (err) {
-      expect(err).toBeInstanceOf(GraphQLError)
-      const gqlErr = err as GraphQLError
-      expect(gqlErr.message).toBe(errorMessage)
-      expect(gqlErr.extensions?.code).toBe(AdapterErrorCode.FORBIDDEN)
+    } catch (error) {
+      expect(error).toBeInstanceOf(GraphQLError)
+      const gqlError = error as GraphQLError
+      expect(gqlError.message).toBe(errorMessage)
+      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.FORBIDDEN)
     }
   })
 
@@ -73,11 +73,11 @@ describe('Persistence', () => {
     try {
       await findByTypeId(adapter, commitHash, 'AnyType', 'some-id')
       fail('Expected findByTypeId to throw')
-    } catch (err) {
-      expect(err).toBeInstanceOf(GraphQLError)
-      const gqlErr = err as GraphQLError
-      expect(gqlErr.message).toBe(errorMessage)
-      expect(gqlErr.extensions?.code).toBe(AdapterErrorCode.INTERNAL_ERROR)
+    } catch (error) {
+      expect(error).toBeInstanceOf(GraphQLError)
+      const gqlError = error as GraphQLError
+      expect(gqlError.message).toBe(errorMessage)
+      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.INTERNAL_ERROR)
     }
   })
 
@@ -91,11 +91,11 @@ describe('Persistence', () => {
     try {
       await getTypeById(adapter, commitHash, 'some-id')
       fail('Expected getTypeById to throw')
-    } catch (err) {
-      expect(err).toBeInstanceOf(GraphQLError)
-      const gqlErr = err as GraphQLError
-      expect(gqlErr.message).toBe(errorMessage)
-      expect(gqlErr.extensions?.code).toBe(AdapterErrorCode.UNAUTHORIZED)
+    } catch (error) {
+      expect(error).toBeInstanceOf(GraphQLError)
+      const gqlError = error as GraphQLError
+      expect(gqlError.message).toBe(errorMessage)
+      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.UNAUTHORIZED)
     }
   })
 })

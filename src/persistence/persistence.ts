@@ -26,7 +26,7 @@ export async function findById(
   }
   const requestedEntry = allEntries.find((entry: Entry) => entry.id === id)
   if (requestedEntry === undefined) {
-    throw createError(`No entry with id "${id}" exists.`, ErrorCode.NOT_FOUND, {
+    throw createError(`No entry with ID "${id}" exists.`, ErrorCode.NOT_FOUND, {
       argumentName: 'id',
       argumentValue: id,
     })
@@ -73,7 +73,7 @@ export async function findByTypeId(
   )
   if (requestedEntry === undefined) {
     throw createError(
-      `No entry of type "${type}" with id "${id}" exists.`,
+      `No entry of type "${type}" with ID "${id}" exists.`,
       ErrorCode.NOT_FOUND,
       {
         typeName: type,

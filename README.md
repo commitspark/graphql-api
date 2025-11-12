@@ -345,10 +345,32 @@ When querying data through the API, this additional level of nesting is transpar
 
 # Error handling
 
-Commitspark converts known errors into `GraphQLError` instances with standardized error codes in the `extensions.code`
-field. This allows API callers to determine the cause of errors and take appropriate action.
+Instead of throwing errors, this library catches known error cases and returns error information for GraphQL calls via
+the `errors` response field. The type of error is indicated in error field `extensions.code`, with additional
+information in error field `extensions.commitspark` (where available). This allows API callers to determine the cause of
+errors and take appropriate action.
 
-This library returns the following error codes:
+Example GraphQL response with error:
+
+```json
+{
+  "errors": [
+    {
+      "message": "No entry with ID \"SOME_UNKNOWN_ID\" exists.",
+      "extensions": {
+        "code": "NOT_FOUND",
+        "commitspark": {
+          "argumentName": "id",
+          "argumentValue": "SOME_UNKNOWN_ID"
+        }
+      }
+    }
+  ]
+}
+```
+
+The following error codes are returned together with error codes of Git adapters as
+documented [here](https://github.com/commitspark/git-adapter):
 
 | Error code             | Description                                                       |
 |------------------------|-------------------------------------------------------------------|
@@ -360,30 +382,8 @@ This library returns the following error codes:
 | `IN_USE`               | Entry cannot be deleted because it is referenced by other entries |
 | `INTERNAL_ERROR`       | Internal processing error                                         |
 
-Errors thrown in GitAdapter instances return additional error codes that are also returned here. Available codes can
-be found [here](https://github.com/commitspark/git-adapter).
-
 Error details can be obtained from the `extensions.commitspark` field, such as affected type names, field
 names, or argument values, where available.
-
-Example error response:
-
-```json
-{
-  "errors": [
-    {
-      "message": "No entry with id \"INVALID_ID\" exists.",
-      "extensions": {
-        "code": "NOT_FOUND",
-        "commitspark": {
-          "argumentName": "id",
-          "argumentValue": "INVALID_ID"
-        }
-      }
-    }
-  ]
-}
-```
 
 # License
 

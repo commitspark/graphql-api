@@ -343,6 +343,48 @@ data:
 
 When querying data through the API, this additional level of nesting is transparently removed and not visible.
 
+# Error handling
+
+Instead of throwing errors, this library catches known error cases and returns error information for GraphQL calls via
+the `errors` response field. The type of error is indicated in error field `extensions.code`, with additional
+information in error field `extensions.commitspark` (where available). This allows API callers to determine the cause of
+errors and take appropriate action.
+
+Example GraphQL response with error:
+
+```json
+{
+  "errors": [
+    {
+      "message": "No entry with ID \"SOME_UNKNOWN_ID\" exists.",
+      "extensions": {
+        "code": "NOT_FOUND",
+        "commitspark": {
+          "argumentName": "id",
+          "argumentValue": "SOME_UNKNOWN_ID"
+        }
+      }
+    }
+  ]
+}
+```
+
+The following error codes are returned together with error codes of Git adapters as
+documented [here](https://github.com/commitspark/git-adapter):
+
+| Error code             | Description                                                       |
+|------------------------|-------------------------------------------------------------------|
+| `BAD_USER_INPUT`       | Invalid input data provided by the caller                         |
+| `NOT_FOUND`            | Requested resource (entry, type, etc.) does not exist             |
+| `BAD_REPOSITORY_DATA`  | Data in the repository is malformed or invalid                    |
+| `SCHEMA_DATA_MISMATCH` | Data in the repository does not match the schema definition       |
+| `BAD_SCHEMA`           | Schema definition is malformed or invalid                         |
+| `IN_USE`               | Entry cannot be deleted because it is referenced by other entries |
+| `INTERNAL_ERROR`       | Internal processing error                                         |
+
+Error details can be obtained from the `extensions.commitspark` field, such as affected type names, field
+names, or argument values, where available.
+
 # License
 
 The code in this repository is licensed under the permissive ISC license (see [LICENSE](LICENSE)).

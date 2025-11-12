@@ -1095,3 +1095,50 @@ type MyEntry @Entry {
     expect(result.ref).toBe(commitHash)
   })
 })
+
+it('should return an error for bad queries', async () => {
+  const gitAdapter = mock<GitAdapter>()
+  const gitRef = 'myRef'
+  const commitHash = 'abcd'
+  const originalSchema = `directive @Entry on OBJECT
+
+type MyEntry @Entry {
+    id: ID!
+}`
+
+  const entryId = 'unknown-entry'
+  const entries: Entry[] = []
+
+  gitAdapter.getLatestCommitHash
+    .calledWith(gitRef)
+    .mockResolvedValue(commitHash)
+  gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(originalSchema)
+  gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
+
+  const client = await createClient(gitAdapter)
+  const result = await client.postGraphQL(gitRef, {
+    query: `query ($entryId: ID!) {
+        data: MyEntry (id: $entryId) {
+          id
+        }
+      }`,
+    variables: {
+      entryId: entryId,
+    },
+  })
+
+  expect(result.errors).toEqual([
+    expect.objectContaining({
+      extensions: {
+        code: 'NOT_FOUND',
+        commitspark: {
+          typeName: 'MyEntry',
+          argumentName: 'id',
+          argumentValue: entryId,
+        },
+      },
+    }),
+  ])
+  expect(result.data).toEqual({ data: null })
+  expect(result.ref).toBe(commitHash)
+})

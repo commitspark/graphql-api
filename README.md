@@ -382,9 +382,6 @@ documented [here](https://github.com/commitspark/git-adapter):
 | `IN_USE`               | Entry cannot be deleted because it is referenced by other entries |
 | `INTERNAL_ERROR`       | Internal processing error                                         |
 
-Error details can be obtained from the `extensions.commitspark` field, such as affected type names, field
-names, or argument values, where available.
-
 # License
 
 The code in this repository is licensed under the permissive ISC license (see [LICENSE](LICENSE)).

@@ -11,12 +11,7 @@ export const mutationDeleteResolver: GraphQLFieldResolver<
   any,
   Promise<EntryData>
 > = async (source, args, context, info) => {
-  const entry: Entry = await findByTypeId(
-    context.gitAdapter,
-    context.getCurrentRef(),
-    context.type.name,
-    args.id,
-  )
+  const entry: Entry = await findByTypeId(context, context.type.name, args.id)
 
   if (entry.metadata.referencedBy && entry.metadata.referencedBy.length > 0) {
     const otherIds = entry.metadata.referencedBy
@@ -50,11 +45,7 @@ export const mutationDeleteResolver: GraphQLFieldResolver<
   )
   const referencedEntryUpdates: EntryDraft[] = []
   for (const referencedEntryId of referencedEntryIds) {
-    const noLongerReferencedEntry = await findById(
-      context.gitAdapter,
-      context.getCurrentRef(),
-      referencedEntryId,
-    )
+    const noLongerReferencedEntry = await findById(context, referencedEntryId)
     referencedEntryUpdates.push({
       ...noLongerReferencedEntry,
       metadata: {
@@ -69,7 +60,7 @@ export const mutationDeleteResolver: GraphQLFieldResolver<
 
   const commit = await context.gitAdapter.createCommit({
     ref: context.branch,
-    parentSha: context.getCurrentRef(),
+    parentSha: context.getCurrentHash(),
     entries: [
       {
         ...entry,
@@ -79,7 +70,7 @@ export const mutationDeleteResolver: GraphQLFieldResolver<
     ],
     message: args.commitMessage,
   })
-  context.setCurrentRef(commit.ref)
+  context.setCurrentHash(commit.ref)
 
   return args.id
 }

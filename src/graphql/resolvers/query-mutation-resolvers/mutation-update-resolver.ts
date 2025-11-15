@@ -29,12 +29,7 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
     )
   }
 
-  const existingEntry = await findByTypeId(
-    context.gitAdapter,
-    context.getCurrentRef(),
-    context.type.name,
-    args.id,
-  )
+  const existingEntry = await findByTypeId(context, context.type.name, args.id)
 
   const existingReferencedEntryIds = await getReferencedEntryIds(
     context.type,
@@ -63,8 +58,7 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
   const referencedEntryUpdates: EntryDraft[] = []
   for (const noLongerReferencedEntryId of noLongerReferencedIds) {
     const noLongerReferencedEntry = await findById(
-      context.gitAdapter,
-      context.getCurrentRef(),
+      context,
       noLongerReferencedEntryId,
     )
     referencedEntryUpdates.push({
@@ -79,11 +73,7 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
     })
   }
   for (const newlyReferencedEntryId of newlyReferencedIds) {
-    const newlyReferencedEntry = await findById(
-      context.gitAdapter,
-      context.getCurrentRef(),
-      newlyReferencedEntryId,
-    )
+    const newlyReferencedEntry = await findById(context, newlyReferencedEntryId)
     const updatedReferenceList: string[] =
       newlyReferencedEntry.metadata.referencedBy ?? []
     updatedReferenceList.push(args.id)
@@ -100,20 +90,15 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
 
   const commit = await context.gitAdapter.createCommit({
     ref: context.branch,
-    parentSha: context.getCurrentRef(),
+    parentSha: context.getCurrentHash(),
     entries: [
       { ...existingEntry, data: mergedData, deletion: false },
       ...referencedEntryUpdates,
     ],
     message: args.commitMessage,
   })
-  context.setCurrentRef(commit.ref)
+  context.setCurrentHash(commit.ref)
 
-  const updatedEntry = await findByTypeId(
-    context.gitAdapter,
-    context.getCurrentRef(),
-    context.type.name,
-    args.id,
-  )
+  const updatedEntry = await findByTypeId(context, context.type.name, args.id)
   return { ...updatedEntry.data, id: updatedEntry.id }
 }

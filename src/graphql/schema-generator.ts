@@ -26,7 +26,7 @@ export async function generateSchema(
   context: ApolloContext,
 ): Promise<IExecutableSchemaDefinition> {
   const originalSchemaString = await context.gitAdapter.getSchema(
-    context.getCurrentRef(),
+    context.getCurrentHash(),
   )
   const schema = makeExecutableSchema({
     typeDefs: originalSchemaString,

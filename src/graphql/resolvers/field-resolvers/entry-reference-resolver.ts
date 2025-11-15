@@ -19,11 +19,7 @@ export const resolveEntryReference: FieldResolver<any> = async (
     )
   }
 
-  const entry = await findById(
-    context.gitAdapter,
-    context.getCurrentRef(),
-    fieldValue.id,
-  )
+  const entry = await findById(context, fieldValue.id)
 
   return { ...entry.data, id: entry.id }
 }

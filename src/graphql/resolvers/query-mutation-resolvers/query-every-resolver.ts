@@ -9,11 +9,7 @@ export const queryEveryResolver: GraphQLFieldResolver<
   any,
   Promise<EntryData[]>
 > = async (obj, args, context, info) => {
-  const entries = await findByType(
-    context.gitAdapter,
-    context.getCurrentRef(),
-    context.type.name,
-  )
+  const entries = await findByType(context, context.type.name)
 
   return entries.map((entry) => {
     return { ...entry.data, id: entry.id }

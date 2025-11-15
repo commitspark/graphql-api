@@ -1,10 +1,9 @@
 import { GraphQLFieldResolver } from 'graphql/type/definition'
-import { EntryData, GitAdapter } from '@commitspark/git-adapter'
+import { EntryData } from '@commitspark/git-adapter'
 import { GraphQLOutputType } from 'graphql'
+import { ApolloContext } from '../../../client'
 
-export interface FieldResolverContext {
-  gitAdapter: GitAdapter
-  getCurrentRef(): string
+export interface FieldResolverContext extends ApolloContext {
   currentType: GraphQLOutputType
   hasNonNullParent?: boolean
 }

@@ -8,7 +8,7 @@ export const unionTypeResolver: GraphQLTypeResolver<
   ApolloContext
 > = async (obj, context, info, abstractType) => {
   if (buildsOnTypeWithEntryDirective(abstractType)) {
-    return getTypeById(context.gitAdapter, context.getCurrentRef(), obj.id)
+    return getTypeById(context, obj.id)
   } else {
     // We have injected an internal `__typename` field into the data of fields pointing to a non-entry union
     // in UnionValueResolver. This artificial field holds the type information we need here.

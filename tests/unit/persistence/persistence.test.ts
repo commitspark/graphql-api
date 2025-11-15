@@ -1,101 +1,94 @@
 import { GraphQLError } from 'graphql'
-import {
-  ErrorCode as AdapterErrorCode,
-  GitAdapter,
-  GitAdapterError,
-} from '@commitspark/git-adapter'
+import { ErrorCode } from '../../../src'
+import { findById, findByTypeId } from '../../../src/persistence/persistence'
 
-import {
-  findById,
-  findByType,
-  findByTypeId,
-  getTypeById,
-} from '../../../src/persistence/persistence'
+// Helper to create a minimal ApolloContext-like object the functions expect
+function makeContext(entries: Array<{ id: string; type: string }>) {
+  const byId = new Map<string, any>()
+  const byType = new Map<string, any[]>()
 
-describe('Persistence', () => {
-  const commitHash = 'abc123'
-
-  const makeThrowingAdapter = (
-    code: AdapterErrorCode,
-    message: string,
-  ): GitAdapter => {
-    return {
-      // Only the method used by persistence.ts needs to be mocked
-      getEntries: jest.fn(async () => {
-        throw new GitAdapterError(code, message)
-      }),
-    } as unknown as GitAdapter
+  for (const e of entries) {
+    const entry = {
+      metadata: { id: e.id, type: e.type },
+    }
+    byId.set(e.id, entry)
+    const list = byType.get(e.type) ?? []
+    list.push(entry)
+    byType.set(e.type, list)
   }
 
-  it('should map adapter errors in `findById` to GraphQLError', async () => {
-    const errorMessage = 'not found'
-    const adapter = makeThrowingAdapter(
-      AdapterErrorCode.NOT_FOUND,
-      errorMessage,
-    )
+  return {
+    getCurrentHash: jest.fn().mockReturnValue('dummy-hash'),
+    repositoryCache: {
+      getEntriesRecord: jest.fn().mockResolvedValue({ byId, byType }),
+    },
+  }
+}
+
+describe('Persistence', () => {
+  it('findById throws GraphQLError when entry does not exist', async () => {
+    const context: any = makeContext([])
+    const missingId = 'missing-id'
 
     try {
-      await findById(adapter, commitHash, 'some-id')
+      await findById(context, missingId)
       fail('Expected findById to throw')
     } catch (error) {
       expect(error).toBeInstanceOf(GraphQLError)
       const gqlError = error as GraphQLError
-      expect(gqlError.message).toBe(errorMessage)
-      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.NOT_FOUND)
+      expect(gqlError.message).toBe(`No entry with ID "${missingId}" exists.`)
+      expect(gqlError.extensions?.code).toBe(ErrorCode.NOT_FOUND)
+      expect(gqlError.extensions?.commitspark).toEqual({
+        argumentName: 'id',
+        argumentValue: missingId,
+      })
     }
   })
 
-  test('should map adapter errors in `findByType` to GraphQLError', async () => {
-    const errorMessage = 'forbidden'
-    const adapter = makeThrowingAdapter(
-      AdapterErrorCode.FORBIDDEN,
-      errorMessage,
-    )
+  it('findByTypeId propagates GraphQLError when id does not exist', async () => {
+    const context: any = makeContext([])
+    const missingId = '42'
 
+    await expect(
+      findByTypeId(context, 'AnyType', missingId),
+    ).rejects.toBeInstanceOf(GraphQLError)
+
+    // Inspect full error details
     try {
-      await findByType(adapter, commitHash, 'AnyType')
-      fail('Expected findByType to throw')
+      await findByTypeId(context, 'AnyType', missingId)
+      fail('Expected findByTypeId to throw')
     } catch (error) {
-      expect(error).toBeInstanceOf(GraphQLError)
       const gqlError = error as GraphQLError
-      expect(gqlError.message).toBe(errorMessage)
-      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.FORBIDDEN)
+      expect(gqlError.message).toBe(`No entry with ID "${missingId}" exists.`)
+      expect(gqlError.extensions?.code).toBe(ErrorCode.NOT_FOUND)
+      expect(gqlError.extensions?.commitspark).toEqual({
+        argumentName: 'id',
+        argumentValue: missingId,
+      })
     }
   })
 
-  it('should map adapter errors in `findByTypeId` to GraphQLError', async () => {
-    const errorMessage = 'internal error'
-    const adapter = makeThrowingAdapter(
-      AdapterErrorCode.INTERNAL_ERROR,
-      errorMessage,
-    )
+  it('findByTypeId throws GraphQLError when type does not match', async () => {
+    const context: any = makeContext([{ id: '1', type: 'Post' }])
+
+    const requestedType = 'User'
+    const id = '1'
 
     try {
-      await findByTypeId(adapter, commitHash, 'AnyType', 'some-id')
+      await findByTypeId(context, requestedType, id)
       fail('Expected findByTypeId to throw')
     } catch (error) {
       expect(error).toBeInstanceOf(GraphQLError)
       const gqlError = error as GraphQLError
-      expect(gqlError.message).toBe(errorMessage)
-      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.INTERNAL_ERROR)
-    }
-  })
-
-  it('should map adapter errors in `getTypeById` to GraphQLError', async () => {
-    const errorMessage = 'unauthorized'
-    const adapter = makeThrowingAdapter(
-      AdapterErrorCode.UNAUTHORIZED,
-      errorMessage,
-    )
-
-    try {
-      await getTypeById(adapter, commitHash, 'some-id')
-      fail('Expected getTypeById to throw')
-    } catch (error) {
-      expect(error).toBeInstanceOf(GraphQLError)
-      const gqlError = error as GraphQLError
-      expect(gqlError.message).toBe(errorMessage)
-      expect(gqlError.extensions?.code).toBe(AdapterErrorCode.UNAUTHORIZED)
+      expect(gqlError.message).toBe(
+        `No entry of type "${requestedType}" with ID "${id}" exists.`,
+      )
+      expect(gqlError.extensions?.code).toBe(ErrorCode.NOT_FOUND)
+      expect(gqlError.extensions?.commitspark).toEqual({
+        typeName: requestedType,
+        argumentName: 'id',
+        argumentValue: id,
+      })
     }
   })
 })

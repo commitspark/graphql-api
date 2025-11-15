@@ -39,11 +39,7 @@ export const mutationCreateResolver: GraphQLFieldResolver<
 
   let existingEntry
   try {
-    existingEntry = await findById(
-      context.gitAdapter,
-      context.getCurrentRef(),
-      args.id,
-    )
+    existingEntry = await findById(context, args.id)
   } catch (_) {
     /* empty */
   }
@@ -68,11 +64,7 @@ export const mutationCreateResolver: GraphQLFieldResolver<
 
   const referencedEntryUpdates: EntryDraft[] = []
   for (const referencedEntryId of referencedEntryIds) {
-    const referencedEntry = await findById(
-      context.gitAdapter,
-      context.getCurrentRef(),
-      referencedEntryId,
-    )
+    const referencedEntry = await findById(context, referencedEntryId)
     const newReferencedEntryIds: string[] = [
       ...(referencedEntry.metadata.referencedBy ?? []),
       args.id,
@@ -100,17 +92,12 @@ export const mutationCreateResolver: GraphQLFieldResolver<
 
   const commit = await context.gitAdapter.createCommit({
     ref: context.branch,
-    parentSha: context.getCurrentRef(),
+    parentSha: context.getCurrentHash(),
     entries: [newEntryDraft, ...referencedEntryUpdates],
     message: args.commitMessage,
   })
-  context.setCurrentRef(commit.ref)
+  context.setCurrentHash(commit.ref)
 
-  const newEntry = await findByTypeId(
-    context.gitAdapter,
-    context.getCurrentRef(),
-    context.type.name,
-    args.id,
-  )
+  const newEntry = await findByTypeId(context, context.type.name, args.id)
   return { ...newEntry.data, id: newEntry.id }
 }

@@ -8,5 +8,5 @@ export const queryTypeByIdResolver: GraphQLFieldResolver<
   any,
   Promise<string>
 > = async (source, args, context, info) => {
-  return getTypeById(context.gitAdapter, context.getCurrentRef(), args.id)
+  return getTypeById(context, args.id)
 }

@@ -74,9 +74,8 @@ export function createObjectTypeFieldResolvers(
           field.name in obj ? obj[field.name] : undefined,
           args,
           {
+            ...context,
             currentType: field.type,
-            gitAdapter: context.gitAdapter,
-            getCurrentRef: context.getCurrentRef,
           },
           info,
         )

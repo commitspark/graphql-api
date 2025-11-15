@@ -5,7 +5,7 @@ import { createError } from '../graphql/errors'
 type Ref = string
 type RepositoryCache = Map<Ref, EntriesRecord>
 
-export interface EntriesRecord {
+interface EntriesRecord {
   byId: Map<string, Entry>
   byType: Map<string, Entry[]>
 }

@@ -3,7 +3,8 @@ import { ApolloContext } from '../client'
 import { createError } from '../graphql/errors'
 
 type Ref = string
-type RepositoryCache = Map<Ref, EntriesRecord>
+type EntriesCache = Map<Ref, EntriesRecord>
+type SchemaCache = Map<Ref, string>
 
 interface EntriesRecord {
   byId: Map<string, Entry>
@@ -15,21 +16,22 @@ export interface RepositoryCacheHandler {
     context: ApolloContext,
     ref: string,
   ) => Promise<EntriesRecord>
+  getSchema: (context: ApolloContext, ref: string) => Promise<string>
 }
 
 const MAX_CACHE_ENTRIES = 50
 
-const getEntriesCacheByRef = async (
-  repositoryCache: RepositoryCache,
+const getEntriesRecordByRef = async (
+  entriesCache: EntriesCache,
   cacheSize: number,
   context: ApolloContext,
   ref: string,
 ): Promise<EntriesRecord> => {
-  const cacheRecord = repositoryCache.get(ref)
+  const cacheRecord = entriesCache.get(ref)
   if (cacheRecord !== undefined) {
     // move map key back to end of list (newest)
-    repositoryCache.delete(ref)
-    repositoryCache.set(ref, cacheRecord)
+    entriesCache.delete(ref)
+    entriesCache.set(ref, cacheRecord)
 
     return cacheRecord
   }
@@ -56,25 +58,66 @@ const getEntriesCacheByRef = async (
     byId: entriesById,
   }
 
-  repositoryCache.set(ref, newCacheRecord)
+  entriesCache.set(ref, newCacheRecord)
 
-  if (repositoryCache.size > cacheSize) {
+  if (entriesCache.size > cacheSize) {
     // get first map key (oldest)
-    const oldestKey = repositoryCache.keys().next().value as Ref | undefined
+    const oldestKey = entriesCache.keys().next().value as Ref | undefined
     if (oldestKey !== undefined) {
-      repositoryCache.delete(oldestKey)
+      entriesCache.delete(oldestKey)
     }
   }
 
   return newCacheRecord
 }
 
+const getSchemaStringByRef = async (
+  schemaCache: SchemaCache,
+  cacheSize: number,
+  context: ApolloContext,
+  ref: string,
+): Promise<string> => {
+  const schemaCacheRecord = schemaCache.get(ref)
+  if (schemaCacheRecord !== undefined) {
+    // move map key back to end of list (newest)
+    schemaCache.delete(ref)
+    schemaCache.set(ref, schemaCacheRecord)
+
+    return schemaCacheRecord
+  }
+
+  let schemaString
+  try {
+    schemaString = await context.gitAdapter.getSchema(ref)
+  } catch (err) {
+    if (err instanceof GitAdapterError) {
+      throw createError(err.message, err.code, {})
+    }
+    throw err
+  }
+
+  schemaCache.set(ref, schemaString)
+
+  if (schemaCache.size > cacheSize) {
+    // get first map key (oldest)
+    const oldestKey = schemaCache.keys().next().value as Ref | undefined
+    if (oldestKey !== undefined) {
+      schemaCache.delete(oldestKey)
+    }
+  }
+
+  return schemaString
+}
+
 export const createCacheHandler = (
   cacheSize: number = MAX_CACHE_ENTRIES,
 ): RepositoryCacheHandler => {
-  const repositoryCache: RepositoryCache = new Map<Ref, EntriesRecord>()
+  const entriesCache: EntriesCache = new Map<Ref, EntriesRecord>()
+  const schemaCache: SchemaCache = new Map<Ref, string>()
   return {
     getEntriesRecord: (...args) =>
-      getEntriesCacheByRef(repositoryCache, cacheSize, ...args),
+      getEntriesRecordByRef(entriesCache, cacheSize, ...args),
+    getSchema: (...args) =>
+      getSchemaStringByRef(schemaCache, cacheSize, ...args),
   }
 }

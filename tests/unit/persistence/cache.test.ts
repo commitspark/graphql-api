@@ -33,12 +33,26 @@ const makeContext = (getEntriesImpl: (ref: string) => Promise<Entry[]>) => {
   return { context, gitAdapter }
 }
 
+const makeContextForSchema = (
+  getSchemaImpl: (ref: string) => Promise<string>,
+) => {
+  // partial mocks
+  const gitAdapter = {
+    getSchema: jest.fn(getSchemaImpl),
+  } as unknown as GitAdapter
+  const context: ApolloContext = {
+    gitAdapter: gitAdapter,
+  } as unknown as ApolloContext
+
+  return { context, gitAdapter }
+}
+
 describe('Cache', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  test('fetches gitAdapter entries only on cache miss', async () => {
+  it('fetches gitAdapter entries only on cache miss', async () => {
     const entries: Entry[] = [
       { id: '1', metadata: { type: 'A' } },
       { id: '2', metadata: { type: 'B' } },
@@ -58,7 +72,7 @@ describe('Cache', () => {
     expect(record2.byType).toBe(record1.byType)
   })
 
-  test('caches entries by ID and by type', async () => {
+  it('caches entries by ID and by type', async () => {
     const entry1: Entry = { id: 'id-1', metadata: { type: 'A' } }
     const entry2: Entry = { id: 'id-2', metadata: { type: 'A' } }
     const entry3: Entry = { id: 'id-3', metadata: { type: 'B' } }
@@ -77,7 +91,7 @@ describe('Cache', () => {
     expect(record.byType.get('B')).toEqual([entry3])
   })
 
-  test('wraps GitAdapterError via createError', async () => {
+  it('wraps GitAdapterError via createError', async () => {
     const errorCode = ErrorCode.NOT_FOUND
     const error = new GitAdapterError(errorCode, '')
     const { context } = makeContext(async () => {
@@ -94,7 +108,7 @@ describe('Cache', () => {
     expect(createError).toHaveBeenCalledWith('', errorCode, {})
   })
 
-  test('evicts using LRU (least recently used) order', async () => {
+  it('evicts using LRU (least recently used) order', async () => {
     const { context, gitAdapter } = makeContext(async () => [])
     const CACHE_SIZE = 5
     const cache = createCacheHandler(CACHE_SIZE)
@@ -121,5 +135,67 @@ describe('Cache', () => {
     // Asking for r1 now should miss and trigger a re-fetch
     await cache.getEntriesRecord(context, 'r1')
     expect(gitAdapter.getEntries).toHaveBeenCalledTimes(CACHE_SIZE + 2)
+  })
+
+  it('fetches gitAdapter schema only on cache miss', async () => {
+    const schema = 'type Query { ok: Boolean! }'
+    const { context, gitAdapter } = makeContextForSchema(async () => schema)
+    const cache = createCacheHandler()
+
+    const s1 = await cache.getSchema(context, 'ref-1')
+    expect(gitAdapter.getSchema).toHaveBeenCalledTimes(1)
+    expect(gitAdapter.getSchema).toHaveBeenLastCalledWith('ref-1')
+    expect(s1).toBe(schema)
+
+    const s2 = await cache.getSchema(context, 'ref-1')
+    // still one call: second is a cache hit
+    expect(gitAdapter.getSchema).toHaveBeenCalledTimes(1)
+    expect(s2).toBe(schema)
+  })
+
+  it('wraps GitAdapterError via createError for schema', async () => {
+    const errorCode = ErrorCode.NOT_FOUND
+    const error = new GitAdapterError(errorCode, '')
+    const { context } = makeContextForSchema(async () => {
+      throw error
+    })
+    const cache = createCacheHandler()
+
+    await expect(cache.getSchema(context, 'ref-err')).rejects.toEqual(
+      // our mocked createError returns this wrapped Error instance
+      expect.objectContaining({ message: 'wrapped-error' }),
+    )
+
+    expect(createError).toHaveBeenCalledTimes(1)
+    expect(createError).toHaveBeenCalledWith('', errorCode, {})
+  })
+
+  it('evicts schema using LRU (least recently used) order', async () => {
+    const { context, gitAdapter } = makeContextForSchema(async () => 's')
+    const CACHE_SIZE = 5
+    const cache = createCacheHandler(CACHE_SIZE)
+
+    // ensure full cache
+    for (let i = 0; i < CACHE_SIZE; i++) {
+      await cache.getSchema(context, `r${i}`)
+    }
+
+    expect(gitAdapter.getSchema).toHaveBeenCalledTimes(CACHE_SIZE)
+
+    // Access the oldest key (r0) so it should now be the most recently used
+    await cache.getSchema(context, 'r0') // cache hit, no new call
+    expect(gitAdapter.getSchema).toHaveBeenCalledTimes(CACHE_SIZE)
+
+    // Add a new key to trigger eviction of the current oldest (r1)
+    await cache.getSchema(context, 'r-new')
+    expect(gitAdapter.getSchema).toHaveBeenCalledTimes(CACHE_SIZE + 1)
+
+    // Now, r0 should still be cached, r1 should have been evicted
+    await cache.getSchema(context, 'r0')
+    expect(gitAdapter.getSchema).toHaveBeenCalledTimes(CACHE_SIZE + 1)
+
+    // Asking for r1 now should miss and trigger a re-fetch
+    await cache.getSchema(context, 'r1')
+    expect(gitAdapter.getSchema).toHaveBeenCalledTimes(CACHE_SIZE + 2)
   })
 })

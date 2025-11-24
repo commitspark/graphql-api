@@ -25,7 +25,8 @@ import { createError, ErrorCode } from './errors'
 export async function generateSchema(
   context: ApolloContext,
 ): Promise<IExecutableSchemaDefinition> {
-  const originalSchemaString = await context.gitAdapter.getSchema(
+  const originalSchemaString = await context.repositoryCache.getSchema(
+    context,
     context.getCurrentHash(),
   )
   const schema = makeExecutableSchema({

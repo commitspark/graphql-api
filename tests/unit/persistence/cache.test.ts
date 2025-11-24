@@ -10,7 +10,11 @@ import {
 jest.mock('../../../src/graphql/errors', () => {
   return {
     createError: jest.fn(
-      (_: string, code: string, extensions: Record<string, unknown>) => {
+      (message: string, code: string, extensions: Record<string, unknown>) => {
+        // mark unused parameters as used to satisfy eslint no-unused-vars
+        void message
+        void code
+        void extensions
         return new Error(`wrapped-error`)
       },
     ),

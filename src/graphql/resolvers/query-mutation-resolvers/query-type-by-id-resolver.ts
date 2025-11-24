@@ -7,6 +7,7 @@ export const queryTypeByIdResolver: GraphQLFieldResolver<
   ApolloContext,
   any,
   Promise<string>
-> = async (source, args, context, info) => {
+> = async (_source, args, context, info) => {
+  void info
   return getTypeById(context, args.id)
 }

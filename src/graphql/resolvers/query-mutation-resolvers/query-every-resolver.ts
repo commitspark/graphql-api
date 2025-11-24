@@ -8,7 +8,8 @@ export const queryEveryResolver: GraphQLFieldResolver<
   QueryMutationResolverContext,
   any,
   Promise<EntryData[]>
-> = async (obj, args, context, info) => {
+> = async (_obj, _args, context, info) => {
+  void info
   const entries = await findByType(context, context.type.name)
 
   return entries.map((entry) => {

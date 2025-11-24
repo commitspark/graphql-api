@@ -9,6 +9,7 @@ export const resolveEntryReference: FieldResolver<any> = async (
   context: FieldResolverContext,
   info: GraphQLResolveInfo,
 ) => {
+  void info
   if (!isNamedType(context.currentType)) {
     throw createError(
       `Expected context.currentType type to be a named type.`,

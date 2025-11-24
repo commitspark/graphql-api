@@ -8,7 +8,8 @@ export const queryByIdResolver: GraphQLFieldResolver<
   QueryMutationResolverContext,
   any,
   Promise<EntryData>
-> = async (obj, args, context, info) => {
+> = async (_obj, args, context, info) => {
+  void info
   const entry = await findByTypeId(context, context.type.name, args.id)
 
   return { ...entry.data, id: entry.id }

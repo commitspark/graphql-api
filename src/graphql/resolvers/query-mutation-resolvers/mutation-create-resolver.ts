@@ -40,9 +40,7 @@ export const mutationCreateResolver: GraphQLFieldResolver<
   let existingEntry
   try {
     existingEntry = await findById(context, args.id)
-  } catch (_) {
-    /* empty */
-  }
+  } catch {}
   if (existingEntry) {
     throw createError(
       `An entry with id "${args.id}" already exists.`,

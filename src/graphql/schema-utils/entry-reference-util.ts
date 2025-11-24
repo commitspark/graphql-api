@@ -78,7 +78,7 @@ async function validateReference(
     let referencedTypeName
     try {
       referencedTypeName = await getTypeById(context, referencedId)
-    } catch (error) {
+    } catch {
       throw createError(
         `Failed to resolve entry reference "${referencedId}".`,
         ErrorCode.BAD_USER_INPUT,

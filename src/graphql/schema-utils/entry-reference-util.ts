@@ -77,12 +77,8 @@ async function validateReference(
     const referencedId = fieldValue.id
     let referencedTypeName
     try {
-      referencedTypeName = await getTypeById(
-        context.gitAdapter,
-        context.getCurrentRef(),
-        referencedId,
-      )
-    } catch (error) {
+      referencedTypeName = await getTypeById(context, referencedId)
+    } catch {
       throw createError(
         `Failed to resolve entry reference "${referencedId}".`,
         ErrorCode.BAD_USER_INPUT,

@@ -11,6 +11,7 @@ import {
   ApolloServerOptions,
   GraphQLRequest,
 } from '@apollo/server'
+import { RepositoryCacheHandler } from './persistence/cache'
 
 export type VariableValues = { [name: string]: unknown }
 
@@ -26,19 +27,21 @@ export const postGraphQL = async <
   TVariables extends VariableValues = VariableValues,
 >(
   gitAdapter: GitAdapter,
+  repositoryCache: RepositoryCacheHandler,
   ref: string,
   request: ApolloExecuteOperationRequest<TData, TVariables>,
 ): Promise<GraphQLResponse<TData | null>> => {
-  let currentRef = await gitAdapter.getLatestCommitHash(ref)
+  let currentHash = await gitAdapter.getLatestCommitHash(ref)
   const context: ApolloContext = {
     branch: ref,
     gitAdapter: gitAdapter,
-    getCurrentRef(): string {
-      return currentRef
+    getCurrentHash(): string {
+      return currentHash
     },
-    setCurrentRef(refArg: string) {
-      currentRef = refArg
+    setCurrentHash(refArg: string) {
+      currentHash = refArg
     },
+    repositoryCache: repositoryCache,
   }
 
   const apolloDriverConfig: ApolloServerOptions<ApolloContext> =
@@ -58,7 +61,7 @@ export const postGraphQL = async <
   await apolloServer.stop()
 
   return {
-    ref: context.getCurrentRef(),
+    ref: context.getCurrentHash(),
     data:
       result.body.kind === 'single' ? result.body.singleResult.data : undefined,
     errors:
@@ -70,18 +73,20 @@ export const postGraphQL = async <
 
 export const getSchema = async (
   gitAdapter: GitAdapter,
+  repositoryCache: RepositoryCacheHandler,
   ref: string,
 ): Promise<SchemaResponse> => {
-  let currentRef = await gitAdapter.getLatestCommitHash(ref)
+  let currentHash = await gitAdapter.getLatestCommitHash(ref)
   const context: ApolloContext = {
     branch: ref,
     gitAdapter: gitAdapter,
-    getCurrentRef(): string {
-      return currentRef
+    getCurrentHash(): string {
+      return currentHash
     },
-    setCurrentRef(refArg: string) {
-      currentRef = refArg
+    setCurrentHash(refArg: string) {
+      currentHash = refArg
     },
+    repositoryCache: repositoryCache,
   }
 
   const typeDefinitionStrings = (await generateSchema(context)).typeDefs
@@ -90,7 +95,7 @@ export const getSchema = async (
   }
 
   return {
-    ref: context.getCurrentRef(),
+    ref: context.getCurrentHash(),
     data: typeDefinitionStrings.join('\n'),
   }
 }
@@ -98,8 +103,9 @@ export const getSchema = async (
 export interface ApolloContext {
   branch: string
   gitAdapter: GitAdapter
-  getCurrentRef(): string
-  setCurrentRef(sha: string): void
+  getCurrentHash(): string
+  setCurrentHash(sha: string): void
+  repositoryCache: RepositoryCacheHandler
 }
 
 export interface GraphQLResponse<TData> {

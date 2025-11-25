@@ -295,7 +295,6 @@ type EntryA @Entry {
           commitspark: {
             argumentName: 'id',
             argumentValue: entryAId,
-            typeName: 'EntryA',
           },
         },
       },

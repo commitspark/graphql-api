@@ -8,6 +8,7 @@ import {
 } from './client'
 import { GitAdapter } from '@commitspark/git-adapter'
 import { ErrorCode, ErrorMetadata } from './graphql/errors'
+import { createCacheHandler } from './persistence/cache'
 
 interface Client {
   postGraphQL<
@@ -23,8 +24,9 @@ interface Client {
 export { Client, GraphQLResponse, SchemaResponse, ErrorCode, ErrorMetadata }
 
 export async function createClient(gitAdapter: GitAdapter): Promise<Client> {
+  const repositoryCache = createCacheHandler()
   return {
-    postGraphQL: (ref, request) => postGraphQL(gitAdapter, ref, request),
-    getSchema: (ref) => getSchema(gitAdapter, ref),
+    postGraphQL: (...args) => postGraphQL(gitAdapter, repositoryCache, ...args),
+    getSchema: (...args) => getSchema(gitAdapter, repositoryCache, ...args),
   }
 }

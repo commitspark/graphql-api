@@ -28,8 +28,7 @@ export const resolveFieldDefaultValue: FieldResolver<any> = async (
       fieldValue,
       args,
       {
-        gitAdapter: context.gitAdapter,
-        getCurrentRef: context.getCurrentRef,
+        ...context,
         currentType: context.currentType.ofType,
         hasNonNullParent: true,
       },
@@ -61,8 +60,7 @@ export const resolveFieldDefaultValue: FieldResolver<any> = async (
         item,
         args,
         {
-          gitAdapter: context.gitAdapter,
-          getCurrentRef: context.getCurrentRef,
+          ...context,
           currentType: context.currentType.ofType,
           hasNonNullParent: context.hasNonNullParent,
         },

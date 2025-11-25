@@ -1,30 +1,24 @@
-import { Entry, GitAdapter, GitAdapterError } from '@commitspark/git-adapter'
+import { Entry } from '@commitspark/git-adapter'
 import { createError, ErrorCode } from '../graphql/errors'
+import { ApolloContext } from '../client'
 
 export async function getTypeById(
-  gitAdapter: GitAdapter,
-  commitHash: string,
+  context: ApolloContext,
   id: string,
 ): Promise<string> {
-  const requestedEntry = await findById(gitAdapter, commitHash, id)
+  const requestedEntry = await findById(context, id)
   return requestedEntry.metadata.type
 }
 
 export async function findById(
-  gitAdapter: GitAdapter,
-  commitHash: string,
+  context: ApolloContext,
   id: string,
 ): Promise<Entry> {
-  let allEntries: Entry[]
-  try {
-    allEntries = await gitAdapter.getEntries(commitHash)
-  } catch (err) {
-    if (err instanceof GitAdapterError) {
-      throw createError(err.message, err.code, {})
-    }
-    throw err
-  }
-  const requestedEntry = allEntries.find((entry: Entry) => entry.id === id)
+  const entriesRecord = await context.repositoryCache.getEntriesRecord(
+    context,
+    context.getCurrentHash(),
+  )
+  const requestedEntry = entriesRecord.byId.get(id)
   if (requestedEntry === undefined) {
     throw createError(`No entry with ID "${id}" exists.`, ErrorCode.NOT_FOUND, {
       argumentName: 'id',
@@ -36,42 +30,23 @@ export async function findById(
 }
 
 export async function findByType(
-  gitAdapter: GitAdapter,
-  commitHash: string,
+  context: ApolloContext,
   type: string,
 ): Promise<Entry[]> {
-  let allEntries: Entry[]
-  try {
-    allEntries = await gitAdapter.getEntries(commitHash)
-  } catch (err) {
-    if (err instanceof GitAdapterError) {
-      throw createError(err.message, err.code, {})
-    }
-    throw err
-  }
-
-  return allEntries.filter((entry: Entry) => entry.metadata.type === type)
+  const entriesRecord = await context.repositoryCache.getEntriesRecord(
+    context,
+    context.getCurrentHash(),
+  )
+  return entriesRecord.byType.get(type) ?? []
 }
 
 export async function findByTypeId(
-  gitAdapter: GitAdapter,
-  commitHash: string,
+  context: ApolloContext,
   type: string,
   id: string,
 ): Promise<Entry> {
-  let allEntries: Entry[]
-  try {
-    allEntries = await gitAdapter.getEntries(commitHash)
-  } catch (err) {
-    if (err instanceof GitAdapterError) {
-      throw createError(err.message, err.code, {})
-    }
-    throw err
-  }
-  const requestedEntry = allEntries.find(
-    (entry: Entry) => entry.id === id && entry.metadata.type === type,
-  )
-  if (requestedEntry === undefined) {
+  const entryById = await findById(context, id)
+  if (entryById === undefined || entryById.metadata.type !== type) {
     throw createError(
       `No entry of type "${type}" with ID "${id}" exists.`,
       ErrorCode.NOT_FOUND,
@@ -83,5 +58,5 @@ export async function findByTypeId(
     )
   }
 
-  return requestedEntry
+  return entryById
 }

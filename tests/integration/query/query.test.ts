@@ -1096,7 +1096,7 @@ type MyEntry @Entry {
   })
 })
 
-it('should return an error for bad queries', async () => {
+it('should return an error for queries for non-existent entries', async () => {
   const gitAdapter = mock<GitAdapter>()
   const gitRef = 'myRef'
   const commitHash = 'abcd'
@@ -1132,7 +1132,6 @@ type MyEntry @Entry {
       extensions: {
         code: 'NOT_FOUND',
         commitspark: {
-          typeName: 'MyEntry',
           argumentName: 'id',
           argumentValue: entryId,
         },

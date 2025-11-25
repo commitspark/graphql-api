@@ -5,7 +5,7 @@ function checkUnionMembersConsistentUseOfEntryDirective(
 ): string {
   const typeMap = schema.getTypeMap()
 
-  for (const [key, type] of Object.entries(typeMap)) {
+  for (const type of Object.values(typeMap)) {
     if (type.astNode?.kind !== Kind.UNION_TYPE_DEFINITION) {
       continue
     }

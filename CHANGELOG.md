@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Internal caching of entries and schema per Git ref to increase performance
 
+### Changed
+
+- Upgrade dependencies
+
 ## [1.0.0-beta.4] - 2025-11-12
 
 ### Added

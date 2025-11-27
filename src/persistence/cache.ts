@@ -1,6 +1,6 @@
 import { Entry, GitAdapterError } from '@commitspark/git-adapter'
 import { ApolloContext } from '../client'
-import { createError } from '../graphql/errors'
+import { createError, ErrorCode } from '../graphql/errors'
 
 type Ref = string
 type EntriesCache = Map<Ref, EntriesRecord>
@@ -69,7 +69,8 @@ const fetchAndCacheEntries = async (
     if (err instanceof GitAdapterError) {
       throw createError(err.message, err.code, {})
     }
-    throw err
+    const message = err instanceof Error ? err.message : String(err)
+    throw createError(message, ErrorCode.INTERNAL_ERROR, {})
   }
 
   const entriesById = new Map(allEntries.map((entry) => [entry.id, entry]))
@@ -120,7 +121,8 @@ const getSchemaStringByRef = async (
     if (err instanceof GitAdapterError) {
       throw createError(err.message, err.code, {})
     }
-    throw err
+    const message = err instanceof Error ? err.message : String(err)
+    throw createError(message, ErrorCode.INTERNAL_ERROR, {})
   }
 
   schemaCache.set(ref, schemaString)

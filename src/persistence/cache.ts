@@ -5,6 +5,7 @@ import { createError } from '../graphql/errors'
 type Ref = string
 type EntriesCache = Map<Ref, EntriesRecord>
 type SchemaCache = Map<Ref, string>
+type InflightEntries = Map<Ref, Promise<EntriesRecord>>
 
 interface EntriesRecord {
   byId: Map<string, Entry>
@@ -21,8 +22,10 @@ export interface RepositoryCacheHandler {
 
 const MAX_CACHE_ENTRIES = 50
 
-const getEntriesRecordByRef = async (
+// intentionally not async so that the same in-flight promise is returned to all callers
+const getEntriesRecordByRef = (
   entriesCache: EntriesCache,
+  inflightEntries: InflightEntries,
   cacheSize: number,
   context: ApolloContext,
   ref: string,
@@ -33,9 +36,32 @@ const getEntriesRecordByRef = async (
     entriesCache.delete(ref)
     entriesCache.set(ref, cacheRecord)
 
-    return cacheRecord
+    return Promise.resolve(cacheRecord)
   }
 
+  const inflightPromise = inflightEntries.get(ref)
+  if (inflightPromise) {
+    return inflightPromise
+  }
+
+  const fetchPromise = fetchAndCacheEntries(
+    entriesCache,
+    cacheSize,
+    context,
+    ref,
+  ).finally(() => inflightEntries.delete(ref))
+
+  inflightEntries.set(ref, fetchPromise)
+
+  return fetchPromise
+}
+
+const fetchAndCacheEntries = async (
+  entriesCache: EntriesCache,
+  cacheSize: number,
+  context: ApolloContext,
+  ref: string,
+): Promise<EntriesRecord> => {
   let allEntries: Entry[]
   try {
     allEntries = await context.gitAdapter.getEntries(ref)
@@ -45,12 +71,13 @@ const getEntriesRecordByRef = async (
     }
     throw err
   }
+
   const entriesById = new Map(allEntries.map((entry) => [entry.id, entry]))
   const entriesByType = new Map<string, Entry[]>()
   for (const entry of allEntries) {
-    const arr = entriesByType.get(entry.metadata.type) || []
-    arr.push(entry)
-    entriesByType.set(entry.metadata.type, arr)
+    const existingEntriesOfType = entriesByType.get(entry.metadata.type) || []
+    existingEntriesOfType.push(entry)
+    entriesByType.set(entry.metadata.type, existingEntriesOfType)
   }
 
   const newCacheRecord = {
@@ -114,9 +141,13 @@ export const createCacheHandler = (
 ): RepositoryCacheHandler => {
   const entriesCache: EntriesCache = new Map<Ref, EntriesRecord>()
   const schemaCache: SchemaCache = new Map<Ref, string>()
+  const inflightEntries: InflightEntries = new Map<
+    Ref,
+    Promise<EntriesRecord>
+  >()
   return {
     getEntriesRecord: (...args) =>
-      getEntriesRecordByRef(entriesCache, cacheSize, ...args),
+      getEntriesRecordByRef(entriesCache, inflightEntries, cacheSize, ...args),
     getSchema: (...args) =>
       getSchemaStringByRef(schemaCache, cacheSize, ...args),
   }

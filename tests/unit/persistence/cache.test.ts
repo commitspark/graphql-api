@@ -202,4 +202,33 @@ describe('Cache', () => {
     await cache.getSchema(context, 'r1')
     expect(gitAdapter.getSchema).toHaveBeenCalledTimes(CACHE_SIZE + 2)
   })
+
+  it('serves the same in-flight promise to concurrent calls from resolvers', async () => {
+    let resolveEntries!: (value: Entry[]) => void
+    const entriesPromise = new Promise<Entry[]>((resolve) => {
+      resolveEntries = resolve
+    })
+
+    const { context, gitAdapter } = makeContext(async () => entriesPromise)
+    const cache = createCacheHandler()
+
+    const p1 = cache.getEntriesRecord(context, 'ref-concurrent')
+    const p2 = cache.getEntriesRecord(context, 'ref-concurrent')
+
+    expect(gitAdapter.getEntries).toHaveBeenCalledTimes(1)
+    expect(gitAdapter.getEntries).toHaveBeenLastCalledWith('ref-concurrent')
+    expect(p1).toBe(p2)
+
+    const entries: Entry[] = [
+      { id: '1', metadata: { type: 'A' } },
+      { id: '2', metadata: { type: 'B' } },
+    ]
+    resolveEntries(entries)
+
+    const [record1, record2] = await Promise.all([p1, p2])
+    expect(record2.byId).toBe(record1.byId)
+    expect(record2.byType).toBe(record1.byType)
+
+    expect(gitAdapter.getEntries).toHaveBeenCalledTimes(1)
+  })
 })

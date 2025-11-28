@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Ensure single adapter call when GraphQL request contains multiple queries
 - Ensure all adapter errors are re-thrown as GraphQLError
+- Upgrade dependencies
 
 ## [1.0.0-beta.5]
 

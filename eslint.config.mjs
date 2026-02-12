@@ -12,6 +12,19 @@ export default defineConfig([
   {
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
+
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['graphql/*'],
+              message:
+                'Do not use deep imports from "graphql/*" (can cause multiple realms at runtime when bundled). Import from "graphql" instead.',
+            },
+          ],
+        },
+      ],
     },
   },
 ])

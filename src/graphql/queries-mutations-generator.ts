@@ -1,13 +1,13 @@
 import { EntryData } from '@commitspark/git-adapter'
-import { ApolloContext } from '../client'
+import { ApolloContext } from '../client.ts'
 import { GraphQLFieldResolver, GraphQLObjectType } from 'graphql'
-import { queryEveryResolver } from './resolvers/query-mutation-resolvers/query-every-resolver'
-import { queryByIdResolver } from './resolvers/query-mutation-resolvers/query-by-id-resolver'
-import { mutationCreateResolver } from './resolvers/query-mutation-resolvers/mutation-create-resolver'
-import { mutationUpdateResolver } from './resolvers/query-mutation-resolvers/mutation-update-resolver'
-import { mutationDeleteResolver } from './resolvers/query-mutation-resolvers/mutation-delete-resolver'
-import { queryTypeByIdResolver } from './resolvers/query-mutation-resolvers/query-type-by-id-resolver'
-import { QueryMutationResolver } from './resolvers/types'
+import { queryEveryResolver } from './resolvers/query-mutation-resolvers/query-every-resolver.ts'
+import { queryByIdResolver } from './resolvers/query-mutation-resolvers/query-by-id-resolver.ts'
+import { mutationCreateResolver } from './resolvers/query-mutation-resolvers/mutation-create-resolver.ts'
+import { mutationUpdateResolver } from './resolvers/query-mutation-resolvers/mutation-update-resolver.ts'
+import { mutationDeleteResolver } from './resolvers/query-mutation-resolvers/mutation-delete-resolver.ts'
+import { queryTypeByIdResolver } from './resolvers/query-mutation-resolvers/query-type-by-id-resolver.ts'
+import { QueryMutationResolver } from './resolvers/types.ts'
 
 export function generateQueriesAndMutations(
   entryDirectiveTypes: GraphQLObjectType[],

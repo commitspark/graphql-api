@@ -6,14 +6,14 @@ import {
   isObjectType,
   isUnionType,
 } from 'graphql'
-import { ApolloContext } from '../../client'
-import { getTypeById } from '../../persistence/persistence'
+import { ApolloContext } from '../../client.ts'
+import { getTypeById } from '../../persistence/persistence.ts'
 import {
   getUnionTypeNameFromFieldValue,
   getUnionValue,
-} from './union-type-util'
-import { hasEntryDirective, isUnionOfEntryTypes } from './entry-type-util'
-import { createError, ErrorCode } from '../errors'
+} from './union-type-util.ts'
+import { hasEntryDirective, isUnionOfEntryTypes } from './entry-type-util.ts'
+import { createError, ErrorCode } from '../errors.ts'
 
 function isPermittedReferenceType(
   referencedTypeName: string,

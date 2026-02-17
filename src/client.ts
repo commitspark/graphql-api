@@ -1,5 +1,5 @@
-import { createApolloConfig } from './graphql/apollo-config-factory'
-import { generateSchema } from './graphql/schema-generator'
+import { createApolloConfig } from './graphql/apollo-config-factory.ts'
+import { generateSchema } from './graphql/schema-generator.ts'
 import {
   DocumentNode,
   GraphQLFormattedError,
@@ -11,7 +11,7 @@ import {
   ApolloServerOptions,
   GraphQLRequest,
 } from '@apollo/server'
-import { RepositoryCacheHandler } from './persistence/cache'
+import { RepositoryCacheHandler } from './persistence/cache.ts'
 
 export type VariableValues = { [name: string]: unknown }
 

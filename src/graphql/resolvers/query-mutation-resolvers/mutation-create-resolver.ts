@@ -1,13 +1,13 @@
-import { findById, findByTypeId } from '../../../persistence/persistence'
+import { findById, findByTypeId } from '../../../persistence/persistence.ts'
 import { GraphQLFieldResolver, isObjectType } from 'graphql'
-import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util'
+import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util.ts'
 import {
   ENTRY_ID_INVALID_CHARACTERS,
   EntryData,
   EntryDraft,
 } from '@commitspark/git-adapter'
-import { QueryMutationResolverContext } from '../types'
-import { createError, ErrorCode } from '../../errors'
+import { QueryMutationResolverContext } from '../types.ts'
+import { createError, ErrorCode } from '../../errors.ts'
 
 export const mutationCreateResolver: GraphQLFieldResolver<
   any,

@@ -1,6 +1,6 @@
 import { Entry } from '@commitspark/git-adapter'
-import { createError, ErrorCode } from '../graphql/errors'
-import { ApolloContext } from '../client'
+import { createError, ErrorCode } from '../graphql/errors.ts'
+import { ApolloContext } from '../client.ts'
 
 export async function getTypeById(
   context: ApolloContext,

@@ -5,10 +5,10 @@ import {
   postGraphQL,
   SchemaResponse,
   VariableValues,
-} from './client'
+} from './client.ts'
 import { GitAdapter } from '@commitspark/git-adapter'
-import { ErrorCode, ErrorMetadata } from './graphql/errors'
-import { createCacheHandler } from './persistence/cache'
+import { ErrorCode, ErrorMetadata } from './graphql/errors.ts'
+import { createCacheHandler } from './persistence/cache.ts'
 
 interface Client {
   postGraphQL<

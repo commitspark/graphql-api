@@ -1,4 +1,4 @@
-import { FieldResolver, FieldResolverContext, ResolvedEntryData } from './types'
+import { FieldResolver, FieldResolverContext, ResolvedEntryData } from './types.ts'
 import { EntryData } from '@commitspark/git-adapter'
 import {
   GraphQLNonNull,
@@ -12,10 +12,10 @@ import {
 import {
   buildsOnTypeWithEntryDirective,
   hasEntryDirective,
-} from '../../schema-utils/entry-type-util'
-import { resolveEntryReference } from './entry-reference-resolver'
-import { resolveUnionValue } from './union-value-resolver'
-import { createError, ErrorCode } from '../../errors'
+} from '../../schema-utils/entry-type-util.ts'
+import { resolveEntryReference } from './entry-reference-resolver.ts'
+import { resolveUnionValue } from './union-value-resolver.ts'
+import { createError, ErrorCode } from '../../errors.ts'
 
 export const resolveFieldDefaultValue: FieldResolver<any> = async (
   fieldValue: any,

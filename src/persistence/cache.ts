@@ -1,6 +1,6 @@
 import { Entry, GitAdapterError } from '@commitspark/git-adapter'
-import { ApolloContext } from '../client'
-import { createError, ErrorCode } from '../graphql/errors'
+import { ApolloContext } from '../client.ts'
+import { createError, ErrorCode } from '../graphql/errors.ts'
 
 type Ref = string
 type EntriesCache = Map<Ref, EntriesRecord>

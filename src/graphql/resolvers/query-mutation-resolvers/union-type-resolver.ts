@@ -1,7 +1,7 @@
-import { ApolloContext } from '../../../client'
-import { getTypeById } from '../../../persistence/persistence'
+import { ApolloContext } from '../../../client.ts'
+import { getTypeById } from '../../../persistence/persistence.ts'
 import { GraphQLTypeResolver } from 'graphql'
-import { buildsOnTypeWithEntryDirective } from '../../schema-utils/entry-type-util'
+import { buildsOnTypeWithEntryDirective } from '../../schema-utils/entry-type-util.ts'
 
 export const unionTypeResolver: GraphQLTypeResolver<
   any,

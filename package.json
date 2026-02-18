@@ -33,7 +33,7 @@
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm && npm run build:types",
     "build:cjs": "tsc --project tsconfig.build.cjs.json",
-    "build:esm": "tsc --project tsconfig.build.esm.json",
+    "build:esm": "tsc --project tsconfig.build.esm.json && echo '{\"type\":\"module\"}' > dist/esm/package.json",
     "build:types": "tsc --project tsconfig.build.types.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,tests}/**/*.ts\"",

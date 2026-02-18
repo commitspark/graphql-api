@@ -3,8 +3,7 @@
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
-    "outDir": "./dist/cjs",
-    "declarationDir": "./dist/types",
+    "moduleResolution": "node",
+    "outDir": "./dist/cjs"
   }
 }

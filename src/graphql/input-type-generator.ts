@@ -13,11 +13,11 @@ import {
   isScalarType,
   isUnionType,
 } from 'graphql'
-import { SchemaAnalyzerResult } from './schema-analyzer'
+import { SchemaAnalyzerResult } from './schema-analyzer.ts'
 import {
   buildsOnTypeWithEntryDirective,
   hasEntryDirective,
-} from './schema-utils/entry-type-util'
+} from './schema-utils/entry-type-util.ts'
 
 function generateFieldInputTypeString(type: GraphQLNullableType): string {
   if (isListType(type)) {

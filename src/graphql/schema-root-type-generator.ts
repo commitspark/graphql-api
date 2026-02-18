@@ -1,4 +1,4 @@
-import { GeneratedQuery, GeneratedSchema } from './queries-mutations-generator'
+import { GeneratedQuery, GeneratedSchema } from './queries-mutations-generator.ts'
 
 export function generateSchemaRootTypeStrings(
   generatedSchemas: GeneratedSchema[],

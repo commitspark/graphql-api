@@ -1,6 +1,6 @@
 import { GraphQLFieldResolver, GraphQLOutputType } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
-import { ApolloContext } from '../../../client'
+import { ApolloContext } from '../../../client.ts'
 
 export interface FieldResolverContext extends ApolloContext {
   currentType: GraphQLOutputType

@@ -1,26 +1,26 @@
 import {
   generateQueriesAndMutations,
   generateTypeNameQuery,
-} from './queries-mutations-generator'
+} from './queries-mutations-generator.ts'
 import {
   IExecutableSchemaDefinition,
   makeExecutableSchema,
 } from '@graphql-tools/schema'
-import { analyzeSchema } from './schema-analyzer'
+import { analyzeSchema } from './schema-analyzer.ts'
 import {
   generateIdInputTypeStrings,
   generateObjectInputTypeStrings,
   generateUnionInputTypeStrings,
-} from './input-type-generator'
-import { generateSchemaRootTypeStrings } from './schema-root-type-generator'
+} from './input-type-generator.ts'
+import { generateSchemaRootTypeStrings } from './schema-root-type-generator.ts'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
-import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver'
-import { ApolloContext } from '../client'
+import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver.ts'
+import { ApolloContext } from '../client.ts'
 import { GraphQLFieldResolver, GraphQLTypeResolver } from 'graphql'
-import { getValidationResult } from './schema-validator'
+import { getValidationResult } from './schema-validator.ts'
 import { EntryData } from '@commitspark/git-adapter'
-import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator'
-import { createError, ErrorCode } from './errors'
+import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator.ts'
+import { createError, ErrorCode } from './errors.ts'
 
 export async function generateSchema(
   context: ApolloContext,

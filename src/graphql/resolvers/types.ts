@@ -1,4 +1,4 @@
-import { ApolloContext } from '../../client'
+import { ApolloContext } from '../../client.ts'
 import { GraphQLFieldResolver, GraphQLNamedType } from 'graphql'
 
 export interface QueryMutationResolverContext extends ApolloContext {

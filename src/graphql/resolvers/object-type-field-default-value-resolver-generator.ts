@@ -10,9 +10,9 @@ import {
   isUnionType,
 } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
-import { ResolvedEntryData } from './field-resolvers/types'
-import { resolveFieldDefaultValue } from './field-resolvers/field-default-value-resolver'
-import { ApolloContext } from '../../client'
+import { ResolvedEntryData } from './field-resolvers/types.ts'
+import { resolveFieldDefaultValue } from './field-resolvers/field-default-value-resolver.ts'
+import { ApolloContext } from '../../client.ts'
 
 function requiresCustomDefaultValueResolver(type: GraphQLOutputType): boolean {
   if (isNonNullType(type)) {

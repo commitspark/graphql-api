@@ -1,6 +1,6 @@
 import { GitAdapter } from '@commitspark/git-adapter'
 import { mock } from 'jest-mock-extended'
-import { createClient } from '../../../src'
+import { createClient } from '../../../src/index.ts'
 
 describe('Schema generator', () => {
   it('should extend schema with a CRUD API for an @Entry type', async () => {

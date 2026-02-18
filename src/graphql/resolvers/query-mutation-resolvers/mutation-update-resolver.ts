@@ -1,9 +1,9 @@
-import { findById, findByTypeId } from '../../../persistence/persistence'
-import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util'
+import { findById, findByTypeId } from '../../../persistence/persistence.ts'
+import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util.ts'
 import { GraphQLFieldResolver, isObjectType } from 'graphql'
 import { EntryData, EntryDraft } from '@commitspark/git-adapter'
-import { QueryMutationResolverContext } from '../types'
-import { createError, ErrorCode } from '../../errors'
+import { QueryMutationResolverContext } from '../types.ts'
+import { createError, ErrorCode } from '../../errors.ts'
 
 function mergeData(
   existingEntryData: EntryData,

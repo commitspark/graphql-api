@@ -1,6 +1,6 @@
 import { Entry, GitAdapter } from '@commitspark/git-adapter'
 import { mock } from 'jest-mock-extended'
-import { createClient } from '../../../src'
+import { createClient } from '../../../src/index.ts'
 
 describe('Query resolvers', () => {
   it('should return every entry', async () => {

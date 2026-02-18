@@ -5,7 +5,7 @@ import {
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
-import { createClient } from '../../../src'
+import { createClient } from '../../../src/index.ts'
 
 describe('"Delete" mutation resolvers', () => {
   it('should delete an entry', async () => {

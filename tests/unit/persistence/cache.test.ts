@@ -1,5 +1,5 @@
-import { createCacheHandler } from '../../../src/persistence/cache'
-import type { ApolloContext } from '../../../src/client'
+import { createCacheHandler } from '../../../src/persistence/cache.ts'
+import type { ApolloContext } from '../../../src/client.ts'
 import {
   Entry,
   ErrorCode,
@@ -7,7 +7,7 @@ import {
   GitAdapterError,
 } from '@commitspark/git-adapter'
 
-jest.mock('../../../src/graphql/errors', () => {
+jest.mock('../../../src/graphql/errors.ts', () => {
   return {
     createError: jest.fn(
       (message: string, code: string, extensions: Record<string, unknown>) => {

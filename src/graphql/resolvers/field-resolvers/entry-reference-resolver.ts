@@ -1,7 +1,7 @@
-import { FieldResolver, FieldResolverContext } from './types'
+import { FieldResolver, FieldResolverContext } from './types.ts'
 import { GraphQLResolveInfo, isNamedType } from 'graphql'
-import { findById } from '../../../persistence/persistence'
-import { createError, ErrorCode } from '../../errors'
+import { findById } from '../../../persistence/persistence.ts'
+import { createError, ErrorCode } from '../../errors.ts'
 
 export const resolveEntryReference: FieldResolver<any> = async (
   fieldValue: any,

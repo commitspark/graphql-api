@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql'
-import { ErrorCode } from '../../../src'
-import { findById, findByTypeId } from '../../../src/persistence/persistence'
+import { ErrorCode } from '../../../src/index.ts'
+import { findById, findByTypeId } from '../../../src/persistence/persistence.ts'
 
 // Helper to create a minimal ApolloContext-like object the functions expect
 function makeContext(entries: Array<{ id: string; type: string }>) {

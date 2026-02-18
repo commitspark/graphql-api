@@ -1,5 +1,5 @@
 import { EntryData } from '@commitspark/git-adapter'
-import { createError, ErrorCode } from '../errors'
+import { createError, ErrorCode } from '../errors.ts'
 
 export function getUnionTypeNameFromFieldValue(fieldValue: unknown): string {
   if (typeof fieldValue !== 'object' || fieldValue === null) {

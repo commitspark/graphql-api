@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix GraphQL bundling issues caused by inconsistent imports
 - Fix incorrect ESM build configuration leading to broken build output
 
+### Changed
+
+- Upgrade Apollo Server to minimum version 5.2 to include Turbopack build fix and latest security fixes
+
 ## [1.0.0-beta.6] - 2025-11-28
 
 ### Changed

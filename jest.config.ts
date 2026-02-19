@@ -9,10 +9,6 @@ const jestConfig: Config = {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.ts$': '$1',
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-  },
 }
 
 export default jestConfig

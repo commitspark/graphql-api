@@ -74,10 +74,10 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
   }
   for (const newlyReferencedEntryId of newlyReferencedIds) {
     const newlyReferencedEntry = await findById(context, newlyReferencedEntryId)
-    const updatedReferenceList: string[] =
-      newlyReferencedEntry.metadata.referencedBy ?? []
-    updatedReferenceList.push(args.id)
-    updatedReferenceList.sort()
+    const updatedReferenceList: string[] = [
+      ...(newlyReferencedEntry.metadata.referencedBy ?? []),
+      args.id,
+    ].sort()
     referencedEntryUpdates.push({
       ...newlyReferencedEntry,
       metadata: {

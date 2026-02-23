@@ -677,4 +677,115 @@ type Box @Entry {
     })
     expect(result.ref).toBe(postCommitHash)
   })
+
+  it('should not mutate the original referencedBy array of a newly referenced entry', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type Item @Entry {
+    id: ID!
+    box: Box
+}
+
+type Box @Entry {
+    id: ID!
+}`
+
+    const commitMessage = 'My message'
+    const boxId = 'box'
+    const itemId = 'item'
+    const otherItemId = 'otherItem'
+    const postCommitHash = 'ef01'
+
+    const commitResult: Commit = {
+      ref: postCommitHash,
+    }
+
+    // The box is already referenced by otherItem
+    const originalReferencedBy = [otherItemId]
+    const box: Entry = {
+      id: boxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: originalReferencedBy,
+      },
+    }
+    const item: Entry = {
+      id: itemId,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        // box field is not set yet
+      },
+    }
+
+    const updatedItem: Entry = {
+      id: itemId,
+      metadata: {
+        type: 'Item',
+      },
+      data: {
+        box: { id: boxId },
+      },
+    }
+    const updatedBox: Entry = {
+      id: boxId,
+      metadata: {
+        type: 'Box',
+        referencedBy: [itemId, otherItemId],
+      },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      entries: [
+        { ...updatedItem, deletion: false },
+        { ...updatedBox, deletion: false },
+      ],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([box, item])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([updatedBox, updatedItem])
+
+    const client = await createClient(gitAdapter)
+    await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!) {
+        data: updateItem(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: itemId,
+        mutationData: {
+          box: { id: boxId },
+        },
+        commitMessage: commitMessage,
+      },
+    })
+
+    // The bug: the resolver does `updatedReferenceList = entry.metadata.referencedBy ?? []`
+    // then `updatedReferenceList.push(args.id)`, which mutates the original array in-place.
+    // After the mutation runs, the original entry's referencedBy should still be untouched.
+    expect(originalReferencedBy).toEqual([otherItemId])
+  })
 })

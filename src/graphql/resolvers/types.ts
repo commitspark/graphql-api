@@ -23,7 +23,7 @@ export type UnionTypeResolver = GraphQLTypeResolver<
   ApolloContext
 >
 
-export type UnionTypeResolverSourceData = EntryData & {
+type UnionTypeResolverSourceData = EntryData & {
   id?: string
   __typename: string
 }

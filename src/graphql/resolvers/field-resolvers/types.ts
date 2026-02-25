@@ -2,12 +2,12 @@ import { GraphQLFieldResolver, GraphQLOutputType } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
 import { ApolloContext } from '../../../client.ts'
 
-export interface FieldResolverContext extends ApolloContext {
+interface FieldResolverContext extends ApolloContext {
   currentType: GraphQLOutputType
   hasNonNullParent?: boolean
 }
 
-export type FieldResolverSource = EntryData | EntryData[]
+type FieldResolverSource = EntryData | EntryData[]
 
 export type FieldResolver<
   TSource = FieldResolverSource,

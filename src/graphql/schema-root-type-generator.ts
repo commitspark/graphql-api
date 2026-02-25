@@ -1,8 +1,11 @@
-import { GeneratedQuery, GeneratedSchema } from './queries-mutations-generator.ts'
+import {
+  GeneratedQuery,
+  GeneratedSchema,
+} from './queries-mutations-generator.ts'
 
 export function generateSchemaRootTypeStrings(
   generatedSchemas: GeneratedSchema[],
-  typeQuery: GeneratedQuery<Promise<string>>,
+  typeQuery: GeneratedQuery,
 ): string {
   return (
     `type Query {\n` +

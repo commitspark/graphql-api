@@ -1,20 +1,20 @@
 import { findById, findByTypeId } from '../../../persistence/persistence.ts'
-import { GraphQLFieldResolver, isObjectType } from 'graphql'
+import { isObjectType } from 'graphql'
 import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util.ts'
 import {
   ENTRY_ID_INVALID_CHARACTERS,
   EntryData,
   EntryDraft,
 } from '@commitspark/git-adapter'
-import { QueryMutationResolverContext } from '../types.ts'
+import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 
-export const mutationCreateResolver: GraphQLFieldResolver<
-  any,
-  QueryMutationResolverContext,
-  any,
-  Promise<EntryData>
-> = async (source, args, context, info) => {
+export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
+  source,
+  args,
+  context,
+  info,
+) => {
   if (!isObjectType(context.type)) {
     throw createError(
       `Entry of type "${context.type.name}" cannot be created as is not an ObjectType.`,
@@ -57,7 +57,7 @@ export const mutationCreateResolver: GraphQLFieldResolver<
     context,
     null,
     info.returnType,
-    args.data,
+    args.data ?? null,
   )
 
   const referencedEntryUpdates: EntryDraft[] = []
@@ -84,7 +84,7 @@ export const mutationCreateResolver: GraphQLFieldResolver<
       type: context.type.name,
       referencedBy: [],
     },
-    data: args.data,
+    data: args.data ?? null,
     deletion: false,
   }
 

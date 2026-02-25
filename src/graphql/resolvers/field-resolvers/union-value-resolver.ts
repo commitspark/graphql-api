@@ -1,13 +1,11 @@
 import { EntryData } from '@commitspark/git-adapter'
-import { FieldResolver, ResolvedEntryData } from './types.ts'
+import { FieldResolver } from './types.ts'
 import {
   getUnionTypeNameFromFieldValue,
   getUnionValue,
 } from '../../schema-utils/union-type-util.ts'
 
-export const resolveUnionValue: FieldResolver<any> = async (
-  fieldValue: any,
-): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> => {
+export const resolveUnionValue: FieldResolver = async (fieldValue) => {
   const typeName = getUnionTypeNameFromFieldValue(fieldValue)
   const unionValue = getUnionValue(fieldValue)
 

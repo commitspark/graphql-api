@@ -1,14 +1,13 @@
 import { EntryData } from '@commitspark/git-adapter'
 import { findByType } from '../../../persistence/persistence.ts'
-import { GraphQLFieldResolver } from 'graphql'
-import { QueryMutationResolverContext } from '../types.ts'
+import { QueryMutationResolver } from '../types.ts'
 
-export const queryEveryResolver: GraphQLFieldResolver<
-  any,
-  QueryMutationResolverContext,
-  any,
-  Promise<EntryData[]>
-> = async (_obj, _args, context, info) => {
+export const queryEveryResolver: QueryMutationResolver<EntryData[]> = async (
+  _source,
+  _args,
+  context,
+  info,
+) => {
   void info
   const entries = await findByType(context, context.type.name)
 

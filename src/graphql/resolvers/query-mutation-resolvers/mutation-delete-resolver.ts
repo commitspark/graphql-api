@@ -1,16 +1,16 @@
 import { findById, findByTypeId } from '../../../persistence/persistence.ts'
-import { Entry, EntryData, EntryDraft } from '@commitspark/git-adapter'
+import { Entry, EntryDraft } from '@commitspark/git-adapter'
 import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util.ts'
-import { GraphQLFieldResolver, isObjectType } from 'graphql'
-import { QueryMutationResolverContext } from '../types.ts'
+import { isObjectType } from 'graphql'
+import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 
-export const mutationDeleteResolver: GraphQLFieldResolver<
-  any,
-  QueryMutationResolverContext,
-  any,
-  Promise<EntryData>
-> = async (source, args, context, info) => {
+export const mutationDeleteResolver: QueryMutationResolver<string> = async (
+  source,
+  args,
+  context,
+  info,
+) => {
   const entry: Entry = await findByTypeId(context, context.type.name, args.id)
 
   if (entry.metadata.referencedBy && entry.metadata.referencedBy.length > 0) {
@@ -41,7 +41,7 @@ export const mutationDeleteResolver: GraphQLFieldResolver<
     context,
     null,
     entryType,
-    entry.data,
+    entry.data ?? null,
   )
   const referencedEntryUpdates: EntryDraft[] = []
   for (const referencedEntryId of referencedEntryIds) {

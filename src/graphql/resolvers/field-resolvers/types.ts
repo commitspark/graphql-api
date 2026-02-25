@@ -7,11 +7,13 @@ export interface FieldResolverContext extends ApolloContext {
   hasNonNullParent?: boolean
 }
 
+export type FieldResolverSource = EntryData | EntryData[]
+
 export type FieldResolver<
-  TSource,
+  TSource = FieldResolverSource,
   TContext = FieldResolverContext,
-  TArgs = any,
-  TResult = Promise<ResolvedEntryData<EntryData | EntryData[] | null>>,
+  TArgs = Record<string, unknown>,
+  TResult = Promise<RecursiveArray<EntryData>>,
 > = GraphQLFieldResolver<TSource, TContext, TArgs, TResult>
 
-export type ResolvedEntryData<T> = T | Array<ResolvedEntryData<T>>
+export type RecursiveArray<T> = T | Array<RecursiveArray<T>>

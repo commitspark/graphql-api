@@ -16,11 +16,17 @@ import { generateSchemaRootTypeStrings } from './schema-root-type-generator.ts'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver.ts'
 import { ApolloContext } from '../client.ts'
-import { GraphQLFieldResolver, GraphQLTypeResolver } from 'graphql'
+import { GraphQLTypeResolver } from 'graphql'
 import { getValidationResult } from './schema-validator.ts'
-import { EntryData } from '@commitspark/git-adapter'
 import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator.ts'
 import { createError, ErrorCode } from './errors.ts'
+import { FieldResolver } from './resolvers/field-resolvers/types.ts'
+import {
+  ContextInjectionResolver,
+  QueryMutationResolver,
+  UnionTypeResolver,
+} from './resolvers/types.ts'
+import { EntryData } from '@commitspark/git-adapter'
 
 export async function generateSchema(
   context: ApolloContext,
@@ -52,19 +58,6 @@ export async function generateSchema(
   )
   const generatedTypeNameQuery = generateTypeNameQuery()
 
-  const generatedEntryReferenceResolvers: Record<
-    string,
-    Record<
-      string,
-      GraphQLFieldResolver<
-        Record<string, any>,
-        ApolloContext,
-        any,
-        Promise<EntryData | EntryData[] | null>
-      >
-    >
-  > = {}
-
   const generatedObjectInputTypeStrings = generateObjectInputTypeStrings(
     schemaAnalyzerResult.objectTypes,
   )
@@ -85,7 +78,10 @@ export async function generateSchema(
 
 ${generatedSchemaRootTypeStrings}`
 
-  const generatedUnionTypeResolvers: Record<string, UnionTypeResolver> = {}
+  const generatedUnionTypeResolvers: Record<
+    string,
+    { __resolveType: UnionTypeResolver }
+  > = {}
   for (const unionType of schemaAnalyzerResult.unionTypes) {
     generatedUnionTypeResolvers[unionType.name] = {
       __resolveType: unionTypeResolver,
@@ -96,11 +92,11 @@ ${generatedSchemaRootTypeStrings}`
 
   const generatedQueryResolvers: Record<
     string,
-    GraphQLFieldResolver<any, ApolloContext>
+    QueryMutationResolver<EntryData | EntryData[] | string>
   > = {}
   const generatedMutationResolvers: Record<
     string,
-    GraphQLFieldResolver<any, ApolloContext>
+    QueryMutationResolver<EntryData | EntryData[] | string>
   > = {}
 
   for (const element of generatedQueriesMutations) {
@@ -119,11 +115,14 @@ ${generatedSchemaRootTypeStrings}`
 
   const allGeneratedResolvers: Record<
     string,
-    Record<
-      string,
-      | GraphQLFieldResolver<any, ApolloContext>
-      | GraphQLTypeResolver<any, ApolloContext>
-    >
+    | Record<
+        string,
+        | QueryMutationResolver<EntryData | EntryData[] | string>
+        | GraphQLTypeResolver<unknown, ApolloContext>
+        | ContextInjectionResolver
+        | FieldResolver
+      >
+    | UnionTypeResolverRecord
   > = {
     Query: generatedQueryResolvers,
     Mutation: generatedMutationResolvers,
@@ -141,12 +140,6 @@ ${generatedSchemaRootTypeStrings}`
       ...generatedObjectTypeFieldResolvers[typeName],
     }
   }
-  for (const typeName of Object.keys(generatedEntryReferenceResolvers)) {
-    allGeneratedResolvers[typeName] = {
-      ...(allGeneratedResolvers[typeName] ?? {}),
-      ...generatedEntryReferenceResolvers[typeName],
-    }
-  }
 
   const typeDefs = [
     filteredOriginalSchemaString,
@@ -162,6 +155,6 @@ ${generatedSchemaRootTypeStrings}`
   }
 }
 
-interface UnionTypeResolver {
-  __resolveType: GraphQLTypeResolver<any, ApolloContext>
+interface UnionTypeResolverRecord {
+  __resolveType: UnionTypeResolver
 }

@@ -1,9 +1,11 @@
 import {
   GraphQLNullableType,
   GraphQLObjectType,
+  GraphQLUnionType,
   isListType,
   isNonNullType,
   isObjectType,
+  isScalarType,
   isUnionType,
 } from 'graphql'
 import { ApolloContext } from '../../client.ts'
@@ -14,6 +16,8 @@ import {
 } from './union-type-util.ts'
 import { hasEntryDirective, isUnionOfEntryTypes } from './entry-type-util.ts'
 import { createError, ErrorCode } from '../errors.ts'
+import { EntryData } from '@commitspark/git-adapter'
+import { isRecord } from '../util.ts'
 
 function isPermittedReferenceType(
   referencedTypeName: string,
@@ -38,7 +42,7 @@ async function validateReference(
   context: ApolloContext,
   fieldName: string,
   fieldType: GraphQLNullableType,
-  fieldValue: any,
+  fieldValue: EntryData,
 ): Promise<void> {
   if (isNonNullType(fieldType)) {
     await validateReference(context, fieldName, fieldType.ofType, fieldValue)
@@ -47,7 +51,7 @@ async function validateReference(
     if (!Array.isArray(fieldValue)) {
       throw createError(
         `Expected array while validation references for field "${fieldName}".`,
-        ErrorCode.SCHEMA_DATA_MISMATCH,
+        ErrorCode.BAD_REPOSITORY_DATA,
         {
           fieldName: fieldName,
           fieldValue: fieldValue,
@@ -64,16 +68,21 @@ async function validateReference(
     }
     return
   } else if (isUnionType(fieldType) || isObjectType(fieldType)) {
-    if (!('id' in fieldValue)) {
+    if (
+      fieldValue === null ||
+      !('id' in fieldValue) ||
+      typeof fieldValue.id !== 'string'
+    ) {
       throw createError(
-        `Expected key "id" in data while validating reference for field "${fieldName}".`,
-        ErrorCode.SCHEMA_DATA_MISMATCH,
+        `Expected key "id" with value of type string in data while validating reference for field "${fieldName}".`,
+        ErrorCode.BAD_REPOSITORY_DATA,
         {
           fieldName: fieldName,
           fieldValue: fieldValue,
         },
       )
     }
+
     const referencedId = fieldValue.id
     let referencedTypeName
     try {
@@ -106,8 +115,12 @@ export async function getReferencedEntryIds(
   context: ApolloContext,
   fieldName: string | null,
   type: GraphQLNullableType,
-  data: any,
+  data: EntryData | EntryData[],
 ): Promise<string[]> {
+  if (data === null || isScalarType(type)) {
+    return []
+  }
+
   if (isNonNullType(type)) {
     return getReferencedEntryIds(
       rootType,
@@ -117,6 +130,17 @@ export async function getReferencedEntryIds(
       data,
     )
   } else if (isListType(type)) {
+    if (!Array.isArray(data)) {
+      throw createError(
+        `Expected array as data for field "${fieldName}". `,
+        ErrorCode.BAD_REPOSITORY_DATA,
+        {
+          fieldName: fieldName ? fieldName : undefined,
+          fieldValue: data,
+        },
+      )
+    }
+
     let referencedEntryIds: string[] = []
     for (const element of data) {
       referencedEntryIds = [
@@ -135,8 +159,13 @@ export async function getReferencedEntryIds(
     return referencedEntryIds
   } else if (isUnionType(type)) {
     if (isUnionOfEntryTypes(type)) {
-      await validateReference(context, '', type, data)
-      return [data.id]
+      const referenceId = await getValidatedReferenceId(
+        context,
+        fieldName,
+        type,
+        data,
+      )
+      return [referenceId]
     }
 
     const requestedUnionTypeName = getUnionTypeNameFromFieldValue(data)
@@ -168,22 +197,56 @@ export async function getReferencedEntryIds(
     )
   } else if (isObjectType(type)) {
     if (type.name !== rootType.name && hasEntryDirective(type)) {
-      await validateReference(context, fieldName ?? '', type, data)
-      return [data.id]
+      const referenceId = await getValidatedReferenceId(
+        context,
+        fieldName,
+        type,
+        data,
+      )
+      return [referenceId]
     } else {
       let referencedEntryIds: string[] = []
       for (const [fieldsKey, field] of Object.entries(type.getFields())) {
-        const fieldValue = data[fieldsKey] ?? undefined
-        if (fieldValue !== undefined) {
-          const nestedResult = await getReferencedEntryIds(
-            rootType,
-            context,
-            fieldsKey,
-            field.type,
-            fieldValue,
+        if (Array.isArray(data)) {
+          throw createError(
+            `Expected object as data for type "${type.name}".`,
+            ErrorCode.BAD_REPOSITORY_DATA,
+            {
+              typeName: type.name,
+              fieldName: field.name ? field.name : undefined,
+            },
           )
-          referencedEntryIds = [...referencedEntryIds, ...nestedResult]
         }
+
+        const fieldValue = data[fieldsKey]
+        if (
+          fieldValue === undefined ||
+          fieldValue === null ||
+          isScalarType(field.type)
+        ) {
+          continue
+        }
+
+        if (!(Array.isArray(fieldValue) || isRecord(fieldValue))) {
+          throw createError(
+            `Expected object or array as data for field "${field.name}" of type "${type.name}".`,
+            ErrorCode.BAD_REPOSITORY_DATA,
+            {
+              typeName: type.name,
+              fieldName: field.name ? field.name : undefined,
+              fieldValue: fieldValue,
+            },
+          )
+        }
+        // recursively get referenced IDs in nested data
+        const nestedResult = await getReferencedEntryIds(
+          rootType,
+          context,
+          fieldsKey,
+          field.type,
+          fieldValue,
+        )
+        referencedEntryIds = [...referencedEntryIds, ...nestedResult]
       }
       // deduplicate
       referencedEntryIds = [...new Set(referencedEntryIds)]
@@ -192,4 +255,40 @@ export async function getReferencedEntryIds(
   }
 
   return []
+}
+
+async function getValidatedReferenceId(
+  context: ApolloContext,
+  fieldName: string | null,
+  type: GraphQLUnionType | GraphQLObjectType,
+  data: EntryData | EntryData[],
+): Promise<string> {
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    throw createError(
+      `Expected object as data for field "${fieldName}" of type "${type.name}".`,
+      ErrorCode.BAD_REPOSITORY_DATA,
+      {
+        typeName: type.name,
+        fieldName: fieldName ? fieldName : undefined,
+        fieldValue: data,
+      },
+    )
+  }
+  await validateReference(context, fieldName ? fieldName : '', type, data)
+
+  let referencedId = null
+  if (typeof (referencedId = data.id) !== 'string') {
+    throw createError(
+      `Expected a key "id" with value of type string in data of field "${fieldName}" of type "${type.name}"` +
+        ` after this reference was just verified to be valid.`,
+      ErrorCode.INTERNAL_ERROR,
+      {
+        typeName: type.name,
+        fieldName: fieldName ? fieldName : undefined,
+        fieldValue: data,
+      },
+    )
+  }
+
+  return referencedId
 }

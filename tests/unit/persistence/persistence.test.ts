@@ -1,20 +1,24 @@
 import { GraphQLError } from 'graphql'
 import { ErrorCode } from '../../../src'
 import { findById, findByTypeId } from '../../../src/persistence/persistence'
+import type { ApolloContext } from '../../../src/client'
+import { Entry } from '@commitspark/git-adapter'
 
-// Helper to create a minimal ApolloContext-like object the functions expect
-function makeContext(entries: Array<{ id: string; type: string }>) {
-  const byId = new Map<string, any>()
-  const byType = new Map<string, any[]>()
+function mockApolloContext(
+  entries: Array<{ id: string; type: string }>,
+): ApolloContext {
+  const byId = new Map<string, Entry>()
+  const byType = new Map<string, Entry[]>()
 
-  for (const e of entries) {
-    const entry = {
-      metadata: { id: e.id, type: e.type },
+  for (const entry of entries) {
+    const generatedEntry = {
+      id: entry.id,
+      metadata: { type: entry.type },
     }
-    byId.set(e.id, entry)
-    const list = byType.get(e.type) ?? []
-    list.push(entry)
-    byType.set(e.type, list)
+    byId.set(entry.id, generatedEntry)
+    const list = byType.get(entry.type) ?? []
+    list.push(generatedEntry)
+    byType.set(entry.type, list)
   }
 
   return {
@@ -22,12 +26,12 @@ function makeContext(entries: Array<{ id: string; type: string }>) {
     repositoryCache: {
       getEntriesRecord: jest.fn().mockResolvedValue({ byId, byType }),
     },
-  }
+  } as unknown as ApolloContext
 }
 
 describe('Persistence', () => {
   it('findById throws GraphQLError when entry does not exist', async () => {
-    const context: any = makeContext([])
+    const context = mockApolloContext([])
     const missingId = 'missing-id'
 
     try {
@@ -46,7 +50,7 @@ describe('Persistence', () => {
   })
 
   it('findByTypeId propagates GraphQLError when id does not exist', async () => {
-    const context: any = makeContext([])
+    const context = mockApolloContext([])
     const missingId = '42'
 
     await expect(
@@ -69,7 +73,7 @@ describe('Persistence', () => {
   })
 
   it('findByTypeId throws GraphQLError when type does not match', async () => {
-    const context: any = makeContext([{ id: '1', type: 'Post' }])
+    const context = mockApolloContext([{ id: '1', type: 'Post' }])
 
     const requestedType = 'User'
     const id = '1'

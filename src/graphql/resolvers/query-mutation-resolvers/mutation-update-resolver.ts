@@ -1,8 +1,8 @@
 import { findById, findByTypeId } from '../../../persistence/persistence.ts'
 import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util.ts'
-import { GraphQLFieldResolver, isObjectType } from 'graphql'
+import { isObjectType } from 'graphql'
 import { EntryData, EntryDraft } from '@commitspark/git-adapter'
-import { QueryMutationResolverContext } from '../types.ts'
+import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 
 function mergeData(
@@ -15,12 +15,12 @@ function mergeData(
   }
 }
 
-export const mutationUpdateResolver: GraphQLFieldResolver<
-  any,
-  QueryMutationResolverContext,
-  any,
-  Promise<EntryData>
-> = async (source, args, context, info) => {
+export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
+  source,
+  args,
+  context,
+  info,
+) => {
   if (!isObjectType(context.type)) {
     throw createError(
       `Type "${context.type.name}" cannot be mutated as is not an ObjectType.`,
@@ -36,10 +36,10 @@ export const mutationUpdateResolver: GraphQLFieldResolver<
     context,
     null,
     info.returnType,
-    existingEntry.data,
+    existingEntry.data ?? null,
   )
 
-  const mergedData = mergeData(existingEntry.data ?? null, args.data)
+  const mergedData = mergeData(existingEntry.data ?? null, args.data ?? null)
   const updatedReferencedEntryIds = await getReferencedEntryIds(
     context.type,
     context,

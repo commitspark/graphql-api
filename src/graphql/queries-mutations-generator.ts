@@ -1,6 +1,5 @@
 import { EntryData } from '@commitspark/git-adapter'
-import { ApolloContext } from '../client.ts'
-import { GraphQLFieldResolver, GraphQLObjectType } from 'graphql'
+import { GraphQLObjectType } from 'graphql'
 import { queryEveryResolver } from './resolvers/query-mutation-resolvers/query-every-resolver.ts'
 import { queryByIdResolver } from './resolvers/query-mutation-resolvers/query-by-id-resolver.ts'
 import { mutationCreateResolver } from './resolvers/query-mutation-resolvers/mutation-create-resolver.ts'
@@ -19,12 +18,12 @@ export function generateQueriesAndMutations(
     // pluralization of user-provided typeName
     const queryEveryName = `every${typeName}`
     const queryEveryString = `${queryEveryName}: [${objectType.name}!]`
-    const queryEveryResolverFunc: GraphQLFieldResolver<
-      any,
-      ApolloContext,
-      any,
-      Promise<EntryData[]>
-    > = (source, args, context, info) =>
+    const queryEveryResolverFunc: QueryMutationResolver<EntryData[]> = (
+      source,
+      args,
+      context,
+      info,
+    ) =>
       queryEveryResolver(source, args, { ...context, type: objectType }, info)
 
     const queryByIdName = typeName
@@ -69,7 +68,7 @@ export function generateQueriesAndMutations(
 
     const deleteMutationName = `delete${typeName}`
     const deleteMutationString = `${deleteMutationName}(id: ID!, commitMessage: String): ID`
-    const deleteMutationResolver: QueryMutationResolver<EntryData> = (
+    const deleteMutationResolver: QueryMutationResolver<string> = (
       source,
       args,
       context,
@@ -112,7 +111,7 @@ export function generateQueriesAndMutations(
   })
 }
 
-export function generateTypeNameQuery(): GeneratedQuery<Promise<string>> {
+export function generateTypeNameQuery(): GeneratedQuery {
   const entryTypeQueryName = '_typeName'
   const entryTypeQueryString = `${entryTypeQueryName}(id: ID!): String!`
 
@@ -124,15 +123,15 @@ export function generateTypeNameQuery(): GeneratedQuery<Promise<string>> {
 }
 
 export interface GeneratedSchema {
-  queryEvery: GeneratedQuery<Promise<EntryData[]>>
-  queryById: GeneratedQuery<Promise<EntryData>>
-  createMutation: GeneratedQuery<Promise<EntryData>>
-  updateMutation: GeneratedQuery<Promise<EntryData>>
-  deleteMutation: GeneratedQuery<Promise<EntryData>>
+  queryEvery: GeneratedQuery
+  queryById: GeneratedQuery
+  createMutation: GeneratedQuery
+  updateMutation: GeneratedQuery
+  deleteMutation: GeneratedQuery
 }
 
-export interface GeneratedQuery<T> {
+export interface GeneratedQuery {
   name: string
   schemaString: string
-  resolver: GraphQLFieldResolver<any, ApolloContext, any, T>
+  resolver: QueryMutationResolver<EntryData | EntryData[] | string>
 }

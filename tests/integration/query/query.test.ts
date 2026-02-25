@@ -650,7 +650,7 @@ type EntryB @Entry {
 
   it('should resolve missing optional data to null', async () => {
     // the behavior asserted here is meant to reduce the need to migrate existing entries after adding
-    // new object type fields to a schema; we expect this to be done by resolving missing (undefined)
+    // new scalar and object type fields to a schema; we expect this to be done by resolving missing (undefined)
     // nullable data to null
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
@@ -660,7 +660,9 @@ type EntryB @Entry {
 type MyEntry @Entry {
     id: ID!
     oldField: String
-    newField: String
+    newString: String
+    newInt: Int
+    newFloat: Float
     newNestedTypeField: NestedType
 }
 
@@ -697,7 +699,9 @@ type NestedType {
         data: MyEntry(id: $entryId) {
           id
           oldField
-          newField
+          newString
+          newInt
+          newFloat
           newNestedTypeField {
             myField
           }
@@ -713,7 +717,9 @@ type NestedType {
       data: {
         id: entryId,
         oldField: 'Old value',
-        newField: null,
+        newString: null,
+        newInt: null,
+        newFloat: null,
         newNestedTypeField: null,
       },
     })

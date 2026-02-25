@@ -1,8 +1,6 @@
-import { FieldResolver, FieldResolverContext, ResolvedEntryData } from './types.ts'
-import { EntryData } from '@commitspark/git-adapter'
+import { FieldResolver } from './types.ts'
 import {
   GraphQLNonNull,
-  GraphQLResolveInfo,
   GraphQLUnionType,
   isListType,
   isNonNullType,
@@ -17,12 +15,12 @@ import { resolveEntryReference } from './entry-reference-resolver.ts'
 import { resolveUnionValue } from './union-value-resolver.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 
-export const resolveFieldDefaultValue: FieldResolver<any> = async (
-  fieldValue: any,
-  args: any,
-  context: FieldResolverContext,
-  info: GraphQLResolveInfo,
-): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> => {
+export const resolveFieldDefaultValue: FieldResolver = async (
+  fieldValue,
+  args,
+  context,
+  info,
+) => {
   if (isNonNullType(context.currentType)) {
     return resolveFieldDefaultValue(
       fieldValue,
@@ -46,7 +44,7 @@ export const resolveFieldDefaultValue: FieldResolver<any> = async (
     if (!Array.isArray(fieldValue)) {
       throw createError(
         `Expected array while resolving value for field "${info.fieldName}".`,
-        ErrorCode.SCHEMA_DATA_MISMATCH,
+        ErrorCode.BAD_REPOSITORY_DATA,
         {
           fieldName: info.fieldName,
           fieldValue: fieldValue,

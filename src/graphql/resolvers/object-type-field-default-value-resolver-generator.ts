@@ -1,6 +1,5 @@
 import {
   GraphQLField,
-  GraphQLFieldResolver,
   GraphQLObjectType,
   GraphQLOutputType,
   GraphQLSchema,
@@ -9,10 +8,10 @@ import {
   isObjectType,
   isUnionType,
 } from 'graphql'
-import { EntryData } from '@commitspark/git-adapter'
-import { ResolvedEntryData } from './field-resolvers/types.ts'
 import { resolveFieldDefaultValue } from './field-resolvers/field-default-value-resolver.ts'
-import { ApolloContext } from '../../client.ts'
+import { createError, ErrorCode } from '../errors.ts'
+import { isRecord } from '../util.ts'
+import { ContextInjectionResolver } from './types.ts'
 
 function requiresCustomDefaultValueResolver(type: GraphQLOutputType): boolean {
   if (isNonNullType(type)) {
@@ -29,10 +28,11 @@ function requiresCustomDefaultValueResolver(type: GraphQLOutputType): boolean {
 
 function getFieldsForCustomDefaultValueResolver(
   objectType: GraphQLObjectType,
-): GraphQLField<any, any>[] {
+): GraphQLField<unknown, unknown>[] {
   const fields = []
   for (const fieldsKey in objectType.getFields()) {
-    const field: GraphQLField<any, any> = objectType.getFields()[fieldsKey]
+    const field: GraphQLField<unknown, unknown> =
+      objectType.getFields()[fieldsKey]
     if (requiresCustomDefaultValueResolver(field.type)) {
       fields.push(field)
     }
@@ -40,38 +40,54 @@ function getFieldsForCustomDefaultValueResolver(
   return fields
 }
 
-type FieldResolversRecord = Record<
+type RecordOfContextInjectionResolvers = Record<
   string,
-  GraphQLFieldResolver<
-    any,
-    ApolloContext,
-    any,
-    Promise<ResolvedEntryData<EntryData | EntryData[] | null>>
-  >
+  ContextInjectionResolver
 >
 
 export function createObjectTypeFieldResolvers(
   schema: GraphQLSchema,
-): Record<string, FieldResolversRecord> {
-  const fieldResolversByType: Record<string, FieldResolversRecord> = {}
+): Record<string, RecordOfContextInjectionResolvers> {
+  const adapterResolversByType: Record<
+    string,
+    RecordOfContextInjectionResolvers
+  > = {}
+
   for (const typeName of Object.keys(schema.getTypeMap())) {
     const type = schema.getType(typeName)
     if (!isObjectType(type) || type.name.startsWith('__')) {
       continue
     }
+
+    // only some fields need a custom resolver that generates a default result value on missing source data
     const fieldsForCustomDefaultValueResolver =
       getFieldsForCustomDefaultValueResolver(type)
 
-    const fieldResolversByFieldName: FieldResolversRecord = {}
+    const fieldResolversByFieldName: Record<string, ContextInjectionResolver> =
+      {}
     for (const field of fieldsForCustomDefaultValueResolver) {
-      fieldResolversByFieldName[field.name] = (
-        obj,
-        args,
-        context,
-        info,
-      ): Promise<ResolvedEntryData<EntryData | EntryData[] | null>> =>
-        resolveFieldDefaultValue(
-          field.name in obj ? obj[field.name] : undefined,
+      // the resolvers created here serve as adapters to inject additional context information needed by actual field resolvers
+      fieldResolversByFieldName[field.name] = (obj, args, context, info) => {
+        let fieldSourceData = null
+        if (obj) {
+          fieldSourceData = obj[field.name] ?? null
+          if (
+            fieldSourceData !== null &&
+            !(isRecord(fieldSourceData) || Array.isArray(fieldSourceData))
+          ) {
+            throw createError(
+              `Expected an object or array as data for passing to resolver of field "${field.name}" in type "${typeName}".`,
+              ErrorCode.BAD_REPOSITORY_DATA,
+              {
+                fieldName: field.name,
+                typeName: typeName,
+              },
+            )
+          }
+        }
+
+        return resolveFieldDefaultValue(
+          fieldSourceData,
           args,
           {
             ...context,
@@ -79,12 +95,13 @@ export function createObjectTypeFieldResolvers(
           },
           info,
         )
+      }
     }
 
     if (Object.keys(fieldResolversByFieldName).length > 0) {
-      fieldResolversByType[typeName] = fieldResolversByFieldName
+      adapterResolversByType[typeName] = fieldResolversByFieldName
     }
   }
 
-  return fieldResolversByType
+  return adapterResolversByType
 }

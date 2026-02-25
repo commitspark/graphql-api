@@ -408,15 +408,14 @@ Example GraphQL response with error:
 The following error codes are returned together with error codes of Git adapters as
 documented [here](https://github.com/commitspark/git-adapter):
 
-| Error code             | Description                                                       |
-|------------------------|-------------------------------------------------------------------|
-| `BAD_USER_INPUT`       | Invalid input data provided by the caller                         |
-| `NOT_FOUND`            | Requested resource (entry, type, etc.) does not exist             |
-| `BAD_REPOSITORY_DATA`  | Data in the repository is malformed or invalid                    |
-| `SCHEMA_DATA_MISMATCH` | Data in the repository does not match the schema definition       |
-| `BAD_SCHEMA`           | Schema definition is malformed or invalid                         |
-| `IN_USE`               | Entry cannot be deleted because it is referenced by other entries |
-| `INTERNAL_ERROR`       | Internal processing error                                         |
+| Error code             | Description                                                        |
+|------------------------|--------------------------------------------------------------------|
+| `BAD_USER_INPUT`       | Invalid input data provided by the caller                          |
+| `NOT_FOUND`            | Requested resource (entry, type, etc.) does not exist              |
+| `BAD_REPOSITORY_DATA`  | Data in the repository is malformed or invalid according to schema |
+| `BAD_SCHEMA`           | Schema definition is malformed or invalid                          |
+| `IN_USE`               | Entry cannot be deleted because it is referenced by other entries  |
+| `INTERNAL_ERROR`       | Internal processing error                                          |
 
 # License
 

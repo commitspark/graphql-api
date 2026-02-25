@@ -303,26 +303,26 @@ This returns the following data:
 
 #### Unions
 
-Consider this example of a schema for storing content for a marketing website built out of modular content elements,
-where field `contentElements` is an array of Union type `ContentElement`, allowing different concrete types `Hero` or
-`Text` to be applied:
+In our rocket example, let's assume we want to store information about the rocket's stages. Assuming there are two
+different types of rocket motors for a rocket stage, a stage could be modeled as a GraphQL union type `Stage`, allowing
+different concrete types `LiquidRocketMotor` or `SolidRocketMotor` to be added to our rocket's `stages` list:
 
 ```graphql
-type Page @Entry {
+type Rocket @Entry {
     id: ID!
-    contentElements: [ContentElement!]
+    stages: [Stage!]!
 }
 
-union ContentElement =
-    | Hero
-    | Text
+union Stage =
+    | LiquidRocketMotor
+    | SolidRocketMotor
 
-type Hero {
-    heroText: String!
+type LiquidRocketMotor {
+    fuelTemperature: Int!
 }
 
-type Text {
-    bodyText: String!
+type SolidRocketMotor {
+    fuelMass: Int!
 }
 ```
 
@@ -330,18 +330,54 @@ During serialization, concrete type instances are represented through an additio
 concrete instance's type name as field name:
 
 ```yaml
+# commitspark/entries/VA256.yaml
 metadata:
-  type: Page
+  type: Rocket
   referencedBy: [ ]
 data:
-  contentElements:
-    - Hero:
-        heroText: "..."
-    - Text:
-        bodyText: "..."
+  stages:
+    - LiquidRocketMotor:
+        fuelTemperature: 21
+    - SolidRocketMotor:
+        fuelMass: 200000
 ```
 
-When querying data through the API, this additional level of nesting is transparently removed and not visible.
+When querying data through the API, this additional level of nesting is transparently removed and not visible:
+
+```graphql
+query {
+    Rocket(id: "VA256") {
+        id
+        stages {
+            __typename
+            ... on LiquidRocketMotor {
+                fuelTemperature
+            }
+            ... on SolidRocketMotor {
+                fuelMass
+           }
+        }
+    }
+}
+```
+
+This returns the following data:
+
+```json
+{
+  "id": "VA256",   
+  "stages": [
+     {
+        "__typename": "LiquidRocketMotor",
+        "fuelTemperature": 21
+     },
+     {
+        "__typename": "SolidRocketMotor",
+        "fuelMass": 200000
+     }
+  ]
+}
+```
 
 # Error handling
 

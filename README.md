@@ -140,6 +140,13 @@ const rocketFlight = response.data.rocketFlight
 
 ## API
 
+### createClient()
+
+This function is used to create a Commitspark GraphQL API client instance.
+
+Argument `gitAdapter` expects a Commitspark git adapter instance which is then used by the client to access the
+adapter's Git repository.
+
 ### Client
 
 #### postGraphQL()

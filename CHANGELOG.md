@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix resolver mutating immutable cache data when updating reference
 
+### Changed
+
+- Upgrade to @commitspark/git-adapter 0.30.0
+
 ## [1.0.0-beta.7] - 2026-02-19
 
 ### Fixed

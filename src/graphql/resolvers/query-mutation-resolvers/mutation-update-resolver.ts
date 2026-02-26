@@ -97,7 +97,7 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
     ],
     message: args.commitMessage,
   })
-  context.setCurrentHash(commit.ref)
+  context.setCurrentHash(commit.commitHash)
 
   const updatedEntry = await findByTypeId(context, context.type.name, args.id)
   return { ...updatedEntry.data, id: updatedEntry.id }

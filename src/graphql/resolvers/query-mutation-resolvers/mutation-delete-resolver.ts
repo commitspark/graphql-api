@@ -70,7 +70,7 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
     ],
     message: args.commitMessage,
   })
-  context.setCurrentHash(commit.ref)
+  context.setCurrentHash(commit.commitHash)
 
   return args.id
 }

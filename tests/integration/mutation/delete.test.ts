@@ -24,7 +24,7 @@ type EntryA @Entry {
     const postCommitHash = 'ef01'
 
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const entry: Entry = {
       id: entryAId,
@@ -225,7 +225,7 @@ type Box @Entry {
     const postCommitHash = 'ef01'
 
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const box: Entry = {
       id: boxId,

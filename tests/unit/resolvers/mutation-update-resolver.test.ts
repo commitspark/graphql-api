@@ -77,7 +77,7 @@ describe('mutationUpdateResolver', () => {
     let currentHash = preCommitHash
 
     const gitAdapter = mock<GitAdapter>()
-    gitAdapter.createCommit.mockResolvedValue({ ref: postCommitHash })
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
 
     const context: QueryMutationResolverContext = {
       type: itemType,

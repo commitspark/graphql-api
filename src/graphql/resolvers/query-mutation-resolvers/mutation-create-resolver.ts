@@ -94,7 +94,7 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
     entries: [newEntryDraft, ...referencedEntryUpdates],
     message: args.commitMessage,
   })
-  context.setCurrentHash(commit.ref)
+  context.setCurrentHash(commit.commitHash)
 
   const newEntry = await findByTypeId(context, context.type.name, args.id)
   return { ...newEntry.data, id: newEntry.id }

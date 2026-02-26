@@ -27,7 +27,7 @@ type EntryA @Entry {
       name: 'My name',
     }
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const newEntry: Entry = {
       id: entryAId,
@@ -189,7 +189,7 @@ type CircularReferenceEntry @Entry {
     }
 
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
 
     const existingCircularReference2Entry = {

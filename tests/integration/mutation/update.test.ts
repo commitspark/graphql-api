@@ -27,7 +27,7 @@ type EntryA @Entry {
       name: 'My name',
     }
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const originalEntry: Entry = {
       id: entryAId,
@@ -136,7 +136,7 @@ type SubType {
 
     const originalValue = 'original'
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const originalEntry: Entry = {
       id: entryId,
@@ -326,7 +326,7 @@ type Box @Entry {
     const postCommitHash = 'ef01'
 
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const box1: Entry = {
       id: box1Id,
@@ -462,7 +462,7 @@ type Box @Entry {
     const postCommitHash = 'ef01'
 
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const box: Entry = {
       id: boxId,
@@ -572,7 +572,7 @@ type Box @Entry {
     const postCommitHash = 'ef01'
 
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
     const box: Entry = {
       id: boxId,
@@ -700,7 +700,7 @@ type Box @Entry {
     const postCommitHash = 'ef01'
 
     const commitResult: Commit = {
-      ref: postCommitHash,
+      commitHash: postCommitHash,
     }
 
     // The box is already referenced by otherItem

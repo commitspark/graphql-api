@@ -305,9 +305,9 @@ This returns the following data:
 
 #### Unions
 
-In our rocket example, let's assume we want to store information about the rocket's stages. Assuming there are two
+In our rocket example, let's assume we want to store information about a rocket's stages. Assuming there are two
 different types of rocket motors for a rocket stage, a stage could be modeled as a GraphQL union type `Stage`, allowing
-different concrete types `LiquidRocketMotor` or `SolidRocketMotor` to be added to our rocket's `stages` list:
+different concrete types `LiquidRocketMotor` or `SolidRocketMotor` to be added to a rocket's `stages` list:
 
 ```graphql
 directive @Entry on OBJECT
@@ -346,7 +346,7 @@ data:
         fuelMass: 200000
 ```
 
-When querying data through the API, this additional level of nesting is transparently removed and not visible:
+We can now query for a rocket and its stages like this:
 
 ```graphql
 query {
@@ -365,7 +365,8 @@ query {
 }
 ```
 
-This returns the following data:
+This returns the following schema-conformant result data where the additional level of nesting has been transparently
+removed:
 
 ```json
 {

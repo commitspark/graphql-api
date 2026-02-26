@@ -240,6 +240,8 @@ References to types annotated with `@Entry` are serialized using a sub-field `id
 For example, consider this variation of our rocket flight schema above:
 
 ```graphql
+directive @Entry on OBJECT
+
 type RocketFlight @Entry {
     id: ID!
     operator: Operator
@@ -308,6 +310,8 @@ different types of rocket motors for a rocket stage, a stage could be modeled as
 different concrete types `LiquidRocketMotor` or `SolidRocketMotor` to be added to our rocket's `stages` list:
 
 ```graphql
+directive @Entry on OBJECT
+
 type Rocket @Entry {
     id: ID!
     stages: [Stage!]!

@@ -47,7 +47,9 @@ async function validateReference(
   if (isNonNullType(fieldType)) {
     await validateReference(context, fieldName, fieldType.ofType, fieldValue)
     return
-  } else if (isListType(fieldType)) {
+  }
+
+  if (isListType(fieldType)) {
     if (!Array.isArray(fieldValue)) {
       throw createError(
         `Expected array while validation references for field "${fieldName}".`,
@@ -67,7 +69,9 @@ async function validateReference(
       )
     }
     return
-  } else if (isUnionType(fieldType) || isObjectType(fieldType)) {
+  }
+
+  if (isUnionType(fieldType) || isObjectType(fieldType)) {
     if (
       fieldValue === null ||
       !('id' in fieldValue) ||
@@ -129,7 +133,9 @@ export async function getReferencedEntryIds(
       type.ofType,
       data,
     )
-  } else if (isListType(type)) {
+  }
+
+  if (isListType(type)) {
     if (!Array.isArray(data)) {
       throw createError(
         `Expected array as data for field "${fieldName}". `,
@@ -195,7 +201,9 @@ export async function getReferencedEntryIds(
       concreteFieldUnionType,
       unionValue,
     )
-  } else if (isObjectType(type)) {
+  }
+
+  if (isObjectType(type)) {
     if (type.name !== rootType.name && hasEntryDirective(type)) {
       const referenceId = await getValidatedReferenceId(
         context,

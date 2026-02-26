@@ -32,7 +32,9 @@ export const resolveFieldDefaultValue: FieldResolver = async (
       },
       info,
     )
-  } else if (isListType(context.currentType)) {
+  }
+
+  if (isListType(context.currentType)) {
     if (fieldValue === undefined || fieldValue === null) {
       if (context.hasNonNullParent) {
         return new Promise((resolve) => resolve([]))
@@ -67,7 +69,9 @@ export const resolveFieldDefaultValue: FieldResolver = async (
       resultPromises.push(resultPromise)
     }
     return Promise.all(resultPromises)
-  } else if (isUnionType(context.currentType)) {
+  }
+
+  if (isUnionType(context.currentType)) {
     if (fieldValue === undefined || fieldValue === null) {
       if (context.hasNonNullParent) {
         throw createError(
@@ -92,7 +96,9 @@ export const resolveFieldDefaultValue: FieldResolver = async (
     }
 
     return resolveUnionValue(fieldValue, args, context, info)
-  } else if (isObjectType(context.currentType)) {
+  }
+
+  if (isObjectType(context.currentType)) {
     if (fieldValue === undefined || fieldValue === null) {
       if (context.hasNonNullParent) {
         throw createError(

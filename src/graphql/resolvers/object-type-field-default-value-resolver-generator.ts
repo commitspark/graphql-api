@@ -10,7 +10,7 @@ import {
 } from 'graphql'
 import { resolveFieldDefaultValue } from './field-resolvers/field-default-value-resolver.ts'
 import { createError, ErrorCode } from '../errors.ts'
-import { isRecord } from '../util.ts'
+import { isEntryData } from '../util.ts'
 import { ContextInjectionResolver } from './types.ts'
 
 function requiresCustomDefaultValueResolver(type: GraphQLOutputType): boolean {
@@ -73,7 +73,7 @@ export function createObjectTypeFieldResolvers(
           fieldSourceData = obj[field.name] ?? null
           if (
             fieldSourceData !== null &&
-            !(isRecord(fieldSourceData) || Array.isArray(fieldSourceData))
+            !(isEntryData(fieldSourceData) || Array.isArray(fieldSourceData))
           ) {
             throw createError(
               `Expected an object or array as data for passing to resolver of field "${field.name}" in type "${typeName}".`,

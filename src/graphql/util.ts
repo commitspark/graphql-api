@@ -1,4 +1,6 @@
-export function isRecord(obj: unknown): obj is Record<string, unknown> {
+import { EntryData } from '@commitspark/git-adapter'
+
+export function isEntryData(obj: unknown): obj is EntryData {
   if (typeof obj !== 'object') {
     return false
   }

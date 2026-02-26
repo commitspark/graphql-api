@@ -788,4 +788,117 @@ type Box @Entry {
     // After the mutation runs, the original entry's referencedBy should still be untouched.
     expect(originalReferencedBy).toEqual([otherItemId])
   })
+
+  it('should update non-null fields of an entry', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    string: String!
+    int: Int!
+    float: Float!
+    boolean: Boolean!
+    enum: MyEnum!
+}
+
+enum MyEnum {
+    A
+    B
+}`
+
+    const commitMessage = 'My message'
+    const entryAId = 'A'
+    const postCommitHash = 'ef01'
+
+    const mutationData = {
+      string: 'My name',
+      int: 100,
+      float: 200.0,
+      boolean: true,
+      enum: 'B',
+    }
+
+    const commitResult: Commit = {
+      commitHash: postCommitHash,
+    }
+    const originalEntry: Entry = {
+      id: entryAId,
+      metadata: {
+        type: 'EntryA',
+      },
+      data: {
+        string: 'text',
+        int: 10,
+        float: 20.0,
+        boolean: false,
+        enum: 'A',
+      },
+    }
+
+    const updatedEntry: Entry = {
+      id: entryAId,
+      metadata: {
+        type: 'EntryA',
+      },
+      data: { ...mutationData },
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      entries: [{ ...updatedEntry, deletion: false }],
+      message: commitMessage,
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    gitAdapter.getEntries
+      .calledWith(commitHash)
+      .mockResolvedValue([originalEntry])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue(commitResult)
+    gitAdapter.getEntries
+      .calledWith(postCommitHash)
+      .mockResolvedValue([updatedEntry])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
+        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+          id
+          string
+          int
+          float
+          boolean
+          enum
+        }
+      }`,
+      variables: {
+        id: entryAId,
+        mutationData: mutationData,
+        commitMessage: commitMessage,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        ...mutationData,
+        id: entryAId,
+      },
+    })
+    expect(result.ref).toBe(postCommitHash)
+  })
 })

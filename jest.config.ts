@@ -9,6 +9,10 @@ const jestConfig: Config = {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
+  // relative ".ts" imports are rewritten to ".js" by TypeScript's rewriteRelativeImportExtensions
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
 }
 
 export default jestConfig

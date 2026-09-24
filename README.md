@@ -442,8 +442,8 @@ The following rules apply:
 ```graphql
 query {
     hits: _search(query: "launch window", types: ["Article"], first: 10) {
-        id
-        type
+        entryId
+        entryType
         fieldPath
         score
         snippet
@@ -452,9 +452,13 @@ query {
 ```
 
 Argument `types` optionally restricts hits to entries of the given entry types. Argument `first` limits the number of
-hits (default 10, maximum 100). Each hit identifies the entry by `id` and `type` and the matching field value by
-`fieldPath` (e.g. `title`, `seo.description` or `sections[2].body`). Hits are ordered by descending `score`, which is
-only meaningful for ordering hits of the same search.
+hits (default 10, maximum 100). Each hit identifies the entry by `entryId` and `entryType` and the matching field value
+by `fieldPath` (e.g. `title`, `seo.description`, `tags[1]` or `sections[2].body`). Hits are ordered by descending
+`score`, which is only meaningful for ordering hits of the same search.
+
+For values within a union, the field path contains the name of the concrete union member type after the union field,
+e.g. `blocks[2].TextBlock.body`. The field path therefore matches the structure of the entry data as stored in the
+repository and as expected by mutations (see [Unions](#unions)).
 
 Hits are based on the commit returned as `ref` of the search response. Where the Git adapter supports commit hashes
 as `ref` argument, entries of hits can therefore be retrieved from exactly the searched commit.

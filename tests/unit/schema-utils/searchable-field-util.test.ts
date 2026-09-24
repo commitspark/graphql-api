@@ -1,6 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { Entry } from '@commitspark/git-adapter'
-import { extractSearchDocuments } from '../../../src/graphql/schema-utils/search-document-util'
+import { extractSearchableFieldValues } from '../../../src/graphql/schema-utils/searchable-field-util'
 
 const directives = `directive @Entry on OBJECT
 directive @Searchable on OBJECT | FIELD_DEFINITION
@@ -12,7 +12,7 @@ const createEntry = (
   data: Record<string, unknown>,
 ): Entry => ({ id: id, metadata: { type: type }, data: data })
 
-describe('Search document extraction', () => {
+describe('Searchable field value extraction', () => {
   it('should extract only fields with directive on field level', () => {
     const schema = makeExecutableSchema({
       typeDefs: `${directives}
@@ -23,16 +23,16 @@ type Article @Entry {
 }`,
     })
 
-    const documents = extractSearchDocuments(schema, [
+    const values = extractSearchableFieldValues(schema, [
       createEntry('a1', 'Article', { title: 'Hello', url: 'https://x' }),
     ])
 
-    expect(documents).toEqual([
+    expect(values).toEqual([
       {
         entryId: 'a1',
         entryType: 'Article',
         fieldPath: 'title',
-        text: 'Hello',
+        value: 'Hello',
       },
     ])
   })
@@ -50,7 +50,7 @@ type Article @Entry @Searchable {
 }`,
     })
 
-    const documents = extractSearchDocuments(schema, [
+    const values = extractSearchableFieldValues(schema, [
       createEntry('a1', 'Article', {
         title: 'Hello',
         subtitle: 'World',
@@ -59,7 +59,7 @@ type Article @Entry @Searchable {
       }),
     ])
 
-    expect(documents.map((document) => document.fieldPath)).toEqual([
+    expect(values.map((document) => document.fieldPath)).toEqual([
       'title',
       'subtitle',
     ])
@@ -82,25 +82,25 @@ type Meta {
 }`,
     })
 
-    const documents = extractSearchDocuments(schema, [
+    const values = extractSearchableFieldValues(schema, [
       createEntry('a1', 'Article', {
         seo: { description: 'SEO text' },
         meta: { author: 'Jane', internalNote: 'hidden' },
       }),
     ])
 
-    expect(documents).toEqual([
+    expect(values).toEqual([
       {
         entryId: 'a1',
         entryType: 'Article',
         fieldPath: 'seo.description',
-        text: 'SEO text',
+        value: 'SEO text',
       },
       {
         entryId: 'a1',
         entryType: 'Article',
         fieldPath: 'meta.author',
-        text: 'Jane',
+        value: 'Jane',
       },
     ])
   })
@@ -118,14 +118,14 @@ type Section @Searchable {
 }`,
     })
 
-    const documents = extractSearchDocuments(schema, [
+    const values = extractSearchableFieldValues(schema, [
       createEntry('a1', 'Article', {
         tags: ['one', 'two'],
         sections: [{ body: 'First' }, { body: 'Second' }],
       }),
     ])
 
-    expect(documents.map((document) => document.fieldPath)).toEqual([
+    expect(values.map((document) => document.fieldPath)).toEqual([
       'tags[0]',
       'tags[1]',
       'sections[0].body',
@@ -149,7 +149,7 @@ type Author @Entry @Searchable {
 union Related = Article | Author`,
     })
 
-    const documents = extractSearchDocuments(schema, [
+    const values = extractSearchableFieldValues(schema, [
       createEntry('a1', 'Article', {
         title: 'Hello',
         author: { id: 'au1' },
@@ -158,14 +158,14 @@ union Related = Article | Author`,
       createEntry('au1', 'Author', { name: 'Jane' }),
     ])
 
-    expect(documents).toEqual([
+    expect(values).toEqual([
       {
         entryId: 'a1',
         entryType: 'Article',
         fieldPath: 'title',
-        text: 'Hello',
+        value: 'Hello',
       },
-      { entryId: 'au1', entryType: 'Author', fieldPath: 'name', text: 'Jane' },
+      { entryId: 'au1', entryType: 'Author', fieldPath: 'name', value: 'Jane' },
     ])
   })
 
@@ -186,7 +186,7 @@ type ImageBlock {
 }`,
     })
 
-    const documents = extractSearchDocuments(schema, [
+    const values = extractSearchableFieldValues(schema, [
       createEntry('p1', 'Page', {
         blocks: [
           { TextBlock: { body: 'Text' } },
@@ -195,9 +195,9 @@ type ImageBlock {
       }),
     ])
 
-    expect(documents.map((document) => document.fieldPath)).toEqual([
-      'blocks[0].body',
-      'blocks[1].caption',
+    expect(values.map((document) => document.fieldPath)).toEqual([
+      'blocks[0].TextBlock.body',
+      'blocks[1].ImageBlock.caption',
     ])
   })
 
@@ -216,7 +216,7 @@ type Seo @Searchable {
 }`,
     })
 
-    const documents = extractSearchDocuments(schema, [
+    const values = extractSearchableFieldValues(schema, [
       createEntry('a1', 'Article', {
         title: '  ',
         subtitle: null,
@@ -227,6 +227,6 @@ type Seo @Searchable {
       createEntry('x1', 'UnknownType', { title: 'Unknown' }),
     ])
 
-    expect(documents).toEqual([])
+    expect(values).toEqual([])
   })
 })

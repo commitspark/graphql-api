@@ -36,8 +36,8 @@ const entries: Entry[] = [
 
 const searchQuery = `query ($query: String!, $types: [String!], $first: Int) {
   hits: _search(query: $query, types: $types, first: $first) {
-    id
-    type
+    entryId
+    entryType
     fieldPath
     score
     snippet
@@ -73,8 +73,8 @@ describe('Search query', () => {
       '_search(query: String!, types: [String!], first: Int): [_SearchHit!]!',
     )
     expect(result.data).toContain(`type _SearchHit {
-  id: ID!
-  type: String!
+  entryId: ID!
+  entryType: String!
   fieldPath: String!
   score: Float!
   snippet: String!
@@ -83,9 +83,9 @@ describe('Search query', () => {
 
   it('should pass request to search adapter and return hits', async () => {
     const searchAdapter = mock<SearchAdapter>()
-    let documents: unknown
+    let searchableFieldValues: unknown
     searchAdapter.search.mockImplementation(async (request) => {
-      documents = await request.getDocuments()
+      searchableFieldValues = await request.getSearchableFieldValues()
       return [
         {
           entryId: 'a1',
@@ -107,8 +107,8 @@ describe('Search query', () => {
     expect(result.data).toEqual({
       hits: [
         {
-          id: 'a1',
-          type: 'Article',
+          entryId: 'a1',
+          entryType: 'Article',
           fieldPath: 'title',
           score: 1.5,
           snippet: 'Rocket launch',
@@ -124,14 +124,14 @@ describe('Search query', () => {
         limit: 10,
       } satisfies Partial<SearchRequest>),
     )
-    expect(documents).toEqual([
+    expect(searchableFieldValues).toEqual([
       {
         entryId: 'a1',
         entryType: 'Article',
         fieldPath: 'title',
-        text: 'Rocket launch',
+        value: 'Rocket launch',
       },
-      { entryId: 'au1', entryType: 'Author', fieldPath: 'name', text: 'Jane' },
+      { entryId: 'au1', entryType: 'Author', fieldPath: 'name', value: 'Jane' },
     ])
   })
 

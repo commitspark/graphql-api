@@ -9,7 +9,7 @@ import {
 import {
   hasSearchableDirective,
   SEARCHABLE_DIRECTIVE_NAME,
-} from './schema-utils/search-document-util.ts'
+} from './schema-utils/searchable-field-util.ts'
 
 function checkUnionMembersConsistentUseOfEntryDirective(
   schema: GraphQLSchema,

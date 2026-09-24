@@ -128,14 +128,14 @@ export function generateTypeNameQuery(): GeneratedQuery {
 
 export function generateSearchQuery(): GeneratedSearchQuery {
   const searchQueryName = '_search'
-  const searchResultTypeName = '_SearchHit'
+  const searchHitTypeName = '_SearchHit'
 
   return {
     name: searchQueryName,
-    schemaString: `${searchQueryName}(query: String!, types: [String!], first: Int): [${searchResultTypeName}!]!`,
-    typeDefinitionString: `type ${searchResultTypeName} {
-  id: ID!
-  type: String!
+    schemaString: `${searchQueryName}(query: String!, types: [String!], first: Int): [${searchHitTypeName}!]!`,
+    typeDefinitionString: `type ${searchHitTypeName} {
+  entryId: ID!
+  entryType: String!
   fieldPath: String!
   score: Float!
   snippet: String!

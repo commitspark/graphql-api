@@ -10,7 +10,7 @@ import {
   isUnionType,
 } from 'graphql'
 import { Entry } from '@commitspark/git-adapter'
-import { SearchDocument } from '@commitspark/search-adapter'
+import { SearchableFieldValue } from '@commitspark/search-adapter'
 import { hasEntryDirective, isUnionOfEntryTypes } from './entry-type-util.ts'
 import { getUnionTypeNameFromFieldValue } from './union-type-util.ts'
 
@@ -26,29 +26,29 @@ export function hasSearchableDirective(
   )
 }
 
-// Returns one document per non-empty string value of a searchable field. Values that do not match the schema are
-// skipped instead of failing the search.
-export function extractSearchDocuments(
+// Returns every non-empty string value of searchable fields. Values that do not match the schema are skipped instead
+// of failing the search.
+export function extractSearchableFieldValues(
   schema: GraphQLSchema,
   entries: Iterable<Entry>,
-): SearchDocument[] {
-  const documents: SearchDocument[] = []
+): SearchableFieldValue[] {
+  const searchableFieldValues: SearchableFieldValue[] = []
   for (const entry of entries) {
     const entryType = schema.getType(entry.metadata.type)
     if (!isObjectType(entryType) || !isRecord(entry.data)) {
       continue
     }
-    const addDocument = (fieldPath: string, text: string): void => {
-      documents.push({
+    const addValue = (fieldPath: string, value: string): void => {
+      searchableFieldValues.push({
         entryId: entry.id,
         entryType: entryType.name,
         fieldPath: fieldPath,
-        text: text,
+        value: value,
       })
     }
-    collectFromObject(schema, entryType, entry.data, '', addDocument)
+    collectFromObject(schema, entryType, entry.data, '', addValue)
   }
-  return documents
+  return searchableFieldValues
 }
 
 function collectFromObject(
@@ -56,7 +56,7 @@ function collectFromObject(
   objectType: GraphQLObjectType,
   data: Record<string, unknown>,
   path: string,
-  addDocument: (fieldPath: string, text: string) => void,
+  addValue: (fieldPath: string, value: string) => void,
 ): void {
   const isTypeSearchable = hasSearchableDirective(objectType)
   for (const field of Object.values(objectType.getFields())) {
@@ -70,7 +70,7 @@ function collectFromObject(
       value,
       path === '' ? field.name : `${path}.${field.name}`,
       isTypeSearchable || hasSearchableDirective(field),
-      addDocument,
+      addValue,
     )
   }
 }
@@ -81,17 +81,10 @@ function collectFromValue(
   value: unknown,
   path: string,
   isSearchable: boolean,
-  addDocument: (fieldPath: string, text: string) => void,
+  addValue: (fieldPath: string, value: string) => void,
 ): void {
   if (isNonNullType(type)) {
-    collectFromValue(
-      schema,
-      type.ofType,
-      value,
-      path,
-      isSearchable,
-      addDocument,
-    )
+    collectFromValue(schema, type.ofType, value, path, isSearchable, addValue)
   } else if (isListType(type)) {
     if (!Array.isArray(value)) {
       return
@@ -103,7 +96,7 @@ function collectFromValue(
         item,
         `${path}[${index}]`,
         isSearchable,
-        addDocument,
+        addValue,
       ),
     )
   } else if (isScalarType(type)) {
@@ -113,22 +106,29 @@ function collectFromValue(
       typeof value === 'string' &&
       value.trim() !== ''
     ) {
-      addDocument(path, value)
+      addValue(path, value)
     }
   } else if (isObjectType(type)) {
     // references to other entries are not followed, as each entry is indexed with its own content only
     if (!hasEntryDirective(type) && isRecord(value)) {
-      collectFromObject(schema, type, value, path, addDocument)
+      collectFromObject(schema, type, value, path, addValue)
     }
   } else if (isUnionType(type)) {
     if (isUnionOfEntryTypes(type) || !isRecord(value)) {
       return
     }
-    // non-entry union values are stored wrapped in an object keyed by their concrete type name
+    // non-entry union values are stored wrapped in an object keyed by their concrete type name, which is kept in the
+    // path so that the path matches stored data and identifies the concrete type
     const concreteType = schema.getType(getUnionTypeNameFromFieldValue(value))
     const concreteValue = value[concreteType?.name ?? '']
     if (isObjectType(concreteType) && isRecord(concreteValue)) {
-      collectFromObject(schema, concreteType, concreteValue, path, addDocument)
+      collectFromObject(
+        schema,
+        concreteType,
+        concreteValue,
+        `${path}.${concreteType.name}`,
+        addValue,
+      )
     }
   }
 }

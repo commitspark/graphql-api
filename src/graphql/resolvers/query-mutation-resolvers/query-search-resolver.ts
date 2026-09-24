@@ -2,8 +2,8 @@ import { GraphQLError, GraphQLSchema, isObjectType } from 'graphql'
 import { SearchAdapterError, SearchHit } from '@commitspark/search-adapter'
 import { createError, ErrorCode } from '../../errors.ts'
 import { hasEntryDirective } from '../../schema-utils/entry-type-util.ts'
-import { extractSearchDocuments } from '../../schema-utils/search-document-util.ts'
-import { SearchQueryResolver, SearchResult } from '../types.ts'
+import { extractSearchableFieldValues } from '../../schema-utils/searchable-field-util.ts'
+import { SearchQueryResolver } from '../types.ts'
 
 const SEARCH_DEFAULT_LIMIT = 10
 const SEARCH_MAX_LIMIT = 100
@@ -62,12 +62,15 @@ export const querySearchResolver: SearchQueryResolver = async (
       query: args.query,
       entryTypes: entryTypes,
       limit: limit,
-      getDocuments: async () => {
+      getSearchableFieldValues: async () => {
         const entriesRecord = await context.repositoryCache.getEntriesRecord(
           context,
           commitHash,
         )
-        return extractSearchDocuments(info.schema, entriesRecord.byId.values())
+        return extractSearchableFieldValues(
+          info.schema,
+          entriesRecord.byId.values(),
+        )
       },
     })
   } catch (err) {
@@ -81,15 +84,7 @@ export const querySearchResolver: SearchQueryResolver = async (
     throw createError(message, ErrorCode.INTERNAL_ERROR, {})
   }
 
-  return hits.slice(0, limit).map(
-    (hit): SearchResult => ({
-      id: hit.entryId,
-      type: hit.entryType,
-      fieldPath: hit.fieldPath,
-      score: hit.score,
-      snippet: hit.snippet,
-    }),
-  )
+  return hits.slice(0, limit)
 }
 
 function validateEntryTypeNames(

@@ -11,8 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Cache entry content by content hash across commits so that only changed entries are retrieved from Git adapters
   after a commit changes
-- Require Git adapters implementing the @commitspark/git-adapter interface with `getEntryHashes` and
-  `getEntriesByIds`
+- Upgrade to @commitspark/git-adapter 2.0.0-beta.1, which requires Git adapters of major version 2
 
 ## [1.0.0] - 2026-02-27
 

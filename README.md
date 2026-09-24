@@ -147,6 +147,11 @@ This function is used to create a Commitspark GraphQL API client instance.
 Argument `gitAdapter` expects a Commitspark git adapter instance which is then used by the client to access the
 adapter's Git repository.
 
+Optional argument `options` supports the following settings:
+
+* `searchAdapter`: A Commitspark search adapter instance. If set, query `_search` is added to the GraphQL API (see
+  [Search](#search)).
+
 ### Client
 
 #### postGraphQL()
@@ -391,6 +396,69 @@ removed:
 }
 ```
 
+## Search
+
+Entries can be searched by text using query `_search` once a search adapter is passed to `createClient()`. How a
+search is performed (e.g. keyword search, semantic search or a combination of both) depends on the search adapter.
+Search adapters implement the interfaces provided in [this repository](https://github.com/commitspark/search-adapter).
+
+### Marking fields as searchable
+
+Only fields explicitly marked with directive `@Searchable` are searchable. The directive must be declared in the
+schema and can be used on types and fields:
+
+```graphql
+directive @Entry on OBJECT
+directive @Searchable on OBJECT | FIELD_DEFINITION
+
+type Article @Entry {
+    id: ID!
+    title: String @Searchable
+    url: String
+    seo: Seo
+    sections: [Section!]
+}
+
+type Seo {
+    description: String @Searchable
+}
+
+type Section @Searchable {
+    heading: String
+    body: String
+}
+```
+
+The following rules apply:
+
+* On a type, the directive makes all fields of type `String` (or a list of `String`) of that type searchable.
+* On a field, the directive makes the field searchable. The field must be of type `String` or a list of `String`,
+  otherwise the schema is rejected as invalid.
+* The directive of a type does not extend to fields of other types used in it. Such types must be marked themselves.
+* References to other entries are never followed. Each entry is only searchable by its own data.
+
+### Querying
+
+```graphql
+query {
+    hits: _search(query: "launch window", types: ["Article"], first: 10) {
+        id
+        type
+        fieldPath
+        score
+        snippet
+    }
+}
+```
+
+Argument `types` optionally restricts hits to entries of the given entry types. Argument `first` limits the number of
+hits (default 10, maximum 100). Each hit identifies the entry by `id` and `type` and the matching field value by
+`fieldPath` (e.g. `title`, `seo.description` or `sections[2].body`). Hits are ordered by descending `score`, which is
+only meaningful for ordering hits of the same search.
+
+Hits are based on the commit returned as `ref` of the search response. Where the Git adapter supports commit hashes
+as `ref` argument, entries of hits can therefore be retrieved from exactly the searched commit.
+
 # Error handling
 
 Instead of throwing errors, this library catches known error cases and returns error information for GraphQL calls via
@@ -418,7 +486,8 @@ Example GraphQL response with error:
 ```
 
 The following error codes are returned together with error codes of Git adapters as
-documented [here](https://github.com/commitspark/git-adapter):
+documented [here](https://github.com/commitspark/git-adapter) and error codes of search adapters as
+documented [here](https://github.com/commitspark/search-adapter):
 
 | Error code             | Description                                                        |
 |------------------------|--------------------------------------------------------------------|

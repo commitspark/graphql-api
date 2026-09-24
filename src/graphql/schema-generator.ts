@@ -1,5 +1,6 @@
 import {
   generateQueriesAndMutations,
+  generateSearchQuery,
   generateTypeNameQuery,
 } from './queries-mutations-generator.ts'
 import {
@@ -24,6 +25,7 @@ import { FieldResolver } from './resolvers/field-resolvers/types.ts'
 import {
   ContextInjectionResolver,
   QueryMutationResolver,
+  SearchQueryResolver,
   UnionTypeResolver,
 } from './resolvers/types.ts'
 import { EntryData } from '@commitspark/git-adapter'
@@ -57,6 +59,8 @@ export async function generateSchema(
     schemaAnalyzerResult.entryDirectiveTypes,
   )
   const generatedTypeNameQuery = generateTypeNameQuery()
+  const generatedSearchQuery =
+    context.searchAdapter !== undefined ? generateSearchQuery() : undefined
 
   const generatedObjectInputTypeStrings = generateObjectInputTypeStrings(
     schemaAnalyzerResult.objectTypes,
@@ -69,6 +73,7 @@ export async function generateSchema(
   const generatedSchemaRootTypeStrings = generateSchemaRootTypeStrings(
     generatedQueriesMutations,
     generatedTypeNameQuery,
+    generatedSearchQuery,
   )
 
   const generatedSchemaString = `schema {
@@ -92,7 +97,8 @@ ${generatedSchemaRootTypeStrings}`
 
   const generatedQueryResolvers: Record<
     string,
-    QueryMutationResolver<EntryData | EntryData[] | string>
+    | QueryMutationResolver<EntryData | EntryData[] | string>
+    | SearchQueryResolver
   > = {}
   const generatedMutationResolvers: Record<
     string,
@@ -112,12 +118,17 @@ ${generatedSchemaRootTypeStrings}`
   }
   generatedQueryResolvers[generatedTypeNameQuery.name] =
     generatedTypeNameQuery.resolver
+  if (generatedSearchQuery !== undefined) {
+    generatedQueryResolvers[generatedSearchQuery.name] =
+      generatedSearchQuery.resolver
+  }
 
   const allGeneratedResolvers: Record<
     string,
     | Record<
         string,
         | QueryMutationResolver<EntryData | EntryData[] | string>
+        | SearchQueryResolver
         | GraphQLTypeResolver<unknown, ApolloContext>
         | ContextInjectionResolver
         | FieldResolver
@@ -147,6 +158,7 @@ ${generatedSchemaRootTypeStrings}`
     generatedIdInputTypeStrings.join('\n'),
     generatedObjectInputTypeStrings.join('\n'),
     generatedUnionInputTypeStrings.join('\n'),
+    generatedSearchQuery?.typeDefinitionString ?? '',
   ].filter((typeDef) => typeDef.length > 0)
 
   return {

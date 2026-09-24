@@ -1,11 +1,13 @@
 import {
   GeneratedQuery,
   GeneratedSchema,
+  GeneratedSearchQuery,
 } from './queries-mutations-generator.ts'
 
 export function generateSchemaRootTypeStrings(
   generatedSchemas: GeneratedSchema[],
   typeQuery: GeneratedQuery,
+  searchQuery: GeneratedSearchQuery | undefined,
 ): string {
   return (
     `type Query {\n` +
@@ -19,6 +21,7 @@ export function generateSchemaRootTypeStrings(
     '\n' +
     `  ${typeQuery.schemaString}` +
     '\n' +
+    (searchQuery !== undefined ? `  ${searchQuery.schemaString}\n` : '') +
     '}\n\n' +
     'type Mutation {\n' +
     generatedSchemas

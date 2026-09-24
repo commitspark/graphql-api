@@ -6,7 +6,11 @@ import { mutationCreateResolver } from './resolvers/query-mutation-resolvers/mut
 import { mutationUpdateResolver } from './resolvers/query-mutation-resolvers/mutation-update-resolver.ts'
 import { mutationDeleteResolver } from './resolvers/query-mutation-resolvers/mutation-delete-resolver.ts'
 import { queryTypeByIdResolver } from './resolvers/query-mutation-resolvers/query-type-by-id-resolver.ts'
-import { QueryMutationResolver } from './resolvers/types.ts'
+import { querySearchResolver } from './resolvers/query-mutation-resolvers/query-search-resolver.ts'
+import {
+  QueryMutationResolver,
+  SearchQueryResolver,
+} from './resolvers/types.ts'
 
 export function generateQueriesAndMutations(
   entryDirectiveTypes: GraphQLObjectType[],
@@ -120,6 +124,32 @@ export function generateTypeNameQuery(): GeneratedQuery {
     schemaString: entryTypeQueryString,
     resolver: queryTypeByIdResolver,
   }
+}
+
+export function generateSearchQuery(): GeneratedSearchQuery {
+  const searchQueryName = '_search'
+  const searchResultTypeName = '_SearchHit'
+
+  return {
+    name: searchQueryName,
+    schemaString: `${searchQueryName}(query: String!, types: [String!], first: Int): [${searchResultTypeName}!]!`,
+    typeDefinitionString: `type ${searchResultTypeName} {
+  id: ID!
+  type: String!
+  fieldPath: String!
+  score: Float!
+  snippet: String!
+}
+`,
+    resolver: querySearchResolver,
+  }
+}
+
+export interface GeneratedSearchQuery {
+  name: string
+  schemaString: string
+  typeDefinitionString: string
+  resolver: SearchQueryResolver
 }
 
 export interface GeneratedSchema {

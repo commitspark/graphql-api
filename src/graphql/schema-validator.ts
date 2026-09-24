@@ -1,4 +1,15 @@
-import { GraphQLSchema, GraphQLUnionType, Kind } from 'graphql'
+import {
+  getNamedType,
+  GraphQLSchema,
+  GraphQLUnionType,
+  isObjectType,
+  isScalarType,
+  Kind,
+} from 'graphql'
+import {
+  hasSearchableDirective,
+  SEARCHABLE_DIRECTIVE_NAME,
+} from './schema-utils/search-document-util.ts'
 
 function checkUnionMembersConsistentUseOfEntryDirective(
   schema: GraphQLSchema,
@@ -30,8 +41,30 @@ function checkUnionMembersConsistentUseOfEntryDirective(
   return ''
 }
 
+function checkSearchableDirectiveOnlyOnStringFields(
+  schema: GraphQLSchema,
+): string {
+  for (const type of Object.values(schema.getTypeMap())) {
+    if (!isObjectType(type) || type.name.startsWith('__')) {
+      continue
+    }
+    for (const field of Object.values(type.getFields())) {
+      if (!hasSearchableDirective(field)) {
+        continue
+      }
+      const namedType = getNamedType(field.type)
+      if (!isScalarType(namedType) || namedType.name !== 'String') {
+        return `Field "${type.name}.${field.name}" must be of type "String" or a list of "String" to use "@${SEARCHABLE_DIRECTIVE_NAME}" directive.`
+      }
+    }
+  }
+
+  return ''
+}
+
 export function getValidationResult(schema: GraphQLSchema): string[] {
   const results = []
   results.push(checkUnionMembersConsistentUseOfEntryDirective(schema))
+  results.push(checkSearchableDirectiveOnlyOnStringFields(schema))
   return results.filter((result) => result !== '')
 }

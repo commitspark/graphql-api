@@ -6,6 +6,7 @@ import {
   TypedQueryDocumentNode,
 } from 'graphql'
 import { GitAdapter } from '@commitspark/git-adapter'
+import { SearchAdapter } from '@commitspark/search-adapter'
 import {
   ApolloServer,
   ApolloServerOptions,
@@ -27,6 +28,7 @@ export const postGraphQL = async <
   TVariables extends VariableValues = VariableValues,
 >(
   gitAdapter: GitAdapter,
+  searchAdapter: SearchAdapter | undefined,
   repositoryCache: RepositoryCacheHandler,
   ref: string,
   request: ApolloExecuteOperationRequest<TData, TVariables>,
@@ -35,6 +37,7 @@ export const postGraphQL = async <
   const context: ApolloContext = {
     branch: ref,
     gitAdapter: gitAdapter,
+    searchAdapter: searchAdapter,
     getCurrentHash(): string {
       return currentHash
     },
@@ -73,6 +76,7 @@ export const postGraphQL = async <
 
 export const getSchema = async (
   gitAdapter: GitAdapter,
+  searchAdapter: SearchAdapter | undefined,
   repositoryCache: RepositoryCacheHandler,
   ref: string,
 ): Promise<SchemaResponse> => {
@@ -80,6 +84,7 @@ export const getSchema = async (
   const context: ApolloContext = {
     branch: ref,
     gitAdapter: gitAdapter,
+    searchAdapter: searchAdapter,
     getCurrentHash(): string {
       return currentHash
     },
@@ -103,6 +108,7 @@ export const getSchema = async (
 export interface ApolloContext {
   branch: string
   gitAdapter: GitAdapter
+  searchAdapter?: SearchAdapter
   getCurrentHash(): string
   setCurrentHash(sha: string): void
   repositoryCache: RepositoryCacheHandler

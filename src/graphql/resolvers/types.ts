@@ -28,6 +28,21 @@ type UnionTypeResolverSourceData = EntryData & {
   __typename: string
 }
 
+export interface SearchResult {
+  id: string
+  type: string
+  fieldPath: string
+  score: number
+  snippet: string
+}
+
+export type SearchQueryResolver = GraphQLFieldResolver<
+  unknown,
+  ApolloContext,
+  { query: string; types?: string[] | null; first?: number | null },
+  Promise<SearchResult[]>
+>
+
 export type ContextInjectionResolver = GraphQLFieldResolver<
   EntryData,
   ApolloContext,

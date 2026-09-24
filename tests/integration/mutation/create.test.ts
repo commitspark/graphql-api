@@ -6,6 +6,7 @@ import {
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
 import { createClient } from '../../../src'
+import { mockEntries } from '../../git-adapter-mock'
 
 describe('"Create" mutation resolvers', () => {
   it('should create an entry', async () => {
@@ -55,13 +56,11 @@ type EntryA @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
+    mockEntries(gitAdapter, commitHash, [])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([newEntry])
+    mockEntries(gitAdapter, postCommitHash, [newEntry])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -302,25 +301,21 @@ type CircularReferenceEntry @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(existingEntries)
+    mockEntries(gitAdapter, commitHash, existingEntries)
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([
-        newEntryA,
-        updatedOptionalReference2,
-        updatedNonNullReference,
-        updatedArrayReference1,
-        updatedArrayReference2,
-        updatedUnionEntryType2,
-        updatedUnionNestedEntry,
-        updatedCircularReference1Entry,
-        existingCircularReference2Entry,
-      ])
+    mockEntries(gitAdapter, postCommitHash, [
+      newEntryA,
+      updatedOptionalReference2,
+      updatedNonNullReference,
+      updatedArrayReference1,
+      updatedArrayReference2,
+      updatedUnionEntryType2,
+      updatedUnionNestedEntry,
+      updatedCircularReference1Entry,
+      existingCircularReference2Entry,
+    ])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -372,9 +367,7 @@ type EntryB @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(existingEntries)
+    mockEntries(gitAdapter, commitHash, existingEntries)
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -438,9 +431,7 @@ type OtherEntry @Entry {
       .calledWith(gitRef)
       .mockResolvedValue(commitHash)
     gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue(existingEntries)
+    mockEntries(gitAdapter, commitHash, existingEntries)
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {

@@ -6,6 +6,7 @@ import {
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
 import { createClient } from '../../../src'
+import { mockEntries } from '../../git-adapter-mock'
 
 describe('"Update" mutation resolvers', () => {
   it('should update an entry', async () => {
@@ -66,15 +67,11 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([originalEntry])
+    mockEntries(gitAdapter, commitHash, [originalEntry])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedEntry])
+    mockEntries(gitAdapter, postCommitHash, [updatedEntry])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -220,15 +217,11 @@ type SubType {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([originalEntry])
+    mockEntries(gitAdapter, commitHash, [originalEntry])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedEntry])
+    mockEntries(gitAdapter, postCommitHash, [updatedEntry])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -269,7 +262,7 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
+    mockEntries(gitAdapter, commitHash, [])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -405,15 +398,16 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([box1, box2, item1, item2])
+    mockEntries(gitAdapter, commitHash, [box1, box2, item1, item2])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedBox1, updatedBox2, updatedItem1, item2])
+    mockEntries(gitAdapter, postCommitHash, [
+      updatedBox1,
+      updatedBox2,
+      updatedItem1,
+      item2,
+    ])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -516,13 +510,11 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([box, item])
+    mockEntries(gitAdapter, commitHash, [box, item])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedBox, updatedItem])
+    mockEntries(gitAdapter, postCommitHash, [updatedBox, updatedItem])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -643,15 +635,15 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([box, otherBox, item])
+    mockEntries(gitAdapter, commitHash, [box, otherBox, item])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedBox, updatedOtherBox, updatedItem])
+    mockEntries(gitAdapter, postCommitHash, [
+      updatedBox,
+      updatedOtherBox,
+      updatedItem,
+    ])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -759,13 +751,11 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([box, item])
+    mockEntries(gitAdapter, commitHash, [box, item])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedBox, updatedItem])
+    mockEntries(gitAdapter, postCommitHash, [updatedBox, updatedItem])
 
     const client = await createClient(gitAdapter)
     await client.postGraphQL(gitRef, {
@@ -863,15 +853,11 @@ enum MyEnum {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([originalEntry])
+    mockEntries(gitAdapter, commitHash, [originalEntry])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedEntry])
+    mockEntries(gitAdapter, postCommitHash, [updatedEntry])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {

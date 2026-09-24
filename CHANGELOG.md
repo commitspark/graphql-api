@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Cache entry content by content hash across commits so that only changed entries are retrieved from Git adapters
+  after a commit changes
+- Require Git adapters implementing the @commitspark/git-adapter interface with `getEntryHashes` and
+  `getEntriesByIds`
+
 ## [1.0.0] - 2026-02-27
 
 ### Changed

@@ -6,6 +6,7 @@ import {
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
 import { createClient } from '../../../src'
+import { mockEntries } from '../../git-adapter-mock'
 
 describe('"Delete" mutation resolvers', () => {
   it('should delete an entry', async () => {
@@ -58,7 +59,7 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([entry])
+    mockEntries(gitAdapter, commitHash, [entry])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
@@ -101,7 +102,7 @@ type EntryA @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue([])
+    mockEntries(gitAdapter, commitHash, [])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -175,7 +176,7 @@ type EntryB @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries.calledWith(commitHash).mockResolvedValue(entries)
+    mockEntries(gitAdapter, commitHash, entries)
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
@@ -280,15 +281,11 @@ type Box @Entry {
     gitAdapter.getSchema
       .calledWith(commitHash)
       .mockResolvedValue(originalSchema)
-    gitAdapter.getEntries
-      .calledWith(commitHash)
-      .mockResolvedValue([box, item1, item2])
+    mockEntries(gitAdapter, commitHash, [box, item1, item2])
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    gitAdapter.getEntries
-      .calledWith(postCommitHash)
-      .mockResolvedValue([updatedBox, item2])
+    mockEntries(gitAdapter, postCommitHash, [updatedBox, item2])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {

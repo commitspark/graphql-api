@@ -7,10 +7,11 @@ import {
   isObjectType,
   isUnionType,
 } from 'graphql'
+import { buildsOnTypeWithEntryDirective } from '../../schema-utils/entry-type-util.ts'
 import {
-  buildsOnTypeWithEntryDirective,
-  hasEntryDirective,
-} from '../../schema-utils/entry-type-util.ts'
+  ENTRY_DIRECTIVE_NAME,
+  hasDirective,
+} from '../../schema-utils/directive-util.ts'
 import { resolveEntryReference } from './entry-reference-resolver.ts'
 import { resolveUnionValue } from './union-value-resolver.ts'
 import { createError, ErrorCode } from '../../errors.ts'
@@ -116,7 +117,7 @@ export const resolveFieldDefaultValue: FieldResolver = async (
       }
     }
 
-    if (hasEntryDirective(context.currentType)) {
+    if (hasDirective(context.currentType, ENTRY_DIRECTIVE_NAME)) {
       return resolveEntryReference(fieldValue, args, context, info)
     }
 

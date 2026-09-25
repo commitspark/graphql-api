@@ -14,10 +14,11 @@ import {
   isUnionType,
 } from 'graphql'
 import { SchemaAnalyzerResult } from './schema-analyzer.ts'
+import { buildsOnTypeWithEntryDirective } from './schema-utils/entry-type-util.ts'
 import {
-  buildsOnTypeWithEntryDirective,
-  hasEntryDirective,
-} from './schema-utils/entry-type-util.ts'
+  ENTRY_DIRECTIVE_NAME,
+  hasDirective,
+} from './schema-utils/directive-util.ts'
 
 function generateFieldInputTypeString(type: GraphQLNullableType): string {
   if (isListType(type)) {
@@ -25,7 +26,7 @@ function generateFieldInputTypeString(type: GraphQLNullableType): string {
   } else if (isNonNullType(type)) {
     return `${generateFieldInputTypeString(type.ofType)}!`
   } else if (isObjectType(type)) {
-    if (hasEntryDirective(type)) {
+    if (hasDirective(type, ENTRY_DIRECTIVE_NAME)) {
       return `${type.name}IdInput`
     } else {
       return `${type.name}Input`

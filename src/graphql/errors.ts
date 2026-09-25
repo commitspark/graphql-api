@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql'
-import { ErrorCode as AdapterErrorCode } from '@commitspark/git-adapter'
+import { ErrorCode as GitAdapterErrorCode } from '@commitspark/git-adapter'
+import { ErrorCode as SearchAdapterErrorCode } from '@commitspark/search-adapter'
 
 export const enum ErrorCode {
   BAD_USER_INPUT = 'BAD_USER_INPUT',
@@ -21,7 +22,7 @@ export interface ErrorMetadata {
 
 export const createError = (
   message: string,
-  code: ErrorCode | AdapterErrorCode,
+  code: ErrorCode | GitAdapterErrorCode | SearchAdapterErrorCode,
   metaData: ErrorMetadata,
 ): GraphQLError => {
   const serializedFieldValue =

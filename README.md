@@ -39,6 +39,16 @@ in [this repository](https://github.com/commitspark/git-adapter).
 | [GitLab (SaaS)](https://github.com/commitspark/git-adapter-gitlab)  | Provides support for Git repositories hosted on gitlab.com | `npm i @commitspark/git-adapter-gitlab`     |
 | [Filesystem](https://github.com/commitspark/git-adapter-filesystem) | Provides read-only access to files on the filesystem level | `npm i @commitspark/git-adapter-filesystem` |
 
+## Installing search support
+
+Searching entries (see [Search](#search)) is optional and relies on a separate search adapter. To enable search, use
+the pre-built adapter listed below or build your own using the interfaces
+in [this repository](https://github.com/commitspark/search-adapter).
+
+| Adapter                                                                | Description                                                  | Install with                                   |
+|------------------------------------------------------------------------|--------------------------------------------------------------|------------------------------------------------|
+| [MiniSearch](https://github.com/commitspark/search-adapter-minisearch) | In-memory keyword search with prefix and misspelling support | `npm i @commitspark/search-adapter-minisearch` |
+
 # Building your GraphQL API
 
 Commitspark builds a GraphQL data management API with create, read, update, and delete (CRUD) functionality that is
@@ -399,8 +409,8 @@ removed:
 ## Search
 
 Entries can be searched by text using query `_search` once a search adapter is passed to `createClient()`. How a
-search is performed (e.g. keyword search, semantic search or a combination of both) depends on the search adapter.
-Search adapters implement the interfaces provided in [this repository](https://github.com/commitspark/search-adapter).
+search is performed (e.g. keyword search, semantic search or a combination of both) depends on the search adapter
+(see [Installing search support](#installing-search-support)).
 
 ### Marking fields as searchable
 

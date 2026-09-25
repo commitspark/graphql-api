@@ -1,5 +1,4 @@
 import {
-  GraphQLField,
   GraphQLObjectType,
   GraphQLOutputType,
   GraphQLSchema,
@@ -11,20 +10,13 @@ import {
 } from 'graphql'
 import { Entry } from '@commitspark/git-adapter'
 import { SearchableFieldValue } from '@commitspark/search-adapter'
-import { hasEntryDirective, isUnionOfEntryTypes } from './entry-type-util.ts'
+import {
+  ENTRY_DIRECTIVE_NAME,
+  hasDirective,
+  SEARCHABLE_DIRECTIVE_NAME,
+} from './directive-util.ts'
+import { isUnionOfEntryTypes } from './entry-type-util.ts'
 import { getUnionTypeNameFromFieldValue } from './union-type-util.ts'
-
-export const SEARCHABLE_DIRECTIVE_NAME = 'Searchable'
-
-export function hasSearchableDirective(
-  typeOrField: GraphQLObjectType | GraphQLField<unknown, unknown>,
-): boolean {
-  return (
-    typeOrField.astNode?.directives?.find(
-      (directive) => directive.name.value === SEARCHABLE_DIRECTIVE_NAME,
-    ) !== undefined
-  )
-}
 
 // Returns every non-empty string value of searchable fields. Values that do not match the schema are skipped instead
 // of failing the search.
@@ -58,7 +50,7 @@ function collectFromObject(
   path: string,
   addValue: (fieldPath: string, value: string) => void,
 ): void {
-  const isTypeSearchable = hasSearchableDirective(objectType)
+  const isTypeSearchable = hasDirective(objectType, SEARCHABLE_DIRECTIVE_NAME)
   for (const field of Object.values(objectType.getFields())) {
     const value = data[field.name]
     if (value === undefined || value === null) {
@@ -69,7 +61,7 @@ function collectFromObject(
       field.type,
       value,
       path === '' ? field.name : `${path}.${field.name}`,
-      isTypeSearchable || hasSearchableDirective(field),
+      isTypeSearchable || hasDirective(field, SEARCHABLE_DIRECTIVE_NAME),
       addValue,
     )
   }
@@ -110,7 +102,7 @@ function collectFromValue(
     }
   } else if (isObjectType(type)) {
     // references to other entries are not followed, as each entry is indexed with its own content only
-    if (!hasEntryDirective(type) && isRecord(value)) {
+    if (!hasDirective(type, ENTRY_DIRECTIVE_NAME) && isRecord(value)) {
       collectFromObject(schema, type, value, path, addValue)
     }
   } else if (isUnionType(type)) {

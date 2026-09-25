@@ -7,9 +7,10 @@ import {
   Kind,
 } from 'graphql'
 import {
-  hasSearchableDirective,
+  ENTRY_DIRECTIVE_NAME,
+  hasDirective,
   SEARCHABLE_DIRECTIVE_NAME,
-} from './schema-utils/searchable-field-util.ts'
+} from './schema-utils/directive-util.ts'
 
 function checkUnionMembersConsistentUseOfEntryDirective(
   schema: GraphQLSchema,
@@ -23,18 +24,14 @@ function checkUnionMembersConsistentUseOfEntryDirective(
     const innerTypes = (type as GraphQLUnionType).getTypes()
 
     const numberUnionMembersWithEntryDirective = innerTypes.filter(
-      (innerType) =>
-        !!innerType.astNode &&
-        innerType.astNode.directives?.find(
-          (directive) => directive.name.value === 'Entry',
-        ) !== undefined,
+      (innerType) => hasDirective(innerType, ENTRY_DIRECTIVE_NAME),
     ).length
 
     if (
       numberUnionMembersWithEntryDirective !== 0 &&
       numberUnionMembersWithEntryDirective !== innerTypes.length
     ) {
-      return `Either all union members of "${type.name}" must have "@Entry" directive or none.`
+      return `Either all union members of "${type.name}" must have "@${ENTRY_DIRECTIVE_NAME}" directive or none.`
     }
   }
 
@@ -49,7 +46,7 @@ function checkSearchableDirectiveOnlyOnStringFields(
       continue
     }
     for (const field of Object.values(type.getFields())) {
-      if (!hasSearchableDirective(field)) {
+      if (!hasDirective(field, SEARCHABLE_DIRECTIVE_NAME)) {
         continue
       }
       const namedType = getNamedType(field.type)

@@ -1,7 +1,10 @@
 import { GraphQLError, GraphQLSchema, isObjectType } from 'graphql'
 import { SearchAdapterError, SearchHit } from '@commitspark/search-adapter'
 import { createError, ErrorCode } from '../../errors.ts'
-import { hasEntryDirective } from '../../schema-utils/entry-type-util.ts'
+import {
+  ENTRY_DIRECTIVE_NAME,
+  hasDirective,
+} from '../../schema-utils/directive-util.ts'
 import { extractSearchableFieldValues } from '../../schema-utils/searchable-field-util.ts'
 import { SearchQueryResolver } from '../types.ts'
 
@@ -93,7 +96,7 @@ function validateEntryTypeNames(
 ): void {
   for (const typeName of typeNames) {
     const type = schema.getType(typeName)
-    if (!isObjectType(type) || !hasEntryDirective(type)) {
+    if (!isObjectType(type) || !hasDirective(type, ENTRY_DIRECTIVE_NAME)) {
       throw createError(
         `Type "${typeName}" is not an entry type.`,
         ErrorCode.BAD_USER_INPUT,

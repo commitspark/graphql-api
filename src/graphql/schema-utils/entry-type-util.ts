@@ -1,21 +1,12 @@
 import {
   GraphQLNullableType,
-  GraphQLObjectType,
   GraphQLUnionType,
   isListType,
   isNonNullType,
   isObjectType,
   isUnionType,
 } from 'graphql'
-
-export function hasEntryDirective(type: GraphQLObjectType): boolean {
-  return (
-    !!type.astNode &&
-    type.astNode.directives?.find(
-      (directive) => directive.name.value === 'Entry',
-    ) !== undefined
-  )
-}
+import { ENTRY_DIRECTIVE_NAME, hasDirective } from './directive-util.ts'
 
 export function isUnionOfEntryTypes(type: GraphQLUnionType): boolean {
   return type
@@ -33,7 +24,7 @@ export function buildsOnTypeWithEntryDirective(
   } else if (isUnionType(type)) {
     return isUnionOfEntryTypes(type)
   } else if (isObjectType(type)) {
-    return hasEntryDirective(type)
+    return hasDirective(type, ENTRY_DIRECTIVE_NAME)
   }
   return false
 }

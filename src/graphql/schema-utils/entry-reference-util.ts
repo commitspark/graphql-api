@@ -14,7 +14,8 @@ import {
   getUnionTypeNameFromFieldValue,
   getUnionValue,
 } from './union-type-util.ts'
-import { hasEntryDirective, isUnionOfEntryTypes } from './entry-type-util.ts'
+import { ENTRY_DIRECTIVE_NAME, hasDirective } from './directive-util.ts'
+import { isUnionOfEntryTypes } from './entry-type-util.ts'
 import { createError, ErrorCode } from '../errors.ts'
 import { EntryData } from '@commitspark/git-adapter'
 import { isEntryData } from '../util.ts'
@@ -218,7 +219,10 @@ export async function getReferencedEntryIds(
   }
 
   if (isObjectType(type)) {
-    if (type.name !== rootType.name && hasEntryDirective(type)) {
+    if (
+      type.name !== rootType.name &&
+      hasDirective(type, ENTRY_DIRECTIVE_NAME)
+    ) {
       const referenceId = await getValidatedReferenceId(
         context,
         fieldName,

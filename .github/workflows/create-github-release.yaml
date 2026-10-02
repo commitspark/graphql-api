@@ -18,7 +18,7 @@ jobs:
             VERSION: ${{ inputs.version }}
             GH_TOKEN: ${{ github.token }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
               with:
                   ref: refs/tags/v${{ inputs.version }}
 

@@ -7,7 +7,7 @@ import type { Config } from 'jest'
 const jestConfig: Config = {
   moduleFileExtensions: ['js', 'ts'],
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.ts$': 'ts-jest',
   },
   // relative ".ts" imports are rewritten to ".js" by TypeScript's rewriteRelativeImportExtensions
   moduleNameMapper: {

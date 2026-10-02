@@ -2,13 +2,13 @@ name: Lint
 on: push
 jobs:
     lint:
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-26.04
         steps:
             - uses: actions/checkout@v4
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: "22"
+                  node-version: "24"
 
             - name: Install dependencies
               run: npm ci

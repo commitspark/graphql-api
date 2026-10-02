@@ -1,0 +1,43 @@
+# Reusable workflow: verifies and stages the package on npm (Trusted Publishing, stage-only).
+# The version goes live only after a maintainer runs `npm stage approve <stage-id>` (requires 2FA).
+# Must be called from a workflow triggered by a `v<version>` tag push; the caller needs permission `id-token: write`.
+name: Publish to npm
+on:
+    workflow_call:
+
+jobs:
+    publish:
+        runs-on: ubuntu-26.04
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+                  registry-url: "https://registry.npmjs.org"
+
+            - name: Upgrade npm
+              run: npm install -g npm@^11.15.0 # `npm stage` requires npm >= 11.15.0
+
+            - name: Verify tag matches package.json and CHANGELOG.md
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  test "v$VERSION" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME does not match package.json version $VERSION"; exit 1; }
+                  grep -q "^## \[$VERSION\]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $VERSION"; exit 1; }
+
+            - run: npm ci
+            - run: npm run lint
+            - run: npm run knip
+            - run: npm test
+            - run: npm run build
+
+            - name: Stage package on npm
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  TAG=latest
+                  # Pre-release `x.y.z-beta.N` is published under dist-tag `beta`
+                  [[ "$VERSION" == *-* ]] && TAG=$(echo "${VERSION#*-}" | cut -d. -f1)
+                  npm stage publish --access public --tag "$TAG"
+                  echo "Staged $VERSION with dist-tag $TAG. Approve with: npm stage list; npm stage approve <stage-id>"

@@ -51,9 +51,7 @@ export function generateIdInputTypeStrings(
   schemaAnalyzerResult: SchemaAnalyzerResult,
 ): string[] {
   let typesWithIdField: (
-    | GraphQLObjectType
-    | GraphQLInterfaceType
-    | GraphQLUnionType
+    GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType
   )[] = []
   typesWithIdField = typesWithIdField.concat(
     schemaAnalyzerResult.entryDirectiveTypes,

@@ -1,0 +1,16 @@
+name: GitHub release
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version to create the GitHub release for, without leading `v` (e.g. 2.0.0-beta.3)"
+                required: true
+                type: string
+
+jobs:
+    release:
+        uses: ./.github/workflows/create-github-release.yaml
+        with:
+            version: ${{ inputs.version }}
+        permissions:
+            contents: write

@@ -1,0 +1,43 @@
+# Reusable workflow: creates a GitHub release for an existing tag `v<version>`, with notes taken from CHANGELOG.md.
+# Intended to run after `npm stage approve`; refuses to run until the version is live on npm.
+# The caller needs permission `contents: write`.
+name: Create GitHub release
+on:
+    workflow_call:
+        inputs:
+            version:
+                required: true
+                type: string
+
+jobs:
+    release:
+        runs-on: ubuntu-26.04
+        permissions:
+            contents: write
+        env:
+            VERSION: ${{ inputs.version }}
+            GH_TOKEN: ${{ github.token }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: refs/tags/v${{ inputs.version }}
+
+            - name: Verify version is live on npm
+              run: |
+                  NAME=$(node -p "require('./package.json').name")
+                  for i in 1 2 3 4 5 6; do
+                      LIVE=$(npm view "$NAME@$VERSION" version 2>/dev/null || true)
+                      [ "$LIVE" = "$VERSION" ] && exit 0
+                      echo "$NAME@$VERSION not found on npm yet (attempt $i), retrying in 30s"
+                      sleep 30
+                  done
+                  echo "$NAME@$VERSION is not published. Run \`npm stage approve\` first."
+                  exit 1
+
+            - name: Create GitHub release from CHANGELOG.md
+              run: |
+                  awk -v h="## [$VERSION]" 'index($0, h) == 1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+                  test -s notes.md || { echo "CHANGELOG.md has no notes for $VERSION"; exit 1; }
+                  FLAGS=""
+                  [[ "$VERSION" == *-* ]] && FLAGS="--prerelease"
+                  gh release create "v$VERSION" --verify-tag --notes-file notes.md $FLAGS

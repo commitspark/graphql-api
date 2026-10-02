@@ -7,5 +7,5 @@ jobs:
     release:
         uses: ./.github/workflows/npm-publish.yaml
         permissions:
-            contents: write
+            contents: read
             id-token: write

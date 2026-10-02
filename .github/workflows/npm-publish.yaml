@@ -1,6 +1,6 @@
-# Reusable workflow: verifies, publishes to npm (Trusted Publishing) and creates a GitHub release from CHANGELOG.md.
-# Must be called from a workflow triggered by a `v<version>` tag push; the caller needs permissions
-# `contents: write` and `id-token: write`.
+# Reusable workflow: verifies and stages the package on npm (Trusted Publishing, stage-only).
+# The version goes live only after a maintainer runs `npm stage approve <stage-id>` (requires 2FA).
+# Must be called from a workflow triggered by a `v<version>` tag push; the caller needs permission `id-token: write`.
 name: Publish to npm
 on:
     workflow_call:
@@ -8,17 +8,18 @@ on:
 jobs:
     publish:
         runs-on: ubuntu-latest
-        # Environment `npm` must have required reviewers configured; this is the manual gate
-        environment: npm
         permissions:
-            contents: write
+            contents: read
             id-token: write
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
               with:
-                  node-version: "24" # npm >= 11.5.1 is required for Trusted Publishing
+                  node-version: "24"
                   registry-url: "https://registry.npmjs.org"
+
+            - name: Upgrade npm
+              run: npm install -g npm@^11.15.0 # `npm stage` requires npm >= 11.15.0
 
             - name: Verify tag matches package.json and CHANGELOG.md
               run: |
@@ -32,20 +33,11 @@ jobs:
             - run: npm test
             - run: npm run build
 
-            - name: Publish to npm
+            - name: Stage package on npm
               run: |
                   VERSION=$(node -p "require('./package.json').version")
                   TAG=latest
                   # Pre-release `x.y.z-beta.N` is published under dist-tag `beta`
                   [[ "$VERSION" == *-* ]] && TAG=$(echo "${VERSION#*-}" | cut -d. -f1)
-                  npm publish --access public --tag "$TAG"
-
-            - name: Create GitHub release from CHANGELOG.md
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: |
-                  VERSION=${GITHUB_REF_NAME#v}
-                  awk -v h="## [$VERSION]" 'index($0, h) == 1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
-                  FLAGS=""
-                  [[ "$VERSION" == *-* ]] && FLAGS="--prerelease"
-                  gh release create "$GITHUB_REF_NAME" --notes-file notes.md $FLAGS
+                  npm stage publish --access public --tag "$TAG"
+                  echo "Staged $VERSION with dist-tag $TAG. Approve with: npm stage list; npm stage approve <stage-id>"

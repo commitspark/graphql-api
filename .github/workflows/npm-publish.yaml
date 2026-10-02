@@ -1,0 +1,51 @@
+# Reusable workflow: verifies, publishes to npm (Trusted Publishing) and creates a GitHub release from CHANGELOG.md.
+# Must be called from a workflow triggered by a `v<version>` tag push; the caller needs permissions
+# `contents: write` and `id-token: write`.
+name: Publish to npm
+on:
+    workflow_call:
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        # Environment `npm` must have required reviewers configured; this is the manual gate
+        environment: npm
+        permissions:
+            contents: write
+            id-token: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "24" # npm >= 11.5.1 is required for Trusted Publishing
+                  registry-url: "https://registry.npmjs.org"
+
+            - name: Verify tag matches package.json and CHANGELOG.md
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  test "v$VERSION" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME does not match package.json version $VERSION"; exit 1; }
+                  grep -q "^## \[$VERSION\]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $VERSION"; exit 1; }
+
+            - run: npm ci
+            - run: npm run lint
+            - run: npm run knip
+            - run: npm test
+            - run: npm run build
+
+            - name: Publish to npm
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  TAG=latest
+                  # Pre-release `x.y.z-beta.N` is published under dist-tag `beta`
+                  [[ "$VERSION" == *-* ]] && TAG=$(echo "${VERSION#*-}" | cut -d. -f1)
+                  npm publish --access public --tag "$TAG"
+
+            - name: Create GitHub release from CHANGELOG.md
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  VERSION=${GITHUB_REF_NAME#v}
+                  awk -v h="## [$VERSION]" 'index($0, h) == 1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+                  FLAGS=""
+                  [[ "$VERSION" == *-* ]] && FLAGS="--prerelease"
+                  gh release create "$GITHUB_REF_NAME" --notes-file notes.md $FLAGS

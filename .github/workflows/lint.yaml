@@ -4,14 +4,14 @@ jobs:
     lint:
         runs-on: ubuntu-22.04
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
             - name: Setup Node.js
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v4
               with:
                   node-version: "22"
 
             - name: Install dependencies
-              run: npm install
+              run: npm ci
 
             - name: Run linter
               run: npm run lint

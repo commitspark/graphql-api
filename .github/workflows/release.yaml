@@ -1,0 +1,11 @@
+name: Release
+on:
+    push:
+        tags: ["v*"]
+
+jobs:
+    release:
+        uses: ./.github/workflows/npm-publish.yaml
+        permissions:
+            contents: write
+            id-token: write

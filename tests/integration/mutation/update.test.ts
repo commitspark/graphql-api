@@ -2,6 +2,7 @@ import {
   Commit,
   CommitDraft,
   Entry,
+  EntryMetadata,
   GitAdapter,
 } from '@commitspark/git-adapter'
 import { Matcher, mock } from 'jest-mock-extended'
@@ -330,11 +331,8 @@ type Box @Entry {
     }
     const item: Entry = {
       id: itemId,
-      metadata: {
-        type: 'Item',
-        // reference metadata written by earlier versions is removed when an entry is written
-        referencedBy: [],
-      },
+      // reference metadata written by earlier versions is removed when an entry is written
+      metadata: { type: 'Item', referencedBy: [] } as EntryMetadata,
       data: {
         box: { id: box1Id },
       },

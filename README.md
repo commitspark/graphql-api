@@ -248,7 +248,6 @@ Entry files have the following structure:
 ```yaml
 metadata:
   type: MyType # name of type as defined in your schema
-  referencedBy: [ ] # array of entry IDs that hold a reference to this entry
 data:
 #   ... fields of the type as defined in your schema
 ```
@@ -282,7 +281,6 @@ like this:
 # commitspark/entries/VA256.yaml
 metadata:
   type: RocketFlight
-  referencedBy: [ ]
 data:
   operator:
     id: Arianespace
@@ -294,8 +292,6 @@ The YAML file of referenced `Operator` with ID `Arianespace` will then look like
 # commitspark/entries/Arianespace.yaml
 metadata:
   type: Operator
-  referencedBy:
-    - VA256
 data:
   fullName: Arianespace SA
 ```
@@ -324,6 +320,34 @@ This returns the following data:
   }
 }
 ```
+
+#### Incoming references
+
+Incoming references are not stored. Commitspark determines them from the data of all entries of the requested commit
+when they are first needed, e.g. to prevent the deletion of an entry that is still referenced by other entries (error
+`IN_USE`).
+
+Every type annotated with `@Entry` provides an additional field `_referencedBy` that returns the IDs of all entries
+referencing an entry, sorted by ID:
+
+```graphql
+query {
+    Operator(id: "Arianespace") {
+        _referencedBy
+    }
+}
+```
+
+This returns the following data:
+
+```json
+{
+  "_referencedBy": ["VA256"]
+}
+```
+
+Entry files written by earlier versions of Commitspark may contain a field `metadata.referencedBy`. This field is
+ignored and removed when the entry is next written.
 
 #### Unions
 
@@ -359,7 +383,6 @@ concrete instance's type name as field name:
 # commitspark/entries/VA256.yaml
 metadata:
   type: Rocket
-  referencedBy: [ ]
 data:
   stages:
     - LiquidRocketMotor:

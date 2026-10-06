@@ -21,6 +21,7 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
   context,
   info,
 ) => {
+  void info
   if (!isObjectType(context.type)) {
     throw createError(
       `Type "${context.type.name}" cannot be mutated as is not an ObjectType.`,
@@ -34,8 +35,6 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
   const existingReferencedEntryIds = await getReferencedEntryIds(
     context.type,
     context,
-    null,
-    info.returnType,
     existingEntry.data ?? null,
   )
 
@@ -43,8 +42,6 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
   const updatedReferencedEntryIds = await getReferencedEntryIds(
     context.type,
     context,
-    null,
-    info.returnType,
     mergedData,
   )
 

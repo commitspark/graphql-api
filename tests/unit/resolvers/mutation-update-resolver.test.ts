@@ -114,10 +114,8 @@ describe('mutationUpdateResolver', () => {
 
     getReferencedEntryIds.mockImplementation(
       async (
-        _rootType: unknown,
+        _entryType: unknown,
         _context: unknown,
-        _fieldName: unknown,
-        _returnType: unknown,
         data: Record<string, unknown>,
       ) => {
         if (data && 'box' in data) {

@@ -116,7 +116,52 @@ async function validateReference(
 }
 
 export async function getReferencedEntryIds(
-  rootType: GraphQLObjectType,
+  entryType: GraphQLObjectType,
+  context: ApolloContext,
+  data: EntryData,
+): Promise<string[]> {
+  // the fields of the entry itself are traversed directly, so that any nested @Entry type is treated as reference,
+  // including references to entries of the same type
+  return getReferencedEntryIdsInObjectFields(entryType, context, data)
+}
+
+async function getReferencedEntryIdsInObjectFields(
+  type: GraphQLObjectType,
+  context: ApolloContext,
+  data: unknown,
+): Promise<string[]> {
+  if (data === null || data === undefined) {
+    return []
+  }
+
+  let referencedEntryIds: string[] = []
+  for (const [fieldsKey, field] of Object.entries(type.getFields())) {
+    // expect our object type to hold EntryData (i.e. an object)
+    if (Array.isArray(data) || !isEntryData(data)) {
+      throw createError(
+        `Expected object as data for type "${type.name}".`,
+        ErrorCode.BAD_REPOSITORY_DATA,
+        {
+          typeName: type.name,
+          fieldName: field.name ? field.name : undefined,
+        },
+      )
+    }
+
+    // recursively get referenced IDs in nested data
+    const nestedResult = await getReferencedEntryIdsInField(
+      context,
+      fieldsKey,
+      field.type,
+      data[fieldsKey],
+    )
+    referencedEntryIds = [...referencedEntryIds, ...nestedResult]
+  }
+  // deduplicate
+  return [...new Set(referencedEntryIds)]
+}
+
+async function getReferencedEntryIdsInField(
   context: ApolloContext,
   fieldName: string | null,
   type: GraphQLNullableType,
@@ -127,13 +172,7 @@ export async function getReferencedEntryIds(
   }
 
   if (isNonNullType(type)) {
-    return getReferencedEntryIds(
-      rootType,
-      context,
-      fieldName,
-      type.ofType,
-      data,
-    )
+    return getReferencedEntryIdsInField(context, fieldName, type.ofType, data)
   }
 
   if (isListType(type)) {
@@ -152,8 +191,7 @@ export async function getReferencedEntryIds(
     for (const element of data) {
       referencedEntryIds = [
         ...referencedEntryIds,
-        ...(await getReferencedEntryIds(
-          rootType,
+        ...(await getReferencedEntryIdsInField(
           context,
           fieldName,
           type.ofType,
@@ -209,8 +247,7 @@ export async function getReferencedEntryIds(
       )
     }
     const unionValue = getUnionValue(data)
-    return getReferencedEntryIds(
-      rootType,
+    return getReferencedEntryIdsInField(
       context,
       fieldName,
       concreteFieldUnionType,
@@ -219,10 +256,7 @@ export async function getReferencedEntryIds(
   }
 
   if (isObjectType(type)) {
-    if (
-      type.name !== rootType.name &&
-      hasDirective(type, ENTRY_DIRECTIVE_NAME)
-    ) {
+    if (hasDirective(type, ENTRY_DIRECTIVE_NAME)) {
       const referenceId = await getValidatedReferenceId(
         context,
         fieldName,
@@ -230,35 +264,8 @@ export async function getReferencedEntryIds(
         data,
       )
       return [referenceId]
-    } else {
-      let referencedEntryIds: string[] = []
-      for (const [fieldsKey, field] of Object.entries(type.getFields())) {
-        // expect our object type to hold EntryData (i.e. an object)
-        if (Array.isArray(data) || !isEntryData(data)) {
-          throw createError(
-            `Expected object as data for type "${type.name}".`,
-            ErrorCode.BAD_REPOSITORY_DATA,
-            {
-              typeName: type.name,
-              fieldName: field.name ? field.name : undefined,
-            },
-          )
-        }
-
-        // recursively get referenced IDs in nested data
-        const nestedResult = await getReferencedEntryIds(
-          rootType,
-          context,
-          fieldsKey,
-          field.type,
-          data[fieldsKey],
-        )
-        referencedEntryIds = [...referencedEntryIds, ...nestedResult]
-      }
-      // deduplicate
-      referencedEntryIds = [...new Set(referencedEntryIds)]
-      return referencedEntryIds
     }
+    return getReferencedEntryIdsInObjectFields(type, context, data)
   }
 
   return []

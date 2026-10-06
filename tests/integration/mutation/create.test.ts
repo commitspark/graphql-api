@@ -398,6 +398,52 @@ type EntryB @Entry {
     expect(result.ref).toBe(commitHash)
   })
 
+  it('should not create an entry that references a non-existent entry of the same type', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type Person @Entry {
+    id: ID!
+    manager: Person
+}`
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: PersonInput!, $commitMessage: String!) {
+        data: createPerson(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+          id
+        }
+      }`,
+      variables: {
+        id: 'employee',
+        mutationData: { manager: { id: 'someUnknownId' } },
+        commitMessage: 'My message',
+      },
+    })
+
+    expect(result.errors).toMatchObject([
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: {
+            fieldName: 'manager',
+            fieldValue: 'someUnknownId',
+          },
+        },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(result.ref).toBe(commitHash)
+  })
+
   it('should not create an entry that references an entry of incorrect type', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'

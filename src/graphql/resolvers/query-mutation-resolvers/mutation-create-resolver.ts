@@ -15,6 +15,7 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   context,
   info,
 ) => {
+  void info
   if (!isObjectType(context.type)) {
     throw createError(
       `Entry of type "${context.type.name}" cannot be created as is not an ObjectType.`,
@@ -55,8 +56,6 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   const referencedEntryIds = await getReferencedEntryIds(
     context.type,
     context,
-    null,
-    info.returnType,
     args.data ?? null,
   )
 

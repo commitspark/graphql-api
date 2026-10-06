@@ -39,8 +39,6 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
   const referencedEntryIds = await getReferencedEntryIds(
     entryType,
     context,
-    null,
-    entryType,
     entry.data ?? null,
   )
   const referencedEntryUpdates: EntryDraft[] = []

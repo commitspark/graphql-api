@@ -7,8 +7,10 @@ import { mutationUpdateResolver } from './resolvers/query-mutation-resolvers/mut
 import { mutationDeleteResolver } from './resolvers/query-mutation-resolvers/mutation-delete-resolver.ts'
 import { queryTypeByIdResolver } from './resolvers/query-mutation-resolvers/query-type-by-id-resolver.ts'
 import { querySearchResolver } from './resolvers/query-mutation-resolvers/query-search-resolver.ts'
+import { referencedByResolver } from './resolvers/field-resolvers/referenced-by-resolver.ts'
 import {
   QueryMutationResolver,
+  ReferencedByResolver,
   SearchQueryResolver,
 } from './resolvers/types.ts'
 
@@ -143,6 +145,29 @@ export function generateSearchQuery(): GeneratedSearchQuery {
 `,
     resolver: querySearchResolver,
   }
+}
+
+export function generateReferencedByFields(
+  entryDirectiveTypes: GraphQLObjectType[],
+): GeneratedField[] {
+  const referencedByFieldName = '_referencedBy'
+
+  return entryDirectiveTypes.map((objectType) => ({
+    typeName: objectType.name,
+    name: referencedByFieldName,
+    typeExtensionString: `extend type ${objectType.name} {
+  ${referencedByFieldName}: [ID!]!
+}
+`,
+    resolver: referencedByResolver,
+  }))
+}
+
+interface GeneratedField {
+  typeName: string
+  name: string
+  typeExtensionString: string
+  resolver: ReferencedByResolver
 }
 
 export interface GeneratedSearchQuery {

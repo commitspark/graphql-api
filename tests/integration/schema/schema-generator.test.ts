@@ -73,6 +73,10 @@ input MyEntryInput {
 input NestedTypeInput {
   nestedField: String
 }
+
+extend type MyEntry {
+  _referencedBy: [ID!]!
+}
 `
 
     expect(result.data).toBe(expectedSchema)
@@ -153,6 +157,14 @@ input EntryAInput {
 
 input EntryBInput {
   entryA: EntryAIdInput
+}
+
+extend type EntryA {
+  _referencedBy: [ID!]!
+}
+
+extend type EntryB {
+  _referencedBy: [ID!]!
 }
 `
 
@@ -268,6 +280,18 @@ input EntryAInput {
 input EntryBInput {
   field2: String
 }
+
+extend type MyEntry {
+  _referencedBy: [ID!]!
+}
+
+extend type EntryA {
+  _referencedBy: [ID!]!
+}
+
+extend type EntryB {
+  _referencedBy: [ID!]!
+}
 `
 
     expect(result.data).toBe(expectedSchema)
@@ -367,6 +391,10 @@ input MyUnionInput @oneOf {
 }
 
 directive @oneOf on INPUT_OBJECT
+
+extend type MyEntry {
+  _referencedBy: [ID!]!
+}
 `
 
     expect(result.data).toBe(expectedSchema)

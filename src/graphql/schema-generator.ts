@@ -1,5 +1,6 @@
 import {
   generateQueriesAndMutations,
+  generateReferencedByFields,
   generateSearchQuery,
   generateTypeNameQuery,
 } from './queries-mutations-generator.ts'
@@ -25,6 +26,7 @@ import { FieldResolver } from './resolvers/field-resolvers/types.ts'
 import {
   ContextInjectionResolver,
   QueryMutationResolver,
+  ReferencedByResolver,
   SearchQueryResolver,
   UnionTypeResolver,
 } from './resolvers/types.ts'
@@ -61,6 +63,9 @@ export async function generateSchema(
   const generatedTypeNameQuery = generateTypeNameQuery()
   const generatedSearchQuery =
     context.searchAdapter !== undefined ? generateSearchQuery() : undefined
+  const generatedReferencedByFields = generateReferencedByFields(
+    schemaAnalyzerResult.entryDirectiveTypes,
+  )
 
   const generatedObjectInputTypeStrings = generateObjectInputTypeStrings(
     schemaAnalyzerResult.objectTypes,
@@ -132,6 +137,7 @@ ${generatedSchemaRootTypeStrings}`
         | GraphQLTypeResolver<unknown, ApolloContext>
         | ContextInjectionResolver
         | FieldResolver
+        | ReferencedByResolver
       >
     | UnionTypeResolverRecord
   > = {
@@ -151,6 +157,12 @@ ${generatedSchemaRootTypeStrings}`
       ...generatedObjectTypeFieldResolvers[typeName],
     }
   }
+  for (const field of generatedReferencedByFields) {
+    allGeneratedResolvers[field.typeName] = {
+      ...(allGeneratedResolvers[field.typeName] ?? {}),
+      [field.name]: field.resolver,
+    }
+  }
 
   const typeDefs = [
     filteredOriginalSchemaString,
@@ -158,6 +170,9 @@ ${generatedSchemaRootTypeStrings}`
     generatedIdInputTypeStrings.join('\n'),
     generatedObjectInputTypeStrings.join('\n'),
     generatedUnionInputTypeStrings.join('\n'),
+    generatedReferencedByFields
+      .map((field) => field.typeExtensionString)
+      .join('\n'),
     generatedSearchQuery?.typeDefinitionString ?? '',
   ].filter((typeDef) => typeDef.length > 0)
 

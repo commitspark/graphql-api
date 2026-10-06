@@ -42,3 +42,10 @@ export type ContextInjectionResolver = GraphQLFieldResolver<
   Record<string, unknown>,
   Promise<RecursiveArray<EntryData>>
 >
+
+export type ReferencedByResolver = GraphQLFieldResolver<
+  EntryData & { id: string },
+  ApolloContext,
+  Record<string, never>,
+  Promise<string[]>
+>

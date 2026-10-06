@@ -1148,3 +1148,106 @@ type MyEntry @Entry {
   expect(result.data).toEqual({ data: null })
   expect(result.ref).toBe(commitHash)
 })
+
+describe('"_referencedBy" field', () => {
+  const schema = `directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    parent: Page
+    blocks: [Block!]
+}
+
+union Block = TextBlock | TeaserBlock
+
+type TextBlock {
+    text: String
+}
+
+type TeaserBlock {
+    target: LinkTarget!
+}
+
+union LinkTarget = Page | Media
+
+type Media @Entry {
+    id: ID!
+}
+
+type Header @Entry {
+    id: ID!
+    links: [NavLink!]!
+}
+
+type NavLink {
+    page: Page!
+}`
+
+  const entries: Entry[] = [
+    { id: 'logo', metadata: { type: 'Media' } },
+    { id: 'home', metadata: { type: 'Page' }, data: { blocks: [] } },
+    {
+      id: 'about',
+      metadata: { type: 'Page' },
+      data: {
+        parent: { id: 'home' },
+        blocks: [
+          { TextBlock: { text: 'Text' } },
+          { TeaserBlock: { target: { id: 'home' } } },
+          { TeaserBlock: { target: { id: 'logo' } } },
+        ],
+      },
+    },
+    {
+      id: 'header',
+      metadata: { type: 'Header' },
+      data: { links: [{ page: { id: 'home' } }, { page: { id: 'about' } }] },
+    },
+  ]
+
+  const query = async (queryString: string) => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, entries)
+
+    const client = await createClient(gitAdapter)
+    return client.postGraphQL(gitRef, { query: queryString })
+  }
+
+  it('should return the IDs of all entries referencing an entry', async () => {
+    const result = await query(`query {
+      everyPage { id _referencedBy }
+      everyMedia { id _referencedBy }
+      everyHeader { id _referencedBy }
+    }`)
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      everyPage: [
+        // sorted by ID; "about" references "home" twice but is listed once
+        { id: 'home', _referencedBy: ['about', 'header'] },
+        { id: 'about', _referencedBy: ['header'] },
+      ],
+      everyMedia: [{ id: 'logo', _referencedBy: ['about'] }],
+      everyHeader: [{ id: 'header', _referencedBy: [] }],
+    })
+  })
+
+  it('should return referencing entries of a referenced entry', async () => {
+    const result = await query(`query {
+      Page(id: "about") {
+        parent { id _referencedBy }
+      }
+    }`)
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      Page: { parent: { id: 'home', _referencedBy: ['about', 'header'] } },
+    })
+  })
+})

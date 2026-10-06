@@ -165,7 +165,6 @@ type EntryB @Entry {
         id: entryBId,
         metadata: {
           type: 'EntryB',
-          referencedBy: [entryAId],
         },
       },
     ]
@@ -204,11 +203,51 @@ type EntryB @Entry {
     expect(result.ref).toBe(commitHash)
   })
 
-  it('should remove references from metadata of other entries when deleting an entry', async () => {
+  const deleteEntry = async (
+    schema: string,
+    entries: Entry[],
+    typeName: string,
+    id: string,
+  ) => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'
-    const originalSchema = `directive @Entry on OBJECT
+    const postCommitHash = 'ef01'
+
+    const entry = entries.find((existingEntry) => existingEntry.id === id)
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      entries: [{ ...(entry as Entry), deletion: true }],
+      message: 'My message',
+    }
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, entries)
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue({ commitHash: postCommitHash })
+
+    const client = await createClient(gitAdapter)
+    return client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $commitMessage: String!) {
+        data: delete${typeName}(id: $id, commitMessage: $commitMessage)
+      }`,
+      variables: {
+        id: id,
+        commitMessage: 'My message',
+      },
+    })
+  }
+
+  it('should delete an entry without modifying the entries it references', async () => {
+    const schema = `directive @Entry on OBJECT
 
 type Item @Entry {
     id: ID!
@@ -218,90 +257,112 @@ type Item @Entry {
 type Box @Entry {
     id: ID!
 }`
+    const entries: Entry[] = [
+      { id: 'box', metadata: { type: 'Box' } },
+      { id: 'item1', metadata: { type: 'Item' }, data: { box: { id: 'box' } } },
+      { id: 'item2', metadata: { type: 'Item' }, data: { box: { id: 'box' } } },
+    ]
 
-    const commitMessage = 'My message'
-    const boxId = 'box'
-    const item1Id = 'item1'
-    const item2Id = 'item2'
-    const postCommitHash = 'ef01'
-
-    const commitResult: Commit = {
-      commitHash: postCommitHash,
-    }
-    const box: Entry = {
-      id: boxId,
-      metadata: {
-        type: 'Box',
-        referencedBy: [item1Id, item2Id],
-      },
-    }
-    const item1: Entry = {
-      id: item1Id,
-      metadata: {
-        type: 'Item',
-      },
-      data: {
-        box: { id: boxId },
-      },
-    }
-    const item2: Entry = {
-      id: item2Id,
-      metadata: {
-        type: 'Item',
-      },
-      data: {
-        box: { id: boxId },
-      },
-    }
-    const updatedBox: Entry = {
-      id: boxId,
-      metadata: {
-        type: 'Box',
-        referencedBy: [item2Id],
-      },
-    }
-
-    const commitDraft: CommitDraft = {
-      ref: gitRef,
-      parentSha: commitHash,
-      entries: [
-        { ...item1, deletion: true },
-        { ...updatedBox, deletion: false },
-      ],
-      message: commitMessage,
-    }
-
-    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
-      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
-    }, '')
-
-    gitAdapter.getLatestCommitHash
-      .calledWith(gitRef)
-      .mockResolvedValue(commitHash)
-    gitAdapter.getSchema
-      .calledWith(commitHash)
-      .mockResolvedValue(originalSchema)
-    mockEntries(gitAdapter, commitHash, [box, item1, item2])
-    gitAdapter.createCommit
-      .calledWith(commitDraftMatcher)
-      .mockResolvedValue(commitResult)
-    mockEntries(gitAdapter, postCommitHash, [updatedBox, item2])
-
-    const client = await createClient(gitAdapter)
-    const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!) {
-        data: deleteItem(id: $id, commitMessage: $commitMessage)
-      }`,
-      variables: {
-        id: item1Id,
-        commitMessage: commitMessage,
-      },
-    })
+    const result = await deleteEntry(schema, entries, 'Item', 'item1')
 
     expect(result.errors).toBeUndefined()
-    expect(result.data).toEqual({
-      data: item1Id,
-    })
-    expect(result.ref).toBe(postCommitHash)
+    expect(result.data).toEqual({ data: 'item1' })
+    expect(result.ref).toBe('ef01')
+  })
+
+  it('should delete an entry that references itself', async () => {
+    const schema = `directive @Entry on OBJECT
+
+type Person @Entry {
+    id: ID!
+    manager: Person
+}`
+    const entries: Entry[] = [
+      {
+        id: 'ceo',
+        metadata: { type: 'Person' },
+        data: { manager: { id: 'ceo' } },
+      },
+    ]
+
+    const result = await deleteEntry(schema, entries, 'Person', 'ceo')
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({ data: 'ceo' })
+  })
+
+  it('should return an error when trying to delete an entry that is referenced by an entry of the same type', async () => {
+    const schema = `directive @Entry on OBJECT
+
+type Person @Entry {
+    id: ID!
+    manager: Person
+}`
+    const entries: Entry[] = [
+      { id: 'manager', metadata: { type: 'Person' } },
+      {
+        id: 'employee',
+        metadata: { type: 'Person' },
+        data: { manager: { id: 'manager' } },
+      },
+    ]
+
+    const result = await deleteEntry(schema, entries, 'Person', 'manager')
+
+    expect(result.errors).toMatchObject([
+      {
+        message:
+          'Entry with ID "manager" is still referenced by entries ["employee"].',
+        extensions: { code: 'IN_USE' },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
+  })
+
+  it('should ignore reference metadata stored in entries', async () => {
+    const schema = `directive @Entry on OBJECT
+
+type Item @Entry {
+    id: ID!
+    box: Box
+}
+
+type Box @Entry {
+    id: ID!
+}`
+    const entries: Entry[] = [
+      // stale reference metadata written by earlier versions
+      { id: 'box', metadata: { type: 'Box', referencedBy: ['item'] } },
+      { id: 'item', metadata: { type: 'Item' }, data: { box: null } },
+    ]
+
+    const result = await deleteEntry(schema, entries, 'Box', 'box')
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({ data: 'box' })
+  })
+
+  it('should return an error when an entry of a type unknown to the schema exists', async () => {
+    const schema = `directive @Entry on OBJECT
+
+type Box @Entry {
+    id: ID!
+}`
+    const entries: Entry[] = [
+      { id: 'box', metadata: { type: 'Box' } },
+      { id: 'orphan', metadata: { type: 'RemovedType' } },
+    ]
+
+    const result = await deleteEntry(schema, entries, 'Box', 'box')
+
+    expect(result.errors).toMatchObject([
+      {
+        extensions: {
+          code: 'BAD_REPOSITORY_DATA',
+          commitspark: { typeName: 'RemovedType', fieldValue: 'orphan' },
+        },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
   })
 })

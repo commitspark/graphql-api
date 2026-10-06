@@ -11,7 +11,7 @@ type ContentCache = Map<ContentHash, EntryContent>
 type SchemaCache = Map<Ref, string>
 type InflightEntries = Map<Ref, Promise<EntriesRecord>>
 
-interface EntriesRecord {
+export interface EntriesRecord {
   byId: Map<string, Entry>
   byType: Map<string, Entry[]>
 }

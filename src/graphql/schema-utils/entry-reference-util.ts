@@ -1,6 +1,7 @@
 import {
   GraphQLNullableType,
   GraphQLObjectType,
+  GraphQLSchema,
   GraphQLUnionType,
   isListType,
   isNonNullType,
@@ -10,6 +11,7 @@ import {
 } from 'graphql'
 import { ApolloContext } from '../../client.ts'
 import { getTypeById } from '../../persistence/persistence.ts'
+import { EntriesRecord } from '../../persistence/cache.ts'
 import {
   getUnionTypeNameFromFieldValue,
   getUnionValue,
@@ -20,211 +22,172 @@ import { createError, ErrorCode } from '../errors.ts'
 import { EntryData } from '@commitspark/git-adapter'
 import { isEntryData } from '../util.ts'
 
-function isPermittedReferenceType(
-  referencedTypeName: string,
-  fieldType: GraphQLNullableType,
-): boolean {
-  if (isNonNullType(fieldType)) {
-    return isPermittedReferenceType(referencedTypeName, fieldType.ofType)
-  } else if (isListType(fieldType)) {
-    return isPermittedReferenceType(referencedTypeName, fieldType.ofType)
-  } else if (isUnionType(fieldType)) {
-    return fieldType
-      .getTypes()
-      .map((concreteType) => concreteType.name)
-      .includes(referencedTypeName)
-  } else if (isObjectType(fieldType)) {
-    return fieldType.name === referencedTypeName
-  }
-  return false
+interface EntryReference {
+  id: string
+  fieldName: string
+  fieldType: GraphQLObjectType | GraphQLUnionType
 }
 
-async function validateReference(
-  context: ApolloContext,
-  fieldName: string,
-  fieldType: GraphQLNullableType,
-  fieldValue: EntryData,
-): Promise<void> {
-  if (isNonNullType(fieldType)) {
-    await validateReference(context, fieldName, fieldType.ofType, fieldValue)
-    return
-  }
+type ReferencedByIndex = Map<string, string[]>
 
-  if (isListType(fieldType)) {
-    if (!Array.isArray(fieldValue)) {
-      throw createError(
-        `Expected array while validation references for field "${fieldName}".`,
-        ErrorCode.BAD_REPOSITORY_DATA,
-        {
-          fieldName: fieldName,
-          fieldValue: fieldValue,
-        },
-      )
-    }
-    for (const fieldListElement of fieldValue) {
-      await validateReference(
-        context,
-        fieldName,
-        fieldType.ofType,
-        fieldListElement,
-      )
-    }
-    return
-  }
+// commits are immutable, so an index built from the cached entries of a commit stays valid for as long as these
+// entries remain cached
+const referencedByIndexes = new WeakMap<EntriesRecord, ReferencedByIndex>()
 
-  if (isUnionType(fieldType) || isObjectType(fieldType)) {
-    if (
-      fieldValue === null ||
-      !('id' in fieldValue) ||
-      typeof fieldValue.id !== 'string'
-    ) {
-      throw createError(
-        `Expected key "id" with value of type string in data while validating reference for field "${fieldName}".`,
-        ErrorCode.BAD_REPOSITORY_DATA,
-        {
-          fieldName: fieldName,
-          fieldValue: fieldValue,
-        },
-      )
-    }
-
-    const referencedId = fieldValue.id
-    let referencedTypeName
-    try {
-      referencedTypeName = await getTypeById(context, referencedId)
-    } catch {
-      throw createError(
-        `Failed to resolve entry reference "${referencedId}".`,
-        ErrorCode.BAD_USER_INPUT,
-        {
-          fieldName: fieldName,
-          fieldValue: referencedId,
-        },
-      )
-    }
-    if (!isPermittedReferenceType(referencedTypeName, fieldType)) {
-      throw createError(
-        `Reference with ID "${referencedId}" points to entry of incompatible type "${referencedTypeName}".`,
-        ErrorCode.BAD_USER_INPUT,
-        {
-          fieldName: fieldName,
-          fieldValue: referencedId,
-        },
-      )
-    }
-  }
-}
-
-export async function getReferencedEntryIds(
+export async function validateEntryReferences(
   entryType: GraphQLObjectType,
   context: ApolloContext,
   data: EntryData,
-): Promise<string[]> {
-  // the fields of the entry itself are traversed directly, so that any nested @Entry type is treated as reference,
-  // including references to entries of the same type
-  return getReferencedEntryIdsInObjectFields(entryType, context, data)
+): Promise<void> {
+  for (const reference of getEntryReferences(entryType, data)) {
+    let referencedTypeName
+    try {
+      referencedTypeName = await getTypeById(context, reference.id)
+    } catch {
+      throw createError(
+        `Failed to resolve entry reference "${reference.id}".`,
+        ErrorCode.BAD_USER_INPUT,
+        {
+          fieldName: reference.fieldName,
+          fieldValue: reference.id,
+        },
+      )
+    }
+    if (!isPermittedReferenceType(referencedTypeName, reference.fieldType)) {
+      throw createError(
+        `Reference with ID "${reference.id}" points to entry of incompatible type "${referencedTypeName}".`,
+        ErrorCode.BAD_USER_INPUT,
+        {
+          fieldName: reference.fieldName,
+          fieldValue: reference.id,
+        },
+      )
+    }
+  }
 }
 
-async function getReferencedEntryIdsInObjectFields(
-  type: GraphQLObjectType,
+export async function getReferencingEntryIds(
   context: ApolloContext,
-  data: unknown,
+  schema: GraphQLSchema,
+  id: string,
 ): Promise<string[]> {
-  if (data === null || data === undefined) {
-    return []
+  const entriesRecord = await context.repositoryCache.getEntriesRecord(
+    context,
+    context.getCurrentHash(),
+  )
+  let referencedByIndex = referencedByIndexes.get(entriesRecord)
+  if (referencedByIndex === undefined) {
+    referencedByIndex = buildReferencedByIndex(schema, entriesRecord)
+    referencedByIndexes.set(entriesRecord, referencedByIndex)
   }
+  return referencedByIndex.get(id) ?? []
+}
 
-  let referencedEntryIds: string[] = []
-  for (const [fieldsKey, field] of Object.entries(type.getFields())) {
-    // expect our object type to hold EntryData (i.e. an object)
-    if (Array.isArray(data) || !isEntryData(data)) {
+function buildReferencedByIndex(
+  schema: GraphQLSchema,
+  entriesRecord: EntriesRecord,
+): ReferencedByIndex {
+  const referencedByIndex: ReferencedByIndex = new Map()
+  for (const entry of entriesRecord.byId.values()) {
+    const entryType = schema.getType(entry.metadata.type)
+    if (
+      !isObjectType(entryType) ||
+      !hasDirective(entryType, ENTRY_DIRECTIVE_NAME)
+    ) {
       throw createError(
-        `Expected object as data for type "${type.name}".`,
+        `Entry "${entry.id}" is of type "${entry.metadata.type}", which is not a type with directive ` +
+          `@${ENTRY_DIRECTIVE_NAME} in the schema.`,
         ErrorCode.BAD_REPOSITORY_DATA,
         {
-          typeName: type.name,
-          fieldName: field.name ? field.name : undefined,
+          typeName: entry.metadata.type,
+          fieldValue: entry.id,
         },
       )
     }
 
-    // recursively get referenced IDs in nested data
-    const nestedResult = await getReferencedEntryIdsInField(
-      context,
-      fieldsKey,
-      field.type,
-      data[fieldsKey],
+    const referencedIds = new Set(
+      getEntryReferences(entryType, entry.data ?? null).map(
+        (reference) => reference.id,
+      ),
     )
-    referencedEntryIds = [...referencedEntryIds, ...nestedResult]
+    for (const referencedId of referencedIds) {
+      const referencingIds = referencedByIndex.get(referencedId) ?? []
+      referencingIds.push(entry.id)
+      referencedByIndex.set(referencedId, referencingIds)
+    }
   }
-  // deduplicate
-  return [...new Set(referencedEntryIds)]
+
+  for (const referencingIds of referencedByIndex.values()) {
+    referencingIds.sort()
+  }
+  return referencedByIndex
 }
 
-async function getReferencedEntryIdsInField(
-  context: ApolloContext,
-  fieldName: string | null,
+function getEntryReferences(
+  entryType: GraphQLObjectType,
+  data: EntryData,
+): EntryReference[] {
+  // the fields of the entry itself are traversed directly, so that any nested @Entry type is treated as reference,
+  // including references to entries of the same type
+  return getReferencesInObjectFields(entryType, data)
+}
+
+function getReferencesInObjectFields(
+  type: GraphQLObjectType,
+  data: unknown,
+): EntryReference[] {
+  if (data === null || data === undefined) {
+    return []
+  }
+  // expect our object type to hold EntryData (i.e. an object)
+  if (!isEntryData(data) || data === null) {
+    throw createError(
+      `Expected object as data for type "${type.name}".`,
+      ErrorCode.BAD_REPOSITORY_DATA,
+      {
+        typeName: type.name,
+        fieldValue: data,
+      },
+    )
+  }
+
+  return Object.entries(type.getFields()).flatMap(([fieldName, field]) =>
+    getReferencesInField(fieldName, field.type, data[fieldName]),
+  )
+}
+
+function getReferencesInField(
+  fieldName: string,
   type: GraphQLNullableType,
   data: unknown,
-): Promise<string[]> {
+): EntryReference[] {
   if (data === null || data === undefined || isScalarType(type)) {
     return []
   }
 
   if (isNonNullType(type)) {
-    return getReferencedEntryIdsInField(context, fieldName, type.ofType, data)
+    return getReferencesInField(fieldName, type.ofType, data)
   }
 
   if (isListType(type)) {
     if (!Array.isArray(data)) {
       throw createError(
-        `Expected array as data for field "${fieldName}". `,
+        `Expected array as data for field "${fieldName}".`,
         ErrorCode.BAD_REPOSITORY_DATA,
         {
-          fieldName: fieldName ? fieldName : undefined,
+          fieldName: fieldName,
           fieldValue: data,
         },
       )
     }
-
-    let referencedEntryIds: string[] = []
-    for (const element of data) {
-      referencedEntryIds = [
-        ...referencedEntryIds,
-        ...(await getReferencedEntryIdsInField(
-          context,
-          fieldName,
-          type.ofType,
-          element,
-        )),
-      ]
-    }
-    // deduplicate
-    referencedEntryIds = [...new Set(referencedEntryIds)]
-    return referencedEntryIds
+    return data.flatMap((element) =>
+      getReferencesInField(fieldName, type.ofType, element),
+    )
   }
 
   if (isUnionType(type)) {
-    if (!isEntryData(data)) {
-      throw createError(
-        `Expected object as data for type "${type.name}".`,
-        ErrorCode.BAD_REPOSITORY_DATA,
-        {
-          typeName: type.name,
-          fieldName: fieldName ? fieldName : undefined,
-          fieldValue: data,
-        },
-      )
-    }
-
     if (isUnionOfEntryTypes(type)) {
-      const referenceId = await getValidatedReferenceId(
-        context,
-        fieldName,
-        type,
-        data,
-      )
-      return [referenceId]
+      return [createEntryReference(fieldName, type, data)]
     }
 
     const requestedUnionTypeName = getUnionTypeNameFromFieldValue(data)
@@ -241,73 +204,59 @@ async function getReferencedEntryIdsInField(
         ErrorCode.BAD_REPOSITORY_DATA,
         {
           typeName: type.name,
-          fieldName: fieldName ? fieldName : undefined,
+          fieldName: fieldName,
           fieldValue: data,
         },
       )
     }
-    const unionValue = getUnionValue(data)
-    return getReferencedEntryIdsInField(
-      context,
-      fieldName,
+    return getReferencesInObjectFields(
       concreteFieldUnionType,
-      unionValue,
+      getUnionValue(data),
     )
   }
 
   if (isObjectType(type)) {
     if (hasDirective(type, ENTRY_DIRECTIVE_NAME)) {
-      const referenceId = await getValidatedReferenceId(
-        context,
-        fieldName,
-        type,
-        data,
-      )
-      return [referenceId]
+      return [createEntryReference(fieldName, type, data)]
     }
-    return getReferencedEntryIdsInObjectFields(type, context, data)
+    return getReferencesInObjectFields(type, data)
   }
 
   return []
 }
 
-async function getValidatedReferenceId(
-  context: ApolloContext,
-  fieldName: string | null,
-  type: GraphQLUnionType | GraphQLObjectType,
+function createEntryReference(
+  fieldName: string,
+  fieldType: GraphQLObjectType | GraphQLUnionType,
   data: unknown,
-): Promise<string> {
+): EntryReference {
   if (
+    typeof data !== 'object' ||
     data === null ||
-    data === undefined ||
-    !isEntryData(data) ||
-    Array.isArray(data)
+    !('id' in data) ||
+    typeof data.id !== 'string'
   ) {
     throw createError(
-      `Expected object as data for field "${fieldName}" of type "${type.name}".`,
+      `Expected key "id" with value of type string in data of field "${fieldName}" of type "${fieldType.name}".`,
       ErrorCode.BAD_REPOSITORY_DATA,
       {
-        typeName: type.name,
-        fieldName: fieldName ? fieldName : undefined,
+        typeName: fieldType.name,
+        fieldName: fieldName,
         fieldValue: data,
       },
     )
   }
-  await validateReference(context, fieldName ? fieldName : '', type, data)
+  return { id: data.id, fieldName, fieldType }
+}
 
-  let referencedId = null
-  if (typeof (referencedId = data.id) !== 'string') {
-    throw createError(
-      `Expected a key "id" with value of type string in data of field "${fieldName}" of type "${type.name}"` +
-        ` after this reference was just verified to be valid.`,
-      ErrorCode.INTERNAL_ERROR,
-      {
-        typeName: type.name,
-        fieldName: fieldName ? fieldName : undefined,
-        fieldValue: data,
-      },
-    )
+function isPermittedReferenceType(
+  referencedTypeName: string,
+  fieldType: GraphQLObjectType | GraphQLUnionType,
+): boolean {
+  if (isUnionType(fieldType)) {
+    return fieldType
+      .getTypes()
+      .some((concreteType) => concreteType.name === referencedTypeName)
   }
-
-  return referencedId
+  return fieldType.name === referencedTypeName
 }

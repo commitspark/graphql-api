@@ -8,7 +8,7 @@ import { EntryData } from '@commitspark/git-adapter'
 import { SearchHit } from '@commitspark/search-adapter'
 import { RecursiveArray } from './field-resolvers/types.ts'
 
-export interface QueryMutationResolverContext extends ApolloContext {
+interface QueryMutationResolverContext extends ApolloContext {
   type: GraphQLNamedType
 }
 

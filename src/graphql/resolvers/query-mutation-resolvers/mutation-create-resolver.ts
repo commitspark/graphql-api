@@ -1,6 +1,6 @@
 import { findById, findByTypeId } from '../../../persistence/persistence.ts'
 import { isObjectType } from 'graphql'
-import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util.ts'
+import { validateEntryReferences } from '../../schema-utils/entry-reference-util.ts'
 import {
   ENTRY_ID_INVALID_CHARACTERS,
   EntryData,
@@ -53,35 +53,12 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
     )
   }
 
-  const referencedEntryIds = await getReferencedEntryIds(
-    context.type,
-    context,
-    args.data ?? null,
-  )
-
-  const referencedEntryUpdates: EntryDraft[] = []
-  for (const referencedEntryId of referencedEntryIds) {
-    const referencedEntry = await findById(context, referencedEntryId)
-    const newReferencedEntryIds: string[] = [
-      ...(referencedEntry.metadata.referencedBy ?? []),
-      args.id,
-    ].sort()
-    const newReferencedEntryDraft: EntryDraft = {
-      ...referencedEntry,
-      metadata: {
-        ...referencedEntry.metadata,
-        referencedBy: newReferencedEntryIds,
-      },
-      deletion: false,
-    }
-    referencedEntryUpdates.push(newReferencedEntryDraft)
-  }
+  await validateEntryReferences(context.type, context, args.data ?? null)
 
   const newEntryDraft: EntryDraft = {
     id: args.id,
     metadata: {
       type: context.type.name,
-      referencedBy: [],
     },
     data: args.data ?? null,
     deletion: false,
@@ -90,7 +67,7 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   const commit = await context.gitAdapter.createCommit({
     ref: context.branch,
     parentSha: context.getCurrentHash(),
-    entries: [newEntryDraft, ...referencedEntryUpdates],
+    entries: [newEntryDraft],
     message: args.commitMessage,
   })
   context.setCurrentHash(commit.commitHash)

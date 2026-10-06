@@ -34,7 +34,6 @@ type EntryA @Entry {
       id: entryAId,
       metadata: {
         type: 'EntryA',
-        referencedBy: [],
       },
       data: {
         name: mutationData.name,
@@ -191,14 +190,6 @@ type CircularReferenceEntry @Entry {
       commitHash: postCommitHash,
     }
 
-    const existingCircularReference2Entry = {
-      id: circularReferenceEntry2Id,
-      metadata: {
-        type: 'CircularReferenceEntry',
-        referencedBy: [circularReferenceEntry1Id],
-      },
-    }
-
     const existingEntries: Entry[] = [
       {
         id: optionalReference2EntryId,
@@ -212,84 +203,28 @@ type CircularReferenceEntry @Entry {
       { id: unionNestedEntryId, metadata: { type: 'UnionNestedEntry' } },
       {
         id: circularReferenceEntry1Id,
-        metadata: {
-          type: 'CircularReferenceEntry',
-          referencedBy: [circularReferenceEntry2Id],
-        },
+        metadata: { type: 'CircularReferenceEntry' },
+        data: { next: { id: circularReferenceEntry2Id } },
       },
-      existingCircularReference2Entry,
+      {
+        id: circularReferenceEntry2Id,
+        metadata: { type: 'CircularReferenceEntry' },
+        data: { next: { id: circularReferenceEntry1Id } },
+      },
     ]
     const newEntryA: Entry = {
       id: entryAId,
       metadata: {
         type: 'EntryA',
-        referencedBy: [],
       },
       data: mutationData,
     }
-    const updatedOptionalReference2: Entry = {
-      id: optionalReference2EntryId,
-      metadata: {
-        type: 'OptionalReference2',
-        referencedBy: [entryAId],
-      },
-    }
-    const updatedNonNullReference: Entry = {
-      id: nonNullReferenceEntryId,
-      metadata: {
-        type: 'NonNullReference',
-        referencedBy: [entryAId],
-      },
-    }
-    const updatedArrayReference1: Entry = {
-      id: arrayReferenceEntry1Id,
-      metadata: {
-        type: 'ArrayReference',
-        referencedBy: [entryAId],
-      },
-    }
-    const updatedArrayReference2: Entry = {
-      id: arrayReferenceEntry2Id,
-      metadata: {
-        type: 'ArrayReference',
-        referencedBy: [entryAId],
-      },
-    }
-    const updatedUnionEntryType2: Entry = {
-      id: unionEntryType2Id,
-      metadata: {
-        type: 'UnionEntryType2',
-        referencedBy: [entryAId],
-      },
-    }
-    const updatedUnionNestedEntry: Entry = {
-      id: unionNestedEntryId,
-      metadata: {
-        type: 'UnionNestedEntry',
-        referencedBy: [entryAId],
-      },
-    }
-    const updatedCircularReference1Entry: Entry = {
-      id: circularReferenceEntry1Id,
-      metadata: {
-        type: 'CircularReferenceEntry',
-        referencedBy: [entryAId, circularReferenceEntry2Id],
-      },
-    }
 
+    // referenced entries are not modified
     const commitDraft: CommitDraft = {
       ref: gitRef,
       parentSha: commitHash,
-      entries: [
-        { ...newEntryA, deletion: false },
-        { ...updatedOptionalReference2, deletion: false },
-        { ...updatedNonNullReference, deletion: false },
-        { ...updatedArrayReference1, deletion: false },
-        { ...updatedArrayReference2, deletion: false },
-        { ...updatedUnionEntryType2, deletion: false },
-        { ...updatedUnionNestedEntry, deletion: false },
-        { ...updatedCircularReference1Entry, deletion: false },
-      ],
+      entries: [{ ...newEntryA, deletion: false }],
       message: commitMessage,
     }
 
@@ -305,17 +240,7 @@ type CircularReferenceEntry @Entry {
     gitAdapter.createCommit
       .calledWith(commitDraftMatcher)
       .mockResolvedValue(commitResult)
-    mockEntries(gitAdapter, postCommitHash, [
-      newEntryA,
-      updatedOptionalReference2,
-      updatedNonNullReference,
-      updatedArrayReference1,
-      updatedArrayReference2,
-      updatedUnionEntryType2,
-      updatedUnionNestedEntry,
-      updatedCircularReference1Entry,
-      existingCircularReference2Entry,
-    ])
+    mockEntries(gitAdapter, postCommitHash, [...existingEntries, newEntryA])
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {

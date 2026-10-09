@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add field `_referencedBy` to every `@Entry` type, returning the IDs of all entries referencing the entry
+- Permit `/` in entry IDs to store entries in subfolders of the entry folder, e.g. `blog/2024/hello`
 
 ### Changed
 
@@ -21,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `referencedBy` is ignored and removed from an entry when the entry is next written.
 - Return error `BAD_REPOSITORY_DATA` when deleting an entry or querying `_referencedBy` while an entry of the commit has
   a type that is not an `@Entry` type of the schema or data that does not match the schema
+- Reject entry IDs on creation that are empty, start or end with `/`, contain `//` or contain segments starting with
+  `.`, using `validateEntryId()` of `@commitspark/git-adapter`
 
 ### Fixed
 

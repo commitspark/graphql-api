@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a type that is not an `@Entry` type of the schema or data that does not match the schema
 - Reject entry IDs on creation that are empty, start or end with `/`, contain `//` or contain segments starting with
   `.`, using `validateEntryId()` of `@commitspark/git-adapter`
+- Upgrade to @commitspark/git-adapter 2.0.0-beta.2
 
 ### Fixed
 

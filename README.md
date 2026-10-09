@@ -323,31 +323,11 @@ This returns the following data:
 
 #### Incoming references
 
-Incoming references are not stored. Commitspark determines them from the data of all entries of the requested commit
-when they are first needed, e.g. to prevent the deletion of an entry that is still referenced by other entries (error
-`IN_USE`).
+Commitspark automatically determines incoming references to entries at runtime from the data of all entries of the
+requested commit.
 
-Every type annotated with `@Entry` provides an additional field `_referencedBy` that returns the IDs of all entries
-referencing an entry, sorted by ID:
-
-```graphql
-query {
-    Operator(id: "Arianespace") {
-        _referencedBy
-    }
-}
-```
-
-This returns the following data:
-
-```json
-{
-  "_referencedBy": ["VA256"]
-}
-```
-
-Entry files written by earlier versions of Commitspark may contain a field `metadata.referencedBy`. This field is
-ignored and removed when the entry is next written.
+These incoming references can be queried with the generated field `_referencedBy` that is added to all types annotated
+with `@Entry`. The query returns the IDs of all entries referencing an entry, sorted by ID.
 
 #### Unions
 

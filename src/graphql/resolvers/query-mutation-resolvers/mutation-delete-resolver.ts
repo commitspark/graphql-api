@@ -1,7 +1,6 @@
-import { findById, findByTypeId } from '../../../persistence/persistence.ts'
-import { Entry, EntryDraft } from '@commitspark/git-adapter'
-import { getReferencedEntryIds } from '../../schema-utils/entry-reference-util.ts'
-import { isObjectType } from 'graphql'
+import { findByTypeId } from '../../../persistence/persistence.ts'
+import { Entry } from '@commitspark/git-adapter'
+import { getReferencingEntryIds } from '../../schema-utils/entry-reference-util.ts'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 
@@ -13,8 +12,12 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
 ) => {
   const entry: Entry = await findByTypeId(context, context.type.name, args.id)
 
-  if (entry.metadata.referencedBy && entry.metadata.referencedBy.length > 0) {
-    const otherIds = entry.metadata.referencedBy
+  // references held by the entry itself are deleted together with the entry
+  const otherReferencingIds = (
+    await getReferencingEntryIds(context, info.schema, args.id)
+  ).filter((referencingId) => referencingId !== args.id)
+  if (otherReferencingIds.length > 0) {
+    const otherIds = otherReferencingIds
       .map((referenceId) => `"${referenceId}"`)
       .join(', ')
     throw createError(
@@ -27,37 +30,6 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
     )
   }
 
-  const entryType = info.schema.getType(context.type.name)
-  if (!isObjectType(entryType)) {
-    throw createError(
-      `Type "${context.type.name}" is not an ObjectType.`,
-      ErrorCode.INTERNAL_ERROR,
-      {},
-    )
-  }
-
-  const referencedEntryIds = await getReferencedEntryIds(
-    entryType,
-    context,
-    null,
-    entryType,
-    entry.data ?? null,
-  )
-  const referencedEntryUpdates: EntryDraft[] = []
-  for (const referencedEntryId of referencedEntryIds) {
-    const noLongerReferencedEntry = await findById(context, referencedEntryId)
-    referencedEntryUpdates.push({
-      ...noLongerReferencedEntry,
-      metadata: {
-        ...noLongerReferencedEntry.metadata,
-        referencedBy: noLongerReferencedEntry.metadata.referencedBy?.filter(
-          (entryId) => entryId !== args.id,
-        ),
-      },
-      deletion: false,
-    })
-  }
-
   const commit = await context.gitAdapter.createCommit({
     ref: context.branch,
     parentSha: context.getCurrentHash(),
@@ -66,7 +38,6 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
         ...entry,
         deletion: true,
       },
-      ...referencedEntryUpdates,
     ],
     message: args.commitMessage,
   })

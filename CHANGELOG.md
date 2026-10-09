@@ -7,11 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add field `_referencedBy` to every `@Entry` type, returning the IDs of all entries referencing the entry
+
 ### Changed
 
 - Publish separate type declarations for the ESM and CJS builds and reference them per condition in `exports` of
   `package.json`, so that TypeScript projects that import this package from ESM code with `moduleResolution` set to
   `node16` or `nodenext` receive correct types. Type declarations are no longer located in `dist/types`.
+- Determine incoming references from the data of all entries of a commit instead of storing them in metadata field
+  `referencedBy` of referenced entries. Mutations no longer modify referenced entries, and an existing field
+  `referencedBy` is ignored and removed from an entry when the entry is next written.
+- Return error `BAD_REPOSITORY_DATA` when deleting an entry or querying `_referencedBy` while an entry of the commit has
+  a type that is not an `@Entry` type of the schema or data that does not match the schema
+
+### Fixed
+
+- Treat fields referencing an entry of the same type as the containing entry (e.g. `manager: Person` in type `Person`)
+  as references instead of embedded data, so that these references are validated and prevent deletion
 
 ## [2.0.0-beta.3] - 2026-10-02
 

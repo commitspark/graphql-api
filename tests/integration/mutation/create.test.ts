@@ -432,4 +432,104 @@ type OtherEntry @Entry {
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
   })
+  it('should create an entry with an ID containing subfolders', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const postCommitHash = 'ef01'
+    const schema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    name: String
+}`
+
+    const entryAId = 'blog/2024/entry'
+    const newEntry: Entry = {
+      id: entryAId,
+      metadata: { type: 'EntryA' },
+      data: { name: 'My name' },
+    }
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [newEntry])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!) {
+        data: createEntryA(id: $id, data: $mutationData) {
+          id
+        }
+      }`,
+      variables: {
+        id: entryAId,
+        mutationData: { name: 'My name' },
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({ data: { id: entryAId } })
+    expect(gitAdapter.createCommit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entries: [{ ...newEntry, deletion: false }],
+      }),
+    )
+  })
+
+  it.each([
+    ['.hidden'],
+    ['blog/.drafts/entry'],
+    ['../entry'],
+    ['blog//entry'],
+    ['blog/'],
+    ['entry:with:colon'],
+  ])('should not create an entry with invalid ID %j', async (id) => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    name: String
+}`
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!) {
+        data: createEntryA(id: $id, data: $mutationData) {
+          id
+        }
+      }`,
+      variables: {
+        id: id,
+        mutationData: { name: 'My name' },
+      },
+    })
+
+    expect(result.errors).toMatchObject([
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: {
+            argumentName: 'id',
+            argumentValue: id,
+          },
+        },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
 })

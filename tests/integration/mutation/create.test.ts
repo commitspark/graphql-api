@@ -432,7 +432,8 @@ type OtherEntry @Entry {
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
   })
-  it('should create an entry with an ID containing subfolders', async () => {
+
+  it('should create an entry with an ID containing `/` characters', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'

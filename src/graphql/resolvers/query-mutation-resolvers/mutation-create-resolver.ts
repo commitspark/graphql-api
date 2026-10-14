@@ -9,6 +9,7 @@ import {
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from './commit-message.ts'
+import { commitWithRetry } from './commit-with-retry.ts'
 
 export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   source,
@@ -24,6 +25,8 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
       {},
     )
   }
+  // narrowed type, as narrowing does not apply within the callback below
+  const entryType = context.type
 
   try {
     validateEntryId(args.id)
@@ -38,44 +41,45 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
     )
   }
 
-  let existingEntry
-  try {
-    existingEntry = await findById(context, args.id)
-  } catch {}
-  if (existingEntry) {
-    throw createError(
-      `An entry with id "${args.id}" already exists.`,
-      ErrorCode.BAD_USER_INPUT,
-      {
-        argumentName: 'id',
-        argumentValue: args.id,
+  await commitWithRetry(context, async () => {
+    let existingEntry
+    try {
+      existingEntry = await findById(context, args.id)
+    } catch {}
+    if (existingEntry) {
+      throw createError(
+        `An entry with id "${args.id}" already exists.`,
+        ErrorCode.BAD_USER_INPUT,
+        {
+          argumentName: 'id',
+          argumentValue: args.id,
+        },
+      )
+    }
+
+    await validateEntryReferences(entryType, context, args.data ?? null)
+
+    const newEntryDraft: EntryDraft = {
+      id: args.id,
+      metadata: {
+        type: context.type.name,
       },
-    )
-  }
+      data: args.data ?? null,
+      deletion: false,
+    }
 
-  await validateEntryReferences(context.type, context, args.data ?? null)
-
-  const newEntryDraft: EntryDraft = {
-    id: args.id,
-    metadata: {
-      type: context.type.name,
-    },
-    data: args.data ?? null,
-    deletion: false,
-  }
-
-  const commit = await context.gitAdapter.createCommit({
-    ref: context.branch,
-    parentSha: context.getCurrentHash(),
-    entries: [newEntryDraft],
-    message: getCommitMessage(
-      args.commitMessage,
-      'Create',
-      context.type.name,
-      args.id,
-    ),
+    return {
+      ref: context.branch,
+      parentSha: context.getCurrentHash(),
+      entries: [newEntryDraft],
+      message: getCommitMessage(
+        args.commitMessage,
+        'Create',
+        context.type.name,
+        args.id,
+      ),
+    }
   })
-  context.setCurrentHash(commit.commitHash)
 
   const newEntry = await findByTypeId(context, context.type.name, args.id)
   return { ...newEntry.data, id: newEntry.id }

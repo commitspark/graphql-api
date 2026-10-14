@@ -68,12 +68,22 @@ type Mutation {
     id: ID!
     data: MyEntryInput!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Update MyEntry "<id>"'.
     """
     commitMessage: String
   ): MyEntry
   deleteMyEntry(
     id: ID!
+    """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
     """
     Commit message. If omitted or empty, the message is 'Delete MyEntry "<id>"'.
     """
@@ -96,6 +106,11 @@ input NestedTypeInput {
 
 extend type MyEntry {
   _referencedBy: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  _version: String!
 }
 `
 
@@ -175,6 +190,11 @@ type Mutation {
     id: ID!
     data: EntryAInput!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Update EntryA "<id>"'.
     """
     commitMessage: String
@@ -183,6 +203,11 @@ type Mutation {
     id: ID!
     data: EntryBInput!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Update EntryB "<id>"'.
     """
     commitMessage: String
@@ -190,12 +215,22 @@ type Mutation {
   deleteEntryA(
     id: ID!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Delete EntryA "<id>"'.
     """
     commitMessage: String
   ): ID
   deleteEntryB(
     id: ID!
+    """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
     """
     Commit message. If omitted or empty, the message is 'Delete EntryB "<id>"'.
     """
@@ -221,10 +256,20 @@ input EntryBInput {
 
 extend type EntryA {
   _referencedBy: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  _version: String!
 }
 
 extend type EntryB {
   _referencedBy: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  _version: String!
 }
 `
 
@@ -330,6 +375,11 @@ type Mutation {
     id: ID!
     data: MyEntryInput!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Update MyEntry "<id>"'.
     """
     commitMessage: String
@@ -337,6 +387,11 @@ type Mutation {
   updateEntryA(
     id: ID!
     data: EntryAInput!
+    """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
     """
     Commit message. If omitted or empty, the message is 'Update EntryA "<id>"'.
     """
@@ -346,12 +401,22 @@ type Mutation {
     id: ID!
     data: EntryBInput!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Update EntryB "<id>"'.
     """
     commitMessage: String
   ): EntryB
   deleteMyEntry(
     id: ID!
+    """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
     """
     Commit message. If omitted or empty, the message is 'Delete MyEntry "<id>"'.
     """
@@ -360,12 +425,22 @@ type Mutation {
   deleteEntryA(
     id: ID!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Delete EntryA "<id>"'.
     """
     commitMessage: String
   ): ID
   deleteEntryB(
     id: ID!
+    """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
     """
     Commit message. If omitted or empty, the message is 'Delete EntryB "<id>"'.
     """
@@ -403,14 +478,29 @@ input EntryBInput {
 
 extend type MyEntry {
   _referencedBy: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  _version: String!
 }
 
 extend type EntryA {
   _referencedBy: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  _version: String!
 }
 
 extend type EntryB {
   _referencedBy: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  _version: String!
 }
 `
 
@@ -492,12 +582,22 @@ type Mutation {
     id: ID!
     data: MyEntryInput!
     """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
+    """
     Commit message. If omitted or empty, the message is 'Update MyEntry "<id>"'.
     """
     commitMessage: String
   ): MyEntry
   deleteMyEntry(
     id: ID!
+    """
+    Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
+    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
+    """
+    expectedVersion: String
     """
     Commit message. If omitted or empty, the message is 'Delete MyEntry "<id>"'.
     """
@@ -534,6 +634,11 @@ directive @oneOf on INPUT_OBJECT
 
 extend type MyEntry {
   _referencedBy: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  _version: String!
 }
 `
 

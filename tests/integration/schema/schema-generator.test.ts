@@ -400,4 +400,78 @@ extend type MyEntry {
     expect(result.data).toBe(expectedSchema)
     expect(result.ref).toBe(commitHash)
   })
+
+  it('should include ID fields other than the entry ID in generated input types', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type MyEntry @Entry {
+    id: ID!
+    sku: ID!
+    supplier: SupplierRef
+}
+
+type SupplierRef {
+    id: ID!
+    externalId: ID
+}`
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+
+    const client = await createClient(gitAdapter)
+    const result = await client.getSchema(gitRef)
+
+    expect(result.data).toContain(`input MyEntryInput {
+  sku: ID!
+  supplier: SupplierRefInput
+}`)
+    expect(result.data).toContain(`input SupplierRefInput {
+  id: ID!
+  externalId: ID
+}`)
+  })
+
+  it.each([
+    ['without field "id"', 'name: String'],
+    ['with field "id" of type "String!"', 'id: String!'],
+    ['with nullable field "id"', 'id: ID'],
+  ])(
+    'should reject schema with @Entry type %s',
+    async (_description, fieldDefinition) => {
+      const gitAdapter = mock<GitAdapter>()
+      const gitRef = 'myRef'
+      const commitHash = 'abcd'
+      const originalSchema = `directive @Entry on OBJECT
+
+type MyEntry @Entry {
+    ${fieldDefinition}
+}`
+
+      gitAdapter.getLatestCommitHash
+        .calledWith(gitRef)
+        .mockResolvedValue(commitHash)
+      gitAdapter.getSchema
+        .calledWith(commitHash)
+        .mockResolvedValue(originalSchema)
+
+      const client = await createClient(gitAdapter)
+
+      await expect(client.getSchema(gitRef)).rejects.toMatchObject({
+        extensions: {
+          code: 'BAD_SCHEMA',
+          commitspark: {
+            argumentValue:
+              'Type "MyEntry" must have a field "id" of type "ID!" to use "@Entry" directive.',
+          },
+        },
+      })
+    },
+  )
 })

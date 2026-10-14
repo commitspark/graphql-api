@@ -24,7 +24,7 @@ jobs:
             - name: Verify tag matches package.json and CHANGELOG.md
               run: |
                   VERSION=$(node -p "require('./package.json').version")
-                  test "v$VERSION" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME does not match package.json version $VERSION"; exit 1; }
+                  [ "v$VERSION" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME does not match package.json version $VERSION"; exit 1; }
                   grep -q "^## \[$VERSION\]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $VERSION"; exit 1; }
 
             - run: npm ci

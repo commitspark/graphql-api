@@ -107,6 +107,9 @@ input PayloadInput {
 }
 ```
 
+The argument `commitMessage` of mutations is trimmed. If it is omitted or empty, a message such as
+`Update RocketFlight "VA256"` is generated from the mutation, type and ID of the entry.
+
 # Making GraphQL calls
 
 Let's now assume your repository is located on GitHub and you want to query for a single rocket flight.

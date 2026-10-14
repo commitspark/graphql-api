@@ -10,11 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
+- Trim argument `commitMessage` of mutations and document it in the generated schema; mutations in the generated schema
+  are now printed with one argument per line
 
 ### Fixed
 
 - Include fields of type `ID` in generated input types, except field `id` of `@Entry` types, so that e.g. `sku: ID` or
   an `id` field of an embedded type can be written
+- Generate a commit message such as `Update MyType "my-id"` when argument `commitMessage` of a mutation is omitted or
+  empty, instead of passing no message to the Git adapter, which led to adapter-specific messages (`-`, `undefined`) or
+  failing commits
 
 ## [2.0.0-beta.4] - 2026-10-14
 

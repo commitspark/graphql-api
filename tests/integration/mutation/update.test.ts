@@ -503,4 +503,54 @@ enum MyEnum {
     })
     expect(result.ref).toBe(postCommitHash)
   })
+
+  it('should commit with a generated message when commit message is omitted', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    name: String
+}`
+    const postCommitHash = 'ef01'
+    const originalEntry: Entry = {
+      id: 'A',
+      metadata: { type: 'EntryA' },
+      data: { name: 'My name' },
+    }
+    const updatedEntry: Entry = {
+      ...originalEntry,
+      data: { name: 'My new name' },
+    }
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    mockEntries(gitAdapter, commitHash, [originalEntry])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [updatedEntry])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!) {
+        data: updateEntryA(id: $id, data: $mutationData) {
+          id
+        }
+      }`,
+      variables: {
+        id: originalEntry.id,
+        mutationData: updatedEntry.data,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(gitAdapter.createCommit).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Update EntryA "A"' }),
+    )
+  })
 })

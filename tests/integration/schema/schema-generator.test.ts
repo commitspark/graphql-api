@@ -56,9 +56,29 @@ type Query {
 }
 
 type Mutation {
-  createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
-  updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
-  deleteMyEntry(id: ID!, commitMessage: String): ID
+  createMyEntry(
+    id: ID!
+    data: MyEntryInput!
+    """
+    Commit message. If omitted or empty, the message is 'Create MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): MyEntry
+  updateMyEntry(
+    id: ID!
+    data: MyEntryInput!
+    """
+    Commit message. If omitted or empty, the message is 'Update MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): MyEntry
+  deleteMyEntry(
+    id: ID!
+    """
+    Commit message. If omitted or empty, the message is 'Delete MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): ID
 }
 
 input MyEntryIdInput {
@@ -135,12 +155,52 @@ type Query {
 }
 
 type Mutation {
-  createEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
-  createEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
-  updateEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
-  updateEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
-  deleteEntryA(id: ID!, commitMessage: String): ID
-  deleteEntryB(id: ID!, commitMessage: String): ID
+  createEntryA(
+    id: ID!
+    data: EntryAInput!
+    """
+    Commit message. If omitted or empty, the message is 'Create EntryA "<id>"'.
+    """
+    commitMessage: String
+  ): EntryA
+  createEntryB(
+    id: ID!
+    data: EntryBInput!
+    """
+    Commit message. If omitted or empty, the message is 'Create EntryB "<id>"'.
+    """
+    commitMessage: String
+  ): EntryB
+  updateEntryA(
+    id: ID!
+    data: EntryAInput!
+    """
+    Commit message. If omitted or empty, the message is 'Update EntryA "<id>"'.
+    """
+    commitMessage: String
+  ): EntryA
+  updateEntryB(
+    id: ID!
+    data: EntryBInput!
+    """
+    Commit message. If omitted or empty, the message is 'Update EntryB "<id>"'.
+    """
+    commitMessage: String
+  ): EntryB
+  deleteEntryA(
+    id: ID!
+    """
+    Commit message. If omitted or empty, the message is 'Delete EntryA "<id>"'.
+    """
+    commitMessage: String
+  ): ID
+  deleteEntryB(
+    id: ID!
+    """
+    Commit message. If omitted or empty, the message is 'Delete EntryB "<id>"'.
+    """
+    commitMessage: String
+  ): ID
 }
 
 input EntryAIdInput {
@@ -242,15 +302,75 @@ type Query {
 }
 
 type Mutation {
-  createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
-  createEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
-  createEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
-  updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
-  updateEntryA(id: ID!, data: EntryAInput!, commitMessage: String): EntryA
-  updateEntryB(id: ID!, data: EntryBInput!, commitMessage: String): EntryB
-  deleteMyEntry(id: ID!, commitMessage: String): ID
-  deleteEntryA(id: ID!, commitMessage: String): ID
-  deleteEntryB(id: ID!, commitMessage: String): ID
+  createMyEntry(
+    id: ID!
+    data: MyEntryInput!
+    """
+    Commit message. If omitted or empty, the message is 'Create MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): MyEntry
+  createEntryA(
+    id: ID!
+    data: EntryAInput!
+    """
+    Commit message. If omitted or empty, the message is 'Create EntryA "<id>"'.
+    """
+    commitMessage: String
+  ): EntryA
+  createEntryB(
+    id: ID!
+    data: EntryBInput!
+    """
+    Commit message. If omitted or empty, the message is 'Create EntryB "<id>"'.
+    """
+    commitMessage: String
+  ): EntryB
+  updateMyEntry(
+    id: ID!
+    data: MyEntryInput!
+    """
+    Commit message. If omitted or empty, the message is 'Update MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): MyEntry
+  updateEntryA(
+    id: ID!
+    data: EntryAInput!
+    """
+    Commit message. If omitted or empty, the message is 'Update EntryA "<id>"'.
+    """
+    commitMessage: String
+  ): EntryA
+  updateEntryB(
+    id: ID!
+    data: EntryBInput!
+    """
+    Commit message. If omitted or empty, the message is 'Update EntryB "<id>"'.
+    """
+    commitMessage: String
+  ): EntryB
+  deleteMyEntry(
+    id: ID!
+    """
+    Commit message. If omitted or empty, the message is 'Delete MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): ID
+  deleteEntryA(
+    id: ID!
+    """
+    Commit message. If omitted or empty, the message is 'Delete EntryA "<id>"'.
+    """
+    commitMessage: String
+  ): ID
+  deleteEntryB(
+    id: ID!
+    """
+    Commit message. If omitted or empty, the message is 'Delete EntryB "<id>"'.
+    """
+    commitMessage: String
+  ): ID
 }
 
 input MyEntryIdInput {
@@ -360,9 +480,29 @@ type Query {
 }
 
 type Mutation {
-  createMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
-  updateMyEntry(id: ID!, data: MyEntryInput!, commitMessage: String): MyEntry
-  deleteMyEntry(id: ID!, commitMessage: String): ID
+  createMyEntry(
+    id: ID!
+    data: MyEntryInput!
+    """
+    Commit message. If omitted or empty, the message is 'Create MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): MyEntry
+  updateMyEntry(
+    id: ID!
+    data: MyEntryInput!
+    """
+    Commit message. If omitted or empty, the message is 'Update MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): MyEntry
+  deleteMyEntry(
+    id: ID!
+    """
+    Commit message. If omitted or empty, the message is 'Delete MyEntry "<id>"'.
+    """
+    commitMessage: String
+  ): ID
 }
 
 input MyEntryIdInput {

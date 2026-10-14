@@ -369,4 +369,45 @@ type Box @Entry {
     ])
     expect(result.data).toEqual({ data: null })
   })
+
+  it('should commit with a generated message when commit message is omitted', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const originalSchema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    name: String
+}`
+    const entry: Entry = {
+      id: 'A',
+      metadata: { type: 'EntryA' },
+      data: { name: 'My name' },
+    }
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema
+      .calledWith(commitHash)
+      .mockResolvedValue(originalSchema)
+    mockEntries(gitAdapter, commitHash, [entry])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: 'ef01' })
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!) {
+        data: deleteEntryA(id: $id)
+      }`,
+      variables: {
+        id: entry.id,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(gitAdapter.createCommit).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Delete EntryA "A"' }),
+    )
+  })
 })

@@ -8,6 +8,7 @@ import {
 } from '@commitspark/git-adapter'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
+import { getCommitMessage } from './commit-message.ts'
 
 export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   source,
@@ -67,7 +68,12 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
     ref: context.branch,
     parentSha: context.getCurrentHash(),
     entries: [newEntryDraft],
-    message: args.commitMessage,
+    message: getCommitMessage(
+      args.commitMessage,
+      'Create',
+      context.type.name,
+      args.id,
+    ),
   })
   context.setCurrentHash(commit.commitHash)
 

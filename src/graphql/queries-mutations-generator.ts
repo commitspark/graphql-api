@@ -42,8 +42,14 @@ export function generateQueriesAndMutations(
     ) => queryByIdResolver(source, args, { ...context, type: objectType }, info)
 
     const inputTypeName = `${typeName}Input`
+    // mutations are printed with one argument per line, as indented within the generated root type
+    const commitMessageArgument = (operation: string): string =>
+      '    """\n' +
+      `    Commit message. If omitted or empty, the message is '${operation} ${typeName} "<id>"'.\n` +
+      '    """\n' +
+      '    commitMessage: String\n'
     const createMutationName = `create${typeName}`
-    const createMutationString = `${createMutationName}(id: ID!, data: ${inputTypeName}!, commitMessage: String): ${typeName}`
+    const createMutationString = `${createMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${commitMessageArgument('Create')}  ): ${typeName}`
     const createMutationResolver: QueryMutationResolver<EntryData> = (
       source,
       args,
@@ -58,7 +64,7 @@ export function generateQueriesAndMutations(
       )
 
     const updateMutationName = `update${typeName}`
-    const updateMutationString = `${updateMutationName}(id: ID!, data: ${inputTypeName}!, commitMessage: String): ${typeName}`
+    const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${commitMessageArgument('Update')}  ): ${typeName}`
     const updateMutationResolver: QueryMutationResolver<EntryData> = (
       source,
       args,
@@ -73,7 +79,7 @@ export function generateQueriesAndMutations(
       )
 
     const deleteMutationName = `delete${typeName}`
-    const deleteMutationString = `${deleteMutationName}(id: ID!, commitMessage: String): ID`
+    const deleteMutationString = `${deleteMutationName}(\n    id: ID!\n${commitMessageArgument('Delete')}  ): ID`
     const deleteMutationResolver: QueryMutationResolver<string> = (
       source,
       args,

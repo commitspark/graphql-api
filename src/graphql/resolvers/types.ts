@@ -15,7 +15,7 @@ interface QueryMutationResolverContext extends ApolloContext {
 export type QueryMutationResolver<ResultType> = GraphQLFieldResolver<
   unknown,
   QueryMutationResolverContext,
-  { id: string; data?: EntryData; commitMessage: string },
+  { id: string; data?: EntryData; commitMessage?: string | null },
   Promise<ResultType>
 >
 

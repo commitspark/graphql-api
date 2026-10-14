@@ -146,6 +146,9 @@ const rocketFlight = response.data.rocketFlight
 // ...
 ```
 
+When creating commits by calling mutations, mutation argument `commitMessage` is trimmed and if omitted or empty, a
+default message such as `Update RocketFlight "VA256"` is generated from the mutation, type and ID of the entry.
+
 # Technical documentation
 
 ## API

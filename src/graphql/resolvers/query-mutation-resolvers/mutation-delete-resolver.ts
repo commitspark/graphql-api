@@ -3,6 +3,7 @@ import { Entry } from '@commitspark/git-adapter'
 import { getReferencingEntryIds } from '../../schema-utils/entry-reference-util.ts'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
+import { getCommitMessage } from './commit-message.ts'
 
 export const mutationDeleteResolver: QueryMutationResolver<string> = async (
   source,
@@ -39,7 +40,12 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
         deletion: true,
       },
     ],
-    message: args.commitMessage,
+    message: getCommitMessage(
+      args.commitMessage,
+      'Delete',
+      context.type.name,
+      args.id,
+    ),
   })
   context.setCurrentHash(commit.commitHash)
 

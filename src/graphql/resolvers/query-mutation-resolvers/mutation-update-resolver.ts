@@ -4,6 +4,7 @@ import { isObjectType } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
+import { getCommitMessage } from './commit-message.ts'
 
 function mergeData(
   existingEntryData: EntryData,
@@ -47,7 +48,12 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
         deletion: false,
       },
     ],
-    message: args.commitMessage,
+    message: getCommitMessage(
+      args.commitMessage,
+      'Update',
+      context.type.name,
+      args.id,
+    ),
   })
   context.setCurrentHash(commit.commitHash)
 

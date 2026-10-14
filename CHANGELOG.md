@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
 - Trim argument `commitMessage` of mutations and document it in the generated schema; mutations in the generated schema
   are now printed with one argument per line
+- Upgrade to @commitspark/git-adapter 2.0.0-beta.3
 
 ### Fixed
 

@@ -241,16 +241,23 @@ This keeps the number of entries low and performance up.
 Entries, i.e. instances of data types annotated with `@Entry`, are stored as `.yaml` YAML text files inside
 folder `commitspark/entries/` in the given Git repository (unless otherwise configured in your Git adapter).
 
-The filename (excluding file extension) constitutes the entry ID.
-
 Entry files have the following structure:
 
 ```yaml
 metadata:
-  type: MyType # name of type as defined in your schema
+  type: MyType # type as defined in the schema that this entry file represents
 data:
-#   ... fields of the type as defined in your schema
+#   ... fields of the type as defined in the schema
 ```
+
+### Entry IDs
+
+The path of an entry file relative to the entry folder excluding file extension constitutes the entry ID. Entry IDs
+can contain `/` for logical grouping, however the entry type is always taken from the file's metadata.
+
+Entry IDs are case-sensitive, must map to valid unique file paths within the entries folder, and must not contain 
+characters `\ * " < > : | ?` or control characters. Files and folders whose name starts with `.` are ignored by
+Commitspark.
 
 ### Serialization / Deserialization
 

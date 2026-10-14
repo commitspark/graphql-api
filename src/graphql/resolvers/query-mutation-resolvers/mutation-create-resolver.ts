@@ -2,9 +2,9 @@ import { findById, findByTypeId } from '../../../persistence/persistence.ts'
 import { isObjectType } from 'graphql'
 import { validateEntryReferences } from '../../schema-utils/entry-reference-util.ts'
 import {
-  ENTRY_ID_INVALID_CHARACTERS,
   EntryData,
   EntryDraft,
+  validateEntryId,
 } from '@commitspark/git-adapter'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
@@ -24,12 +24,11 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
     )
   }
 
-  const idValidationResult = args.id.match(ENTRY_ID_INVALID_CHARACTERS)
-  if (idValidationResult) {
+  try {
+    validateEntryId(args.id)
+  } catch (err) {
     throw createError(
-      `Field "id" contains invalid characters "${idValidationResult.join(
-        ', ',
-      )}".`,
+      err instanceof Error ? err.message : String(err),
       ErrorCode.BAD_USER_INPUT,
       {
         argumentName: 'id',

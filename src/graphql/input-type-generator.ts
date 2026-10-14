@@ -10,7 +10,6 @@ import {
   isListType,
   isNonNullType,
   isObjectType,
-  isScalarType,
   isUnionType,
 } from 'graphql'
 import { SchemaAnalyzerResult } from './schema-analyzer.ts'
@@ -72,16 +71,13 @@ export function generateObjectInputTypeStrings(
   return objectTypes.map((objectType): string => {
     const name = objectType.name
     const inputTypeName = `${name}Input`
+    const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
     let inputType = `input ${inputTypeName} {\n`
     let inputTypeFieldStrings = ''
     for (const fieldsKey in objectType.getFields()) {
       const field = objectType.getFields()[fieldsKey]
-      if (
-        (isNonNullType(field.type) &&
-          isScalarType(field.type.ofType) &&
-          field.type.ofType.name === 'ID') ||
-        (isScalarType(field.type) && field.type.name === 'ID')
-      ) {
+      // the ID of an entry is passed as mutation argument instead of as part of the entry data
+      if (isEntryType && field.name === 'id') {
         continue
       }
       const inputTypeString = generateFieldInputTypeString(field.type)

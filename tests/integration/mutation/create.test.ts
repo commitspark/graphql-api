@@ -533,4 +533,85 @@ type EntryA @Entry {
     expect(result.data).toEqual({ data: null })
     expect(gitAdapter.createCommit).not.toHaveBeenCalled()
   })
+
+  it('should create an entry with ID fields other than the entry ID', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type Product @Entry {
+    id: ID!
+    sku: ID!
+    supplier: SupplierRef
+}
+
+type SupplierRef {
+    id: ID!
+    externalId: ID
+}`
+
+    const entryId = 'product-1'
+    const postCommitHash = 'ef01'
+
+    const mutationData = {
+      sku: 'A-1',
+      supplier: { id: 'supplier-1', externalId: 'ext-1' },
+    }
+    const newEntry: Entry = {
+      id: entryId,
+      metadata: {
+        type: 'Product',
+      },
+      data: mutationData,
+    }
+
+    const commitDraft: CommitDraft = {
+      ref: gitRef,
+      parentSha: commitHash,
+      entries: [{ ...newEntry, deletion: false }],
+      message: '-',
+    }
+
+    const commitDraftMatcher = new Matcher<CommitDraft>((actualValue) => {
+      return JSON.stringify(actualValue) === JSON.stringify(commitDraft)
+    }, '')
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+    gitAdapter.createCommit
+      .calledWith(commitDraftMatcher)
+      .mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [newEntry])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: ProductInput!) {
+        data: createProduct(id: $id, data: $mutationData, commitMessage: "-") {
+          id
+          sku
+          supplier {
+            id
+            externalId
+          }
+        }
+      }`,
+      variables: {
+        id: entryId,
+        mutationData: mutationData,
+      },
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: {
+        id: entryId,
+        ...mutationData,
+      },
+    })
+    expect(result.ref).toBe(postCommitHash)
+  })
 })

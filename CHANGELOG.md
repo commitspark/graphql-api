@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
+
+### Fixed
+
+- Include fields of type `ID` in generated input types, except field `id` of `@Entry` types, so that e.g. `sku: ID` or
+  an `id` field of an embedded type can be written
+
 ## [2.0.0-beta.4] - 2026-10-14
 
 ### Added

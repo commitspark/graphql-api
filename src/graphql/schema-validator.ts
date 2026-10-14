@@ -2,6 +2,7 @@ import {
   getNamedType,
   GraphQLSchema,
   GraphQLUnionType,
+  isNonNullType,
   isObjectType,
   isScalarType,
   Kind,
@@ -59,8 +60,28 @@ function checkSearchableDirectiveOnlyOnStringFields(
   return ''
 }
 
+function checkEntryTypesHaveIdField(schema: GraphQLSchema): string {
+  for (const type of Object.values(schema.getTypeMap())) {
+    if (!isObjectType(type) || !hasDirective(type, ENTRY_DIRECTIVE_NAME)) {
+      continue
+    }
+    const idField = type.getFields()['id']
+    if (
+      idField === undefined ||
+      !isNonNullType(idField.type) ||
+      !isScalarType(idField.type.ofType) ||
+      idField.type.ofType.name !== 'ID'
+    ) {
+      return `Type "${type.name}" must have a field "id" of type "ID!" to use "@${ENTRY_DIRECTIVE_NAME}" directive.`
+    }
+  }
+
+  return ''
+}
+
 export function getValidationResult(schema: GraphQLSchema): string[] {
   const results = []
+  results.push(checkEntryTypesHaveIdField(schema))
   results.push(checkUnionMembersConsistentUseOfEntryDirective(schema))
   results.push(checkSearchableDirectiveOnlyOnStringFields(schema))
   return results.filter((result) => result !== '')

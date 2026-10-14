@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generate a commit message such as `Update MyType "my-id"` when argument `commitMessage` of a mutation is omitted or
   empty, instead of passing no message to the Git adapter, which led to adapter-specific messages (`-`, `undefined`) or
   failing commits
+- Export `ErrorCode` as a regular enum instead of a `const enum`, so that it exists at runtime and can be used by
+  consumers, e.g. in `error.extensions.code === ErrorCode.CONFLICT`, also when compiled with `isolatedModules`
 
 ## [2.0.0-beta.4] - 2026-10-14
 

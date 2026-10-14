@@ -9,6 +9,7 @@ export const enum ErrorCode {
   BAD_SCHEMA = 'BAD_SCHEMA',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   IN_USE = 'IN_USE',
+  CONFLICT = 'CONFLICT',
 }
 
 export interface ErrorMetadata {

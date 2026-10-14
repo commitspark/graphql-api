@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add field `_version` to every `@Entry` type and optional argument `expectedVersion` to update and delete mutations,
+  which fail with error code `CONFLICT` if the entry has a different version, so that changes made since an entry was
+  read are not overwritten
+- Validate and commit a mutation again against the new branch head, up to three times in total, when the Git adapter
+  reports with `CONFLICT` that the branch has moved, so that concurrent changes to unrelated entries do not lead to
+  errors
+
 ### Changed
 
 - Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
@@ -15,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Return errors of Git adapters during commits with their error code, e.g. `CONFLICT` or `FORBIDDEN`, instead of a
+  generic internal server error
 - Include fields of type `ID` in generated input types, except field `id` of `@Entry` types, so that e.g. `sku: ID` or
   an `id` field of an embedded type can be written
 - Generate a commit message such as `Update MyType "my-id"` when argument `commitMessage` of a mutation is omitted or

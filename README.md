@@ -203,6 +203,31 @@ HEAD in the given branch.
 To guarantee deterministic results, mutations in calls with multiple mutations are processed sequentially (see
 the [official GraphQL documentation](https://graphql.org/learn/queries/#multiple-fields-in-mutations) for details).
 
+### Concurrent writes
+
+Every `@Entry` type has a generated field `_version` that changes whenever the stored entry changes. Mutations
+`update<Type>` and `delete<Type>` accept an optional argument `expectedVersion`. If it is given and the entry has a
+different version, the mutation fails with error code `CONFLICT` instead of overwriting changes made in the meantime.
+Callers that let users edit entries are recommended to read `_version` together with the entry and pass it as
+`expectedVersion` when saving, e.g.:
+
+```graphql
+mutation {
+  updateMyEntry(id: "my-id", data: { name: "New name" }, expectedVersion: "<_version as read before>") {
+    _version
+  }
+}
+```
+
+Each mutation is validated (expected version, references, etc.) against the latest commit of the branch and passed to
+the Git adapter together with this commit as expected parent. Git adapters must only add the new commit if the branch
+still points to that parent. If another commit was added to the branch in the meantime, the mutation is validated again
+against the new branch head and committed on top of it, up to three times in total, so that changes to unrelated
+entries do not lead to errors. If the attempts are exhausted, the mutation fails with error code `CONFLICT`.
+
+How reliably a Git adapter detects a moved branch depends on its Git provider; see the documentation of the respective
+adapter for limitations.
+
 ## Data model
 
 The data model (i.e. schema) is defined in a single GraphQL type definition text file using the
@@ -523,6 +548,7 @@ documented [here](https://github.com/commitspark/search-adapter):
 | `BAD_REPOSITORY_DATA`  | Data in the repository is malformed or invalid according to schema |
 | `BAD_SCHEMA`           | Schema definition is malformed or invalid                          |
 | `IN_USE`               | Entry cannot be deleted because it is referenced by other entries  |
+| `CONFLICT`             | Entry or branch was changed concurrently (see "Concurrent writes") |
 | `INTERNAL_ERROR`       | Internal processing error                                          |
 
 # License

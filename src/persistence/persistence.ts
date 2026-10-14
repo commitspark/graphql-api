@@ -60,3 +60,26 @@ export async function findByTypeId(
 
   return entryById
 }
+
+/**
+ * Returns the version of an entry, which is the content hash of the entry reported by the Git adapter. It changes
+ * whenever the stored entry changes.
+ */
+export async function getEntryVersion(
+  context: ApolloContext,
+  id: string,
+): Promise<string> {
+  const entriesRecord = await context.repositoryCache.getEntriesRecord(
+    context,
+    context.getCurrentHash(),
+  )
+  const version = entriesRecord.hashById.get(id)
+  if (version === undefined) {
+    throw createError(`No entry with ID "${id}" exists.`, ErrorCode.NOT_FOUND, {
+      argumentName: 'id',
+      argumentValue: id,
+    })
+  }
+
+  return version
+}

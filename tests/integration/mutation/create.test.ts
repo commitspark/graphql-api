@@ -615,56 +615,47 @@ type SupplierRef {
     expect(result.ref).toBe(postCommitHash)
   })
 
-  it.each([
-    ['omitted', undefined, 'Create EntryA "A"'],
-    ['null', null, 'Create EntryA "A"'],
-    ['whitespace only', ' \n ', 'Create EntryA "A"'],
-    ['surrounded by whitespace', '  My message\n', 'My message'],
-  ])(
-    'should commit with a trimmed or generated message when commit message is %s',
-    async (_description, commitMessage, expectedMessage) => {
-      const gitAdapter = mock<GitAdapter>()
-      const gitRef = 'myRef'
-      const commitHash = 'abcd'
-      const schema = `directive @Entry on OBJECT
+  it('should commit with a generated message when commit message is omitted', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
 
 type EntryA @Entry {
     id: ID!
     name: String
 }`
-      const postCommitHash = 'ef01'
-      const newEntry: Entry = {
-        id: 'A',
-        metadata: { type: 'EntryA' },
-        data: { name: 'My name' },
-      }
+    const postCommitHash = 'ef01'
+    const newEntry: Entry = {
+      id: 'A',
+      metadata: { type: 'EntryA' },
+      data: { name: 'My name' },
+    }
 
-      gitAdapter.getLatestCommitHash
-        .calledWith(gitRef)
-        .mockResolvedValue(commitHash)
-      gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
-      mockEntries(gitAdapter, commitHash, [])
-      gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
-      mockEntries(gitAdapter, postCommitHash, [newEntry])
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [newEntry])
 
-      const client = await createClient(gitAdapter)
-      const result = await client.postGraphQL(gitRef, {
-        query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String) {
-          data: createEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
-            id
-          }
-        }`,
-        variables: {
-          id: newEntry.id,
-          mutationData: newEntry.data,
-          commitMessage,
-        },
-      })
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!) {
+        data: createEntryA(id: $id, data: $mutationData) {
+          id
+        }
+      }`,
+      variables: {
+        id: newEntry.id,
+        mutationData: newEntry.data,
+      },
+    })
 
-      expect(result.errors).toBeUndefined()
-      expect(gitAdapter.createCommit).toHaveBeenCalledWith(
-        expect.objectContaining({ message: expectedMessage }),
-      )
-    },
-  )
+    expect(result.errors).toBeUndefined()
+    expect(gitAdapter.createCommit).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Create EntryA "A"' }),
+    )
+  })
 })

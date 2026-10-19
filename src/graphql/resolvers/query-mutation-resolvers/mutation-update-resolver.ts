@@ -1,10 +1,14 @@
-import { findByTypeId } from '../../../persistence/persistence.ts'
+import {
+  assertExpectedVersion,
+  findByTypeId,
+} from '../../../persistence/persistence.ts'
 import { validateEntryReferences } from '../../schema-utils/entry-reference-util.ts'
 import { isObjectType } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
-import { getCommitMessage } from './commit-message.ts'
+import { getCommitMessage } from '../commit-message.ts'
+import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
 
 function mergeData(
   existingEntryData: EntryData,
@@ -30,32 +34,40 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
       {},
     )
   }
+  // narrowed type, as narrowing does not apply within the callback below
+  const entryType = context.type
 
-  const existingEntry = await findByTypeId(context, context.type.name, args.id)
-
-  const mergedData = mergeData(existingEntry.data ?? null, args.data ?? null)
-  await validateEntryReferences(context.type, context, mergedData)
-
-  const commit = await context.gitAdapter.createCommit({
-    ref: context.branch,
-    parentSha: context.getCurrentHash(),
-    entries: [
-      {
-        id: existingEntry.id,
-        // only the type is written, which removes metadata no longer in use from existing entries
-        metadata: { type: existingEntry.metadata.type },
-        data: mergedData,
-        deletion: false,
-      },
-    ],
-    message: getCommitMessage(
-      args.commitMessage,
-      'Update',
+  await commitWithRetry(context, async () => {
+    const existingEntry = await findByTypeId(
+      context,
       context.type.name,
       args.id,
-    ),
+    )
+    await assertExpectedVersion(context, args.id, args.expectedVersion)
+
+    const mergedData = mergeData(existingEntry.data ?? null, args.data ?? null)
+    await validateEntryReferences(entryType, context, mergedData)
+
+    return {
+      ref: context.branch,
+      parentSha: context.getCurrentHash(),
+      entries: [
+        {
+          id: existingEntry.id,
+          // only the type is written, which removes metadata no longer in use from existing entries
+          metadata: { type: existingEntry.metadata.type },
+          data: mergedData,
+          deletion: false,
+        },
+      ],
+      message: getCommitMessage(
+        args.commitMessage,
+        'Update',
+        context.type.name,
+        args.id,
+      ),
+    }
   })
-  context.setCurrentHash(commit.commitHash)
 
   const updatedEntry = await findByTypeId(context, context.type.name, args.id)
   return { ...updatedEntry.data, id: updatedEntry.id }

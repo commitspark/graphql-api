@@ -1,11 +1,14 @@
-import { findByTypeId } from '../../../persistence/persistence.ts'
+import {
+  assertExpectedVersion,
+  findByTypeId,
+} from '../../../persistence/persistence.ts'
 import { validateEntryReferences } from '../../schema-utils/entry-reference-util.ts'
 import { isObjectType } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
-import { getCommitMessage } from './commit-message.ts'
-import { assertExpectedVersion, commitWithRetry } from './commit-with-retry.ts'
+import { getCommitMessage } from '../commit-message.ts'
+import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
 
 function mergeData(
   existingEntryData: EntryData,

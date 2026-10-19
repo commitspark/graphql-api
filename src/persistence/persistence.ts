@@ -83,3 +83,30 @@ export async function getEntryVersion(
 
   return version
 }
+
+/**
+ * Throws `CONFLICT` if an expected version is given and the entry has a different version at the current commit of
+ * the request. This lets callers detect that an entry was changed by someone else since they read it, e.g. while a
+ * user was editing the entry, instead of overwriting these changes.
+ */
+export async function assertExpectedVersion(
+  context: ApolloContext,
+  id: string,
+  expectedVersion: string | null | undefined,
+): Promise<void> {
+  if (expectedVersion === undefined || expectedVersion === null) {
+    return
+  }
+  const currentVersion = await getEntryVersion(context, id)
+  if (currentVersion !== expectedVersion) {
+    throw createError(
+      `Entry with ID "${id}" has been changed: expected version "${expectedVersion}" but current version is ` +
+        `"${currentVersion}".`,
+      ErrorCode.CONFLICT,
+      {
+        argumentName: 'expectedVersion',
+        argumentValue: expectedVersion,
+      },
+    )
+  }
+}

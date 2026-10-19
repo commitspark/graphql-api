@@ -3,13 +3,8 @@ import {
   ErrorCode as GitAdapterErrorCode,
   GitAdapterError,
 } from '@commitspark/git-adapter'
-import { ApolloContext } from '../../../client.ts'
-import {
-  callGitAdapter,
-  toGraphQLError,
-} from '../../../persistence/git-adapter-call.ts'
-import { createError, ErrorCode } from '../../errors.ts'
-import { getEntryVersion } from '../../../persistence/persistence.ts'
+import { ApolloContext } from '../client.ts'
+import { callGitAdapter, toGraphQLError } from './git-adapter-call.ts'
 
 const MAX_COMMIT_ATTEMPTS = 3
 
@@ -48,32 +43,5 @@ export const commitWithRetry = async (
       context.gitAdapter.getLatestCommitHash(context.branch),
     )
     context.setCurrentHash(headCommitHash)
-  }
-}
-
-/**
- * Throws `CONFLICT` if an expected version is given and the entry has a different version at the current commit of
- * the request. This lets callers detect that an entry was changed by someone else since they read it, e.g. while a
- * user was editing the entry, instead of overwriting these changes.
- */
-export const assertExpectedVersion = async (
-  context: ApolloContext,
-  id: string,
-  expectedVersion: string | null | undefined,
-): Promise<void> => {
-  if (expectedVersion === undefined || expectedVersion === null) {
-    return
-  }
-  const currentVersion = await getEntryVersion(context, id)
-  if (currentVersion !== expectedVersion) {
-    throw createError(
-      `Entry with ID "${id}" has been changed: expected version "${expectedVersion}" but current version is ` +
-        `"${currentVersion}".`,
-      ErrorCode.CONFLICT,
-      {
-        argumentName: 'expectedVersion',
-        argumentValue: expectedVersion,
-      },
-    )
   }
 }

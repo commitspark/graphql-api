@@ -323,7 +323,7 @@ type EntryB @Entry {
     expect(result.ref).toBe(commitHash)
   })
 
-  it('should not create an entry with more than one member of an inline union', async () => {
+  it('should reject an inline union value that sets more than one member type', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'
@@ -361,6 +361,7 @@ type TypeB {
       }`,
       variables: {
         id: 'A',
+        // a union value is exactly one member type, enforced by @oneOf on MyUnionInput
         mutationData: {
           union: { TypeA: { field1: 'a' }, TypeB: { field2: 'b' } },
         },

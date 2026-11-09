@@ -1,6 +1,7 @@
-import { Entry, GitAdapterError } from '@commitspark/git-adapter'
+import { Entry } from '@commitspark/git-adapter'
 import { ApolloContext } from '../client.ts'
 import { createError, ErrorCode } from '../graphql/errors.ts'
+import { callGitAdapter } from './git-adapter-call.ts'
 
 type Ref = string
 type ContentHash = string
@@ -14,6 +15,8 @@ type InflightEntries = Map<Ref, Promise<EntriesRecord>>
 export interface EntriesRecord {
   byId: Map<string, Entry>
   byType: Map<string, Entry[]>
+  // content hash of each entry as reported by the Git adapter, exposed to callers as entry version
+  hashById: Map<string, ContentHash>
 }
 
 interface CommitCacheRecord {
@@ -113,7 +116,9 @@ const fetchAndCacheEntries = async (
 
   const entriesById = new Map<string, Entry>()
   const entriesByType = new Map<string, Entry[]>()
+  const hashesById = new Map<string, ContentHash>()
   for (const { id, hash } of entryHashes) {
+    hashesById.set(id, hash)
     const entry: Entry = {
       id: id,
       ...(contentByHash.get(hash) as EntryContent),
@@ -128,6 +133,7 @@ const fetchAndCacheEntries = async (
     entriesRecord: {
       byType: entriesByType,
       byId: entriesById,
+      hashById: hashesById,
     },
     contentHashes: [...contentByHash.keys()],
   }
@@ -171,18 +177,6 @@ const removeUnreferencedContent = (
     if (!referencedHashes.has(hash)) {
       contentCache.delete(hash)
     }
-  }
-}
-
-const callGitAdapter = async <T>(operation: () => Promise<T>): Promise<T> => {
-  try {
-    return await operation()
-  } catch (err) {
-    if (err instanceof GitAdapterError) {
-      throw createError(err.message, err.code, {})
-    }
-    const message = err instanceof Error ? err.message : String(err)
-    throw createError(message, ErrorCode.INTERNAL_ERROR, {})
   }
 }
 

@@ -9,6 +9,7 @@ import {
 
 jest.mock('../../../src/graphql/errors', () => {
   return {
+    ...jest.requireActual('../../../src/graphql/errors'),
     createError: jest.fn(
       (message: string, code: string, extensions: Record<string, unknown>) => {
         // mark unused parameters as used to satisfy eslint no-unused-vars

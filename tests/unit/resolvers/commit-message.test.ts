@@ -1,4 +1,4 @@
-import { getCommitMessage } from '../../../src/graphql/resolvers/query-mutation-resolvers/commit-message'
+import { getCommitMessage } from '../../../src/graphql/resolvers/commit-message'
 
 describe('Commit message', () => {
   it.each([

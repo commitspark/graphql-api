@@ -8,10 +8,12 @@ import { mutationDeleteResolver } from './resolvers/query-mutation-resolvers/mut
 import { queryTypeByIdResolver } from './resolvers/query-mutation-resolvers/query-type-by-id-resolver.ts'
 import { querySearchResolver } from './resolvers/query-mutation-resolvers/query-search-resolver.ts'
 import { referencedByResolver } from './resolvers/field-resolvers/referenced-by-resolver.ts'
+import { versionResolver } from './resolvers/field-resolvers/version-resolver.ts'
 import {
   QueryMutationResolver,
   ReferencedByResolver,
   SearchQueryResolver,
+  VersionResolver,
 } from './resolvers/types.ts'
 
 export function generateQueriesAndMutations(
@@ -48,6 +50,12 @@ export function generateQueriesAndMutations(
       `    Commit message. If omitted or empty, the message is '${operation} ${typeName} "<id>"'.\n` +
       '    """\n' +
       '    commitMessage: String\n'
+    const expectedVersionArgument =
+      '    """\n' +
+      '    Version of the entry (field `_version`) that the change is based on. If given and the entry has a different\n' +
+      '    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.\n' +
+      '    """\n' +
+      '    expectedVersion: String\n'
     const createMutationName = `create${typeName}`
     const createMutationString = `${createMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${commitMessageArgument('Create')}  ): ${typeName}`
     const createMutationResolver: QueryMutationResolver<EntryData> = (
@@ -64,7 +72,7 @@ export function generateQueriesAndMutations(
       )
 
     const updateMutationName = `update${typeName}`
-    const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${commitMessageArgument('Update')}  ): ${typeName}`
+    const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${expectedVersionArgument}${commitMessageArgument('Update')}  ): ${typeName}`
     const updateMutationResolver: QueryMutationResolver<EntryData> = (
       source,
       args,
@@ -79,7 +87,7 @@ export function generateQueriesAndMutations(
       )
 
     const deleteMutationName = `delete${typeName}`
-    const deleteMutationString = `${deleteMutationName}(\n    id: ID!\n${commitMessageArgument('Delete')}  ): ID`
+    const deleteMutationString = `${deleteMutationName}(\n    id: ID!\n${expectedVersionArgument}${commitMessageArgument('Delete')}  ): ID`
     const deleteMutationResolver: QueryMutationResolver<string> = (
       source,
       args,
@@ -153,27 +161,34 @@ export function generateSearchQuery(): GeneratedSearchQuery {
   }
 }
 
-export function generateReferencedByFields(
+export function generateEntryFields(
   entryDirectiveTypes: GraphQLObjectType[],
-): GeneratedField[] {
+): GeneratedEntryFields[] {
   const referencedByFieldName = '_referencedBy'
+  const versionFieldName = '_version'
 
   return entryDirectiveTypes.map((objectType) => ({
     typeName: objectType.name,
-    name: referencedByFieldName,
     typeExtensionString: `extend type ${objectType.name} {
   ${referencedByFieldName}: [ID!]!
+  """
+  Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
+  and delete mutations to prevent overwriting changes made since the entry was read.
+  """
+  ${versionFieldName}: String!
 }
 `,
-    resolver: referencedByResolver,
+    resolvers: {
+      [referencedByFieldName]: referencedByResolver,
+      [versionFieldName]: versionResolver,
+    },
   }))
 }
 
-interface GeneratedField {
+interface GeneratedEntryFields {
   typeName: string
-  name: string
   typeExtensionString: string
-  resolver: ReferencedByResolver
+  resolvers: Record<string, ReferencedByResolver | VersionResolver>
 }
 
 export interface GeneratedSearchQuery {

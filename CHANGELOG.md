@@ -7,19 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add field `_version` to every `@Entry` type and optional argument `expectedVersion` to update and delete mutations,
+  which fail with error code `CONFLICT` if the entry has a different version, so that changes made since an entry was
+  read are not overwritten
+- Validate and commit a mutation again against the new branch head, up to three times in total, when the Git adapter
+  reports with `CONFLICT` that the branch has moved, so that concurrent changes to unrelated entries do not lead to
+  errors
+
 ### Changed
 
 - Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
 - Trim argument `commitMessage` of mutations and document it in the generated schema; mutations in the generated schema
   are now printed with one argument per line
+- Upgrade to @commitspark/git-adapter 2.0.0-beta.3
+- Require peer dependency `graphql` in version `^16.11.0`, which is the version range already required by dependency
+  `@apollo/server`, instead of declaring support for versions 14 to 17
+- Omit the declaration `directive @oneOf on INPUT_OBJECT` from the generated schema, as `@oneOf` is built into
+  `graphql` since version 16.9
+- Upgrade to @graphql-tools/schema 11.0.8 and @graphql-tools/utils 13.2.1, which require Node.js 22.18 or newer
+- Declare the required Node.js version `>=22.18.0` in field `engines` of `package.json`
 
 ### Fixed
 
+- Return errors of Git adapters during commits with their error code, e.g. `CONFLICT` or `FORBIDDEN`, instead of a
+  generic internal server error
 - Include fields of type `ID` in generated input types, except field `id` of `@Entry` types, so that e.g. `sku: ID` or
   an `id` field of an embedded type can be written
 - Generate a commit message such as `Update MyType "my-id"` when argument `commitMessage` of a mutation is omitted or
   empty, instead of passing no message to the Git adapter, which led to adapter-specific messages (`-`, `undefined`) or
   failing commits
+- Export `ErrorCode` as a regular enum instead of a `const enum`, so that it exists at runtime and can be used by
+  consumers, e.g. in `error.extensions.code === ErrorCode.CONFLICT`, also when compiled with `isolatedModules`
 
 ## [2.0.0-beta.4] - 2026-10-14
 

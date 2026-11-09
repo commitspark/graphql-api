@@ -99,12 +99,12 @@ export function generateObjectInputTypeStrings(
 export function generateUnionInputTypeStrings(
   unionTypes: GraphQLUnionType[],
 ): string[] {
-  const typeStrings = unionTypes.map((unionType): string => {
+  return unionTypes.map((unionType): string => {
     if (buildsOnTypeWithEntryDirective(unionType)) {
       return ''
     }
 
-    // see https://github.com/graphql/graphql-spec/pull/825
+    // `@oneOf` is a directive specified by GraphQL and built into graphql-js since 16.9
     let unionInputType = `input ${unionType.name}Input @oneOf {\n`
     for (const innerType of unionType.getTypes()) {
       unionInputType += `  ${innerType.name}: ${innerType.name}Input\n`
@@ -112,10 +112,4 @@ export function generateUnionInputTypeStrings(
     unionInputType += '}\n'
     return unionInputType
   })
-
-  if (typeStrings.join('').length > 0) {
-    typeStrings.push('directive @oneOf on INPUT_OBJECT\n')
-  }
-
-  return typeStrings
 }

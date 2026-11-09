@@ -1,6 +1,6 @@
 import {
   generateQueriesAndMutations,
-  generateReferencedByFields,
+  generateEntryFields,
   generateSearchQuery,
   generateTypeNameQuery,
 } from './queries-mutations-generator.ts'
@@ -29,6 +29,7 @@ import {
   ReferencedByResolver,
   SearchQueryResolver,
   UnionTypeResolver,
+  VersionResolver,
 } from './resolvers/types.ts'
 import { EntryData } from '@commitspark/git-adapter'
 
@@ -63,7 +64,7 @@ export async function generateSchema(
   const generatedTypeNameQuery = generateTypeNameQuery()
   const generatedSearchQuery =
     context.searchAdapter !== undefined ? generateSearchQuery() : undefined
-  const generatedReferencedByFields = generateReferencedByFields(
+  const generatedEntryFields = generateEntryFields(
     schemaAnalyzerResult.entryDirectiveTypes,
   )
 
@@ -138,6 +139,7 @@ ${generatedSchemaRootTypeStrings}`
         | ContextInjectionResolver
         | FieldResolver
         | ReferencedByResolver
+        | VersionResolver
       >
     | UnionTypeResolverRecord
   > = {
@@ -157,10 +159,10 @@ ${generatedSchemaRootTypeStrings}`
       ...generatedObjectTypeFieldResolvers[typeName],
     }
   }
-  for (const field of generatedReferencedByFields) {
-    allGeneratedResolvers[field.typeName] = {
-      ...(allGeneratedResolvers[field.typeName] ?? {}),
-      [field.name]: field.resolver,
+  for (const entryFields of generatedEntryFields) {
+    allGeneratedResolvers[entryFields.typeName] = {
+      ...(allGeneratedResolvers[entryFields.typeName] ?? {}),
+      ...entryFields.resolvers,
     }
   }
 
@@ -170,8 +172,8 @@ ${generatedSchemaRootTypeStrings}`
     generatedIdInputTypeStrings.join('\n'),
     generatedObjectInputTypeStrings.join('\n'),
     generatedUnionInputTypeStrings.join('\n'),
-    generatedReferencedByFields
-      .map((field) => field.typeExtensionString)
+    generatedEntryFields
+      .map((entryFields) => entryFields.typeExtensionString)
       .join('\n'),
     generatedSearchQuery?.typeDefinitionString ?? '',
   ].filter((typeDef) => typeDef.length > 0)

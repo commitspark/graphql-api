@@ -16,6 +16,9 @@
     "url": "git+https://github.com/commitspark/graphql-api.git"
   },
   "private": false,
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "files": [
     "dist/**",
     "!dist/**/*.tsbuildinfo",

@@ -37,7 +37,7 @@ in [this repository](https://github.com/commitspark/git-adapter).
 |---------------------------------------------------------------------|------------------------------------------------------------|---------------------------------------------|
 | [GitHub](https://github.com/commitspark/git-adapter-github)         | Provides support for Git repositories hosted on github.com | `npm i @commitspark/git-adapter-github`     |
 | [GitLab (SaaS)](https://github.com/commitspark/git-adapter-gitlab)  | Provides support for Git repositories hosted on gitlab.com | `npm i @commitspark/git-adapter-gitlab`     |
-| [Filesystem](https://github.com/commitspark/git-adapter-filesystem) | Provides read-only access to files on the filesystem level | `npm i @commitspark/git-adapter-filesystem` |
+| [Filesystem](https://github.com/commitspark/git-adapter-filesystem) | Provides support for Git repositories in the filesystem    | `npm i @commitspark/git-adapter-filesystem` |
 
 ## Installing search support
 

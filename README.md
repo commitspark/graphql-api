@@ -88,13 +88,17 @@ schema {
 type Query {
     everyRocketFlight: [RocketFlight!]
     RocketFlight(id: ID!): RocketFlight
-    _typeName(id: ID!): String
+    _typeName(id: ID!): String!
 }
 
 type Mutation {
     createRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight
-    updateRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight
-    deleteRocketFlight(id: ID!, commitMessage: String): ID
+    updateRocketFlight(id: ID!, data: RocketFlightInput!, expectedVersion: String, commitMessage: String): RocketFlight
+    deleteRocketFlight(id: ID!, expectedVersion: String, commitMessage: String): ID
+}
+
+input RocketFlightIdInput {
+    id: ID!
 }
 
 input RocketFlightInput {
@@ -105,7 +109,15 @@ input RocketFlightInput {
 input PayloadInput {
     weight: Int!
 }
+
+extend type RocketFlight {
+    _referencedBy: [ID!]!
+    _version: String!
+}
 ```
+
+The schema returned by [`getSchema()`](#getschema) additionally contains descriptions of the generated arguments and
+fields.
 
 # Making GraphQL calls
 

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@apollo/server`, instead of declaring support for versions 14 to 17
 - Omit the declaration `directive @oneOf on INPUT_OBJECT` from the generated schema, as `@oneOf` is built into
   `graphql` since version 16.9
+- Upgrade to @graphql-tools/schema 11.0.8 and @graphql-tools/utils 13.2.1, which require Node.js 22.18 or newer
 
 ### Fixed
 

@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Trim argument `commitMessage` of mutations and document it in the generated schema; mutations in the generated schema
   are now printed with one argument per line
 - Upgrade to @commitspark/git-adapter 2.0.0-beta.3
+- Require peer dependency `graphql` in version `^16.11.0`, which is the version range already required by dependency
+  `@apollo/server`, instead of declaring support for versions 14 to 17
+- Omit the declaration `directive @oneOf on INPUT_OBJECT` from the generated schema, as `@oneOf` is built into
+  `graphql` since version 16.9
 
 ### Fixed
 

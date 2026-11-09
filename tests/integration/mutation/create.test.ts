@@ -323,6 +323,60 @@ type EntryB @Entry {
     expect(result.ref).toBe(commitHash)
   })
 
+  it('should not create an entry with more than one member of an inline union', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    union: MyUnion
+}
+
+union MyUnion =
+    | TypeA
+    | TypeB
+
+type TypeA {
+    field1: String
+}
+
+type TypeB {
+    field2: String
+}`
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!) {
+        data: createEntryA(id: $id, data: $mutationData) {
+          id
+        }
+      }`,
+      variables: {
+        id: 'A',
+        mutationData: {
+          union: { TypeA: { field1: 'a' }, TypeB: { field2: 'b' } },
+        },
+      },
+    })
+
+    expect(result.errors).toMatchObject([
+      {
+        message: expect.stringContaining('OneOf'),
+        extensions: { code: 'BAD_USER_INPUT' },
+      },
+    ])
+    expect(result.data).toBeUndefined()
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
+
   it('should not create an entry that references a non-existent entry of the same type', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'

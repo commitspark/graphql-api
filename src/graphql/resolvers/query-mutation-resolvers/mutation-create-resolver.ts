@@ -40,6 +40,12 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
       },
     )
   }
+  const commitMessage = getCommitMessage(
+    args.commit,
+    'Create',
+    context.type.name,
+    args.id,
+  )
 
   await commitWithRetry(context, async () => {
     let existingEntry
@@ -72,12 +78,7 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
       ref: context.branch,
       parentSha: context.getCurrentHash(),
       entries: [newEntryDraft],
-      message: getCommitMessage(
-        args.commitMessage,
-        'Create',
-        context.type.name,
-        args.id,
-      ),
+      ...commitMessage,
     }
   })
 

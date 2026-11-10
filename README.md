@@ -92,9 +92,14 @@ type Query {
 }
 
 type Mutation {
-    createRocketFlight(id: ID!, data: RocketFlightInput!, commitMessage: String): RocketFlight
-    updateRocketFlight(id: ID!, data: RocketFlightInput!, expectedVersion: String, commitMessage: String): RocketFlight
-    deleteRocketFlight(id: ID!, expectedVersion: String, commitMessage: String): ID
+    createRocketFlight(id: ID!, data: RocketFlightInput!, commit: _CommitInput): RocketFlight
+    updateRocketFlight(id: ID!, data: RocketFlightInput!, expectedVersion: String, commit: _CommitInput): RocketFlight
+    deleteRocketFlight(id: ID!, expectedVersion: String, commit: _CommitInput): ID
+}
+
+input _CommitInput {
+    message: String
+    body: String
 }
 
 input RocketFlightIdInput {
@@ -158,8 +163,14 @@ const rocketFlight = response.data.rocketFlight
 // ...
 ```
 
-When creating commits by calling mutations, mutation argument `commitMessage` is trimmed and if omitted or empty, a
-default message such as `Update RocketFlight "VA256"` is generated from the mutation, type and ID of the entry.
+Mutations accept an optional argument `commit` to describe the commit they create:
+
+* `message` summarizes the change in a single line. A message containing line breaks is rejected with error code
+  `BAD_USER_INPUT`. If omitted or empty, a message such as `Update RocketFlight "VA256"` is generated from the
+  mutation, type and ID of the entry.
+* `body` optionally holds details of the change and may span multiple lines.
+
+Both are trimmed. How message and body are stored depends on the Git adapter, e.g. as commit headline and body.
 
 # Technical documentation
 

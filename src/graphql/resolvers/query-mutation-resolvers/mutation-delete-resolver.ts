@@ -15,6 +15,13 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
   context,
   info,
 ) => {
+  const commitMessage = getCommitMessage(
+    args.commit,
+    'Delete',
+    context.type.name,
+    args.id,
+  )
+
   await commitWithRetry(context, async () => {
     const entry: Entry = await findByTypeId(context, context.type.name, args.id)
     await assertExpectedVersion(context, args.id, args.expectedVersion)
@@ -46,12 +53,7 @@ export const mutationDeleteResolver: QueryMutationResolver<string> = async (
           deletion: true,
         },
       ],
-      message: getCommitMessage(
-        args.commitMessage,
-        'Delete',
-        context.type.name,
-        args.id,
-      ),
+      ...commitMessage,
     }
   })
 

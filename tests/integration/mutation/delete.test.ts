@@ -67,12 +67,12 @@ type EntryA @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!) {
-        data: deleteEntryA(id: $id, commitMessage: $commitMessage)
+      query: `mutation ($id: ID!, $commit: _CommitInput!) {
+        data: deleteEntryA(id: $id, commit: $commit)
       }`,
       variables: {
         id: entryAId,
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 
@@ -107,12 +107,12 @@ type EntryA @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!) {
-        data: deleteEntryA(id: $id, commitMessage: $commitMessage)
+      query: `mutation ($id: ID!, $commit: _CommitInput!) {
+        data: deleteEntryA(id: $id, commit: $commit)
       }`,
       variables: {
         id: entryAId,
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 
@@ -180,12 +180,12 @@ type EntryB @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!) {
-        data: deleteEntryB(id: $id, commitMessage: $commitMessage)
+      query: `mutation ($id: ID!, $commit: _CommitInput!) {
+        data: deleteEntryB(id: $id, commit: $commit)
       }`,
       variables: {
         id: entryBId,
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 
@@ -237,12 +237,12 @@ type EntryB @Entry {
 
     const client = await createClient(gitAdapter)
     return client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $commitMessage: String!) {
-        data: delete${typeName}(id: $id, commitMessage: $commitMessage)
+      query: `mutation ($id: ID!, $commit: _CommitInput!) {
+        data: delete${typeName}(id: $id, commit: $commit)
       }`,
       variables: {
         id: id,
-        commitMessage: 'My message',
+        commit: { message: 'My message' },
       },
     })
   }

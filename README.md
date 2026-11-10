@@ -24,7 +24,7 @@ There are two common ways to use this library:
    ```
 2. By making GraphQL calls over HTTP to this library wrapped in a webserver or Lambda function.
 
-   You can find an example Node.js Express web server implementation 
+   You can find an example Node.js Express web server implementation
    [here](https://github.com/commitspark/example-http-express).
 
 ## Installing Git provider support
@@ -121,9 +121,6 @@ extend type RocketFlight {
 }
 ```
 
-The schema returned by [`getSchema()`](#getschema) additionally contains descriptions of the generated arguments and
-fields.
-
 # Making GraphQL calls
 
 Let's now assume your repository is located on GitHub and you want to query for a single rocket flight.
@@ -163,93 +160,7 @@ const rocketFlight = response.data.rocketFlight
 // ...
 ```
 
-Mutations accept an optional argument `commit` to describe the commit they create:
-
-* `message` summarizes the change in a single line. A message containing line breaks is rejected with error code
-  `BAD_USER_INPUT`. If omitted or empty, a message such as `Update RocketFlight "VA256"` is generated from the
-  mutation, type and ID of the entry.
-* `body` optionally holds details of the change and may span multiple lines.
-
-Both are trimmed. How message and body are stored depends on the Git adapter, e.g. as commit headline and body.
-
 # Technical documentation
-
-## API
-
-### createClient()
-
-This function is used to create a Commitspark GraphQL API client instance.
-
-Argument `gitAdapter` expects a Commitspark git adapter instance which is then used by the client to access the
-adapter's Git repository.
-
-Optional argument `options` supports the following settings:
-
-* `searchAdapter`: A Commitspark search adapter instance. If set, query `_search` is added to the GraphQL API (see
-  [Search](#search)).
-
-### Client
-
-#### postGraphQL()
-
-This function is used to make GraphQL requests.
-
-Request execution is handled by ApolloServer behind the scenes.
-
-Argument `request` expects a conventional GraphQL query and supports query variables as well as introspection.
-
-#### getSchema()
-
-This function allows retrieving the GraphQL schema extended by Commitspark as a string.
-
-Compared to schema data obtained through GraphQL introspection, the schema returned by this function also includes
-directive declarations and annotations, allowing for development of additional tools that require this information.
-
-## Picking from the Git tree
-
-As Commitspark is Git-based, all GraphQL requests support traversing the Git commit tree by setting the `ref` argument
-in library calls to a
-
-* ref (i.e. commit hash),
-* branch name, or
-* tag name (light or regular)
-
-This enables great flexibility, e.g. to use branches in order to enable data (entry) development workflows, to retrieve
-a specific (historic) commit where it is guaranteed that entries are immutable, or to retrieve entries by tag such as
-one that marks the latest reviewed and approved version in a repository.
-
-### Writing data
-
-Mutation operations work on branch names only and (when successful) each append a new commit on
-HEAD in the given branch.
-
-To guarantee deterministic results, mutations in calls with multiple mutations are processed sequentially (see
-the [official GraphQL documentation](https://graphql.org/learn/queries/#multiple-fields-in-mutations) for details).
-
-### Concurrent writes
-
-Every `@Entry` type has a generated field `_version` that changes whenever the stored entry changes. Mutations
-`update<Type>` and `delete<Type>` accept an optional argument `expectedVersion`. If it is given and the entry has a
-different version, the mutation fails with error code `CONFLICT` instead of overwriting changes made in the meantime.
-Callers that let users edit entries are recommended to read `_version` together with the entry and pass it as
-`expectedVersion` when saving, e.g.:
-
-```graphql
-mutation {
-  updateMyEntry(id: "my-id", data: { name: "New name" }, expectedVersion: "<_version as read before>") {
-    _version
-  }
-}
-```
-
-Each mutation is validated (expected version, references, etc.) against the latest commit of the branch and passed to
-the Git adapter together with this commit as expected parent. Git adapters must only add the new commit if the branch
-still points to that parent. If another commit was added to the branch in the meantime, the mutation is validated again
-against the new branch head and committed on top of it, up to three times in total, so that changes to unrelated
-entries do not lead to errors. If the attempts are exhausted, the mutation fails with error code `CONFLICT`.
-
-How reliably a Git adapter detects a moved branch depends on its Git provider; see the documentation of the respective
-adapter for limitations.
 
 ## Data model
 
@@ -306,7 +217,7 @@ data:
 The path of an entry file relative to the entry folder excluding file extension constitutes the entry ID. Entry IDs
 can contain `/` for logical grouping, however the entry type is always taken from the file's metadata.
 
-Entry IDs are case-sensitive, must map to valid unique file paths within the entries folder, and must not contain 
+Entry IDs are case-sensitive, must map to valid unique file paths within the entries folder, and must not contain
 characters `\ * " < > : | ?` or control characters. Files and folders whose name starts with `.` are ignored by
 Commitspark.
 
@@ -442,7 +353,7 @@ query {
             }
             ... on SolidRocketMotor {
                 fuelMass
-           }
+            }
         }
     }
 }
@@ -453,27 +364,94 @@ removed:
 
 ```json
 {
-  "id": "VA256",   
+  "id": "VA256",
   "stages": [
-     {
-        "__typename": "LiquidRocketMotor",
-        "fuelTemperature": 21
-     },
-     {
-        "__typename": "SolidRocketMotor",
-        "fuelMass": 200000
-     }
+    {
+      "__typename": "LiquidRocketMotor",
+      "fuelTemperature": 21
+    },
+    {
+      "__typename": "SolidRocketMotor",
+      "fuelMass": 200000
+    }
   ]
 }
 ```
 
-## Search
+## Navigating the Git repository
+
+As Commitspark is Git-based, `postGraphQL()` and `getSchema()` take a `ref` argument that selects the commit to work
+on. It can be a
+
+* branch name,
+* tag name (lightweight or annotated), or
+* commit hash, if supported by the Git adapter
+
+## Reading and writing data
+
+### Queries
+
+The given `ref` is resolved to a commit when request processing starts. All queries in a request read data from this
+commit, which is returned as `ref` of the response.
+
+### Mutations
+
+Mutations work on branch names only, as they create new commits.
+
+Each successful mutation appends a new commit on HEAD of the given branch.
+
+#### Multiple mutations in one request
+
+To guarantee deterministic results, mutations in a request containing multiple mutations are processed sequentially (see
+the [official GraphQL documentation](https://graphql.org/learn/queries/#multiple-fields-in-mutations) for details). The
+commit internally resolved as branch HEAD for the duration of the request is updated after each successful mutation.
+
+#### Mutations from multiple concurrent requests
+
+When a repository is written to concurrently, whether through one or several Commitspark instances or from other
+sources, the following logic guards against race conditions and data loss:
+
+Every `@Entry` type has a generated field `_version` that changes whenever the stored entry changes. Mutations
+`update<Type>` and `delete<Type>` accept an optional argument `expectedVersion`. If it is given and the entry has a
+different version, the mutation fails with error code `CONFLICT` instead of overwriting changes made in the meantime.
+Callers that let users edit entries are recommended to read `_version` together with the entry and pass it as
+`expectedVersion` when saving, e.g.:
+
+```graphql
+mutation {
+    updateMyEntry(id: "my-id", data: { name: "New name" }, expectedVersion: "<_version as read before>") {
+        _version
+    }
+}
+```
+
+Each mutation is validated (expected version, references, etc.) against the latest commit of the branch and passed to
+the Git adapter together with this commit as expected parent. Git adapters must only add the new commit if the branch
+still points to that parent. If another commit was added to the branch in the meantime, the mutation is validated again
+against the new branch head and committed on top of it, up to three times in total, so that changes to unrelated
+entries do not lead to errors. If the attempts are exhausted, the mutation fails with error code `CONFLICT`.
+
+How reliably a Git adapter detects a moved branch depends on its Git provider; see the documentation of the respective
+adapter for limitations.
+
+#### Commit messages
+
+Mutations accept an optional argument `commit` to describe the commit they create:
+
+* `message` summarizes the change in a single line. A message containing line breaks is rejected with error code
+  `BAD_USER_INPUT`. If omitted or empty, a message such as `Update RocketFlight "VA256"` is generated from the
+  mutation, type and ID of the entry.
+* `body` optionally holds details of the change and may span multiple lines.
+
+Both are trimmed. How message and body are stored depends on the Git adapter, e.g. as commit headline and body.
+
+### Search
 
 Entries can be searched by text using query `_search` once a search adapter is passed to `createClient()`. How a
 search is performed (e.g. keyword search, semantic search or a combination of both) depends on the search adapter
 (see [Installing search support](#installing-search-support)).
 
-### Marking fields as searchable
+#### Marking fields as searchable
 
 Only fields explicitly marked with directive `@Searchable` are searchable. The directive must be declared in the
 schema and can be used on types and fields:
@@ -508,7 +486,7 @@ The following rules apply:
 * The directive of a type does not extend to fields of other types used in it. Such types must be marked themselves.
 * References to other entries are never followed. Each entry is only searchable by its own data.
 
-### Querying
+#### Search queries
 
 ```graphql
 query {
@@ -564,15 +542,52 @@ The following error codes are returned together with error codes of Git adapters
 documented [here](https://github.com/commitspark/git-adapter) and error codes of search adapters as
 documented [here](https://github.com/commitspark/search-adapter):
 
-| Error code             | Description                                                        |
-|------------------------|--------------------------------------------------------------------|
-| `BAD_USER_INPUT`       | Invalid input data provided by the caller                          |
-| `NOT_FOUND`            | Requested resource (entry, type, etc.) does not exist              |
-| `BAD_REPOSITORY_DATA`  | Data in the repository is malformed or invalid according to schema |
-| `BAD_SCHEMA`           | Schema definition is malformed or invalid                          |
-| `IN_USE`               | Entry cannot be deleted because it is referenced by other entries  |
-| `CONFLICT`             | Entry or branch was changed concurrently (see "Concurrent writes") |
-| `INTERNAL_ERROR`       | Internal processing error                                          |
+| Error code            | Description                                                                                  |
+|-----------------------|----------------------------------------------------------------------------------------------|
+| `BAD_USER_INPUT`      | Invalid input data provided by the caller                                                    |
+| `NOT_FOUND`           | Requested resource (entry, type, etc.) does not exist                                        |
+| `BAD_REPOSITORY_DATA` | Data in the repository is malformed or invalid according to schema                           |
+| `BAD_SCHEMA`          | Schema definition is malformed or invalid                                                    |
+| `IN_USE`              | Entry cannot be deleted because it is referenced by other entries                            |
+| `CONFLICT`            | Entry or branch was changed concurrently (see "Mutations from multiple concurrent requests") |
+| `INTERNAL_ERROR`      | Internal processing error                                                                    |
+
+# TypeScript API
+
+## createClient()
+
+This function is used to create a Commitspark GraphQL API client instance.
+
+Argument `gitAdapter` expects a Commitspark git adapter instance which is then used by the client to access the
+adapter's Git repository.
+
+Optional argument `options` supports the following settings:
+
+* `searchAdapter`: A Commitspark search adapter instance. If set, query `_search` is added to the GraphQL API (see
+  [Search](#search)).
+
+## Client
+
+### postGraphQL()
+
+This function is used to make GraphQL requests.
+
+Request execution is handled by ApolloServer behind the scenes.
+
+Argument `ref` expects a branch name, tag name or commit hash (see
+[Navigating the Git repository](#navigating-the-git-repository)).
+
+Argument `request` expects a conventional GraphQL query and supports query variables as well as introspection.
+
+### getSchema()
+
+This function allows retrieving the GraphQL schema extended by Commitspark as a string.
+
+Compared to schema data obtained through GraphQL introspection, the schema returned by this function also includes
+directive declarations and annotations, allowing for development of additional tools that require this information.
+
+Argument `ref` expects a branch name, tag name or commit hash (see
+[Navigating the Git repository](#navigating-the-git-repository)).
 
 # License
 

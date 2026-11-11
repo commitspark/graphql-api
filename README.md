@@ -412,6 +412,13 @@ Mutations work on branch names only, as they create new commits.
 
 Each successful mutation appends a new commit on HEAD of the given branch.
 
+Before committing, Commitspark validates the resulting entry against the schema (see
+[Changing the schema](#changing-the-schema)). If the entry would not match the schema, no commit is made and the
+mutation fails with error `BAD_USER_INPUT`, listing the problems under `extensions.commitspark.violations`. This also
+applies to existing data of fields not included in an update, e.g. a stored value that no longer matches a changed field
+type; such a value can be fixed by including the field in the update. Data stored under keys that are not fields in the
+schema is retained by updates.
+
 #### Multiple mutations in one request
 
 To guarantee deterministic results, mutations in a request containing multiple mutations are processed sequentially (see

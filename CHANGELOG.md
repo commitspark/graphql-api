@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fail reading an entry with a missing non-null list instead of returning an empty list, consistent with other missing
   non-null values
 - Fail reading a reference to an entry of a type that the field does not permit instead of returning that entry's data
+- Validate the resulting entry against the schema before committing a create or update mutation and fail with
+  `BAD_USER_INPUT` without committing if it does not match, so that mutations cannot write entries that fail to read;
+  errors list all problems under `violations` instead of naming a single field
 
 ## [2.0.0-beta.5] - 2026-11-11
 

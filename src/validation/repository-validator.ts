@@ -1,6 +1,6 @@
 import { GraphQLSchema } from 'graphql'
 import { makeExecutableSchema } from '@graphql-tools/schema'
-import { Entry } from '@commitspark/git-adapter'
+import { Entry, EntryDraft } from '@commitspark/git-adapter'
 import { ApolloContext } from '../client.ts'
 import { generateSchema } from '../graphql/schema-generator.ts'
 import { getValidationResult } from '../graphql/schema-validator.ts'
@@ -55,6 +55,49 @@ export async function validateRepository(
 }
 
 /**
+ * Throws `BAD_USER_INPUT` if any entry written by a commit draft would have violations of severity error, so that
+ * commits never create entries that cannot be read. Entries are validated against the current commit of the context
+ * with the draft applied, e.g. so that a new entry can reference itself. Unknown keys are retained and only reported
+ * as warnings, so they do not prevent the commit.
+ */
+export async function assertValidEntryDrafts(
+  context: ApolloContext,
+  generatedSchema: GraphQLSchema,
+  entryDrafts: EntryDraft[],
+): Promise<void> {
+  const entriesRecord = await context.repositoryCache.getEntriesRecord(
+    context,
+    context.getCurrentHash(),
+  )
+  const draftsById = new Map(entryDrafts.map((draft) => [draft.id, draft]))
+  const getEntryType = (id: string) => {
+    const draft = draftsById.get(id)
+    if (draft !== undefined) {
+      return draft.deletion ? undefined : draft.metadata.type
+    }
+    return entriesRecord.byId.get(id)?.metadata.type
+  }
+
+  const errors = entryDrafts
+    .filter((draft) => !draft.deletion)
+    .flatMap((draft) => validateEntry(generatedSchema, draft, getEntryType))
+    .filter((violation) => violation.severity === ViolationSeverity.ERROR)
+  if (errors.length === 0) {
+    return
+  }
+  throw createError(
+    `The resulting entry data does not match the schema: ${formatViolations(errors)}`,
+    ErrorCode.BAD_USER_INPUT,
+    {
+      fieldValue: [...new Set(errors.map((violation) => violation.entryId))]
+        .sort()
+        .join(', '),
+      violations: errors,
+    },
+  )
+}
+
+/**
  * Throws `BAD_REPOSITORY_DATA` if an entry has violations of severity error at the current commit of the context.
  * Called for every entry before its data is returned, so that resolvers only process data that matches the schema.
  */
@@ -76,14 +119,7 @@ export async function assertValidEntry(
     return
   }
   throw createError(
-    `Entry "${entry.id}" does not match the schema: ` +
-      errors
-        .map((violation) =>
-          violation.path.length > 0
-            ? `${violation.path.join('.')}: ${violation.message}`
-            : violation.message,
-        )
-        .join(' '),
+    `Entry "${entry.id}" does not match the schema: ${formatViolations(errors)}`,
     ErrorCode.BAD_REPOSITORY_DATA,
     {
       typeName: entry.metadata.type,
@@ -91,4 +127,18 @@ export async function assertValidEntry(
       violations: errors,
     },
   )
+}
+
+function formatViolations(violations: Violation[]): string {
+  return violations
+    .map((violation) => {
+      const location = [
+        violation.entryId,
+        ...(violation.path.length > 0 ? [violation.path.join('.')] : []),
+      ]
+        .filter((part) => part !== undefined)
+        .join(' ')
+      return `${location}: ${violation.message}`
+    })
+    .join(' ')
 }

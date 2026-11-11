@@ -2,14 +2,16 @@ import {
   assertExpectedVersion,
   findByTypeId,
 } from '../../../persistence/persistence.ts'
-import { validateEntryReferences } from '../../schema-utils/entry-reference-util.ts'
 import { isObjectType } from 'graphql'
-import { EntryData } from '@commitspark/git-adapter'
+import { EntryData, EntryDraft } from '@commitspark/git-adapter'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
 import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
-import { assertValidEntry } from '../../../validation/repository-validator.ts'
+import {
+  assertValidEntry,
+  assertValidEntryDrafts,
+} from '../../../validation/repository-validator.ts'
 
 function mergeData(
   existingEntryData: EntryData,
@@ -34,8 +36,6 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
       {},
     )
   }
-  // narrowed type, as narrowing does not apply within the callback below
-  const entryType = context.type
   const commitMessage = getCommitMessage(
     args.commit,
     'Update',
@@ -51,21 +51,20 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
     )
     await assertExpectedVersion(context, args.id, args.expectedVersion)
 
-    const mergedData = mergeData(existingEntry.data ?? null, args.data ?? null)
-    await validateEntryReferences(entryType, context, mergedData)
+    const entryDraft: EntryDraft = {
+      id: existingEntry.id,
+      // only the type is written, which removes metadata no longer in use from existing entries
+      metadata: { type: existingEntry.metadata.type },
+      // unknown keys of the existing data are retained
+      data: mergeData(existingEntry.data ?? null, args.data ?? null),
+      deletion: false,
+    }
+    await assertValidEntryDrafts(context, info.schema, [entryDraft])
 
     return {
       ref: context.branch,
       parentSha: context.getCurrentHash(),
-      entries: [
-        {
-          id: existingEntry.id,
-          // only the type is written, which removes metadata no longer in use from existing entries
-          metadata: { type: existingEntry.metadata.type },
-          data: mergedData,
-          deletion: false,
-        },
-      ],
+      entries: [entryDraft],
       ...commitMessage,
     }
   })

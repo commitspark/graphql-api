@@ -1,6 +1,5 @@
 import { findById, findByTypeId } from '../../../persistence/persistence.ts'
 import { isObjectType } from 'graphql'
-import { validateEntryReferences } from '../../schema-utils/entry-reference-util.ts'
 import {
   EntryData,
   EntryDraft,
@@ -10,7 +9,10 @@ import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
 import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
-import { assertValidEntry } from '../../../validation/repository-validator.ts'
+import {
+  assertValidEntry,
+  assertValidEntryDrafts,
+} from '../../../validation/repository-validator.ts'
 
 export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   source,
@@ -25,9 +27,6 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
       {},
     )
   }
-  // narrowed type, as narrowing does not apply within the callback below
-  const entryType = context.type
-
   try {
     validateEntryId(args.id)
   } catch (err) {
@@ -63,8 +62,6 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
       )
     }
 
-    await validateEntryReferences(entryType, context, args.data ?? null)
-
     const newEntryDraft: EntryDraft = {
       id: args.id,
       metadata: {
@@ -73,6 +70,7 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
       data: args.data ?? null,
       deletion: false,
     }
+    await assertValidEntryDrafts(context, info.schema, [newEntryDraft])
 
     return {
       ref: context.branch,

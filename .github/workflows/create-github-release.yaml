@@ -40,4 +40,5 @@ jobs:
                   test -s notes.md || { echo "CHANGELOG.md has no notes for $VERSION"; exit 1; }
                   FLAGS=""
                   [[ "$VERSION" == *-* ]] && FLAGS="--prerelease"
-                  gh release create "v$VERSION" --verify-tag --notes-file notes.md $FLAGS
+                  # without an explicit title, GitHub shows the subject of the tagged commit as release title
+                  gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file notes.md $FLAGS

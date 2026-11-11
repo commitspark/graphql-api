@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add client function `validate()` that checks the schema and all entries against the schema and reports all problems
+  found, so that a repository can be checked after changing the schema, e.g. in CI
+
+### Changed
+
+- Fail reading an entry that does not match the schema with `BAD_REPOSITORY_DATA` and list all its problems in the
+  error, so that reads behave the same for all kinds of mismatches and match the result of `validate()`
+- Fail reading an entry with a missing non-null list instead of returning an empty list, consistent with other missing
+  non-null values
+- Fail reading a reference to an entry of a type that the field does not permit instead of returning that entry's data
+
 ## [2.0.0-beta.5] - 2026-11-11
 
 ### Added

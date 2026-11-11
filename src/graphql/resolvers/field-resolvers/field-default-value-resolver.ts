@@ -1,12 +1,5 @@
 import { FieldResolver } from './types.ts'
-import {
-  GraphQLNonNull,
-  GraphQLUnionType,
-  isListType,
-  isNonNullType,
-  isObjectType,
-  isUnionType,
-} from 'graphql'
+import { isListType, isNonNullType, isObjectType, isUnionType } from 'graphql'
 import { buildsOnTypeWithEntryDirective } from '../../schema-utils/entry-type-util.ts'
 import {
   ENTRY_DIRECTIVE_NAME,
@@ -14,8 +7,12 @@ import {
 } from '../../schema-utils/directive-util.ts'
 import { resolveEntryReference } from './entry-reference-resolver.ts'
 import { resolveUnionValue } from './union-value-resolver.ts'
-import { createError, ErrorCode } from '../../errors.ts'
 
+/**
+ * Resolves the value of a field that holds a list, union or object. Entries are validated before their data is
+ * returned, so the data processed here matches the schema. Missing values of non-null fields are reported by the
+ * validation.
+ */
 export const resolveFieldDefaultValue: FieldResolver = async (
   fieldValue,
   args,
@@ -26,102 +23,41 @@ export const resolveFieldDefaultValue: FieldResolver = async (
     return resolveFieldDefaultValue(
       fieldValue,
       args,
-      {
-        ...context,
-        currentType: context.currentType.ofType,
-        hasNonNullParent: true,
-      },
+      { ...context, currentType: context.currentType.ofType },
       info,
     )
   }
 
+  if (fieldValue === undefined || fieldValue === null) {
+    return null
+  }
+
   if (isListType(context.currentType)) {
-    if (fieldValue === undefined || fieldValue === null) {
-      if (context.hasNonNullParent) {
-        return new Promise((resolve) => resolve([]))
-      } else {
-        return new Promise((resolve) => resolve(null))
-      }
-    }
-
-    if (!Array.isArray(fieldValue)) {
-      throw createError(
-        `Expected array while resolving value for field "${info.fieldName}".`,
-        ErrorCode.BAD_REPOSITORY_DATA,
-        {
-          fieldName: info.fieldName,
-          fieldValue: fieldValue,
-        },
-      )
-    }
-
-    const resultPromises = []
-    for (const item of fieldValue) {
-      const resultPromise = resolveFieldDefaultValue(
-        item,
-        args,
-        {
-          ...context,
-          currentType: context.currentType.ofType,
-          hasNonNullParent: context.hasNonNullParent,
-        },
-        info,
-      )
-      resultPromises.push(resultPromise)
-    }
-    return Promise.all(resultPromises)
+    const itemType = context.currentType.ofType
+    return Promise.all(
+      (fieldValue as unknown[]).map((item) =>
+        resolveFieldDefaultValue(
+          item as typeof fieldValue,
+          args,
+          { ...context, currentType: itemType },
+          info,
+        ),
+      ),
+    )
   }
 
   if (isUnionType(context.currentType)) {
-    if (fieldValue === undefined || fieldValue === null) {
-      if (context.hasNonNullParent) {
-        throw createError(
-          `Cannot generate a default value for NonNull field "${
-            info.parentType.name
-          }.${info.fieldName}" because it is a union field of type "${
-            (info.returnType as GraphQLNonNull<GraphQLUnionType>).ofType.name
-          }". Set a value in your repository data or remove the NonNull declaration in your schema.`,
-          ErrorCode.BAD_REPOSITORY_DATA,
-          {
-            typeName: info.parentType.name,
-            fieldName: info.fieldName,
-          },
-        )
-      } else {
-        return new Promise((resolve) => resolve(null))
-      }
-    }
-
     if (buildsOnTypeWithEntryDirective(context.currentType)) {
       return resolveEntryReference(fieldValue, args, context, info)
     }
-
     return resolveUnionValue(fieldValue, args, context, info)
   }
 
-  if (isObjectType(context.currentType)) {
-    if (fieldValue === undefined || fieldValue === null) {
-      if (context.hasNonNullParent) {
-        throw createError(
-          `Cannot generate a default value for NonNull field "${info.fieldName}" of type ` +
-            `"${info.parentType.name}". Set a value in your repository data or remove the NonNull ` +
-            `declaration in your schema.`,
-          ErrorCode.BAD_REPOSITORY_DATA,
-          {
-            typeName: info.parentType.name,
-            fieldName: info.fieldName,
-          },
-        )
-      } else {
-        return new Promise((resolve) => resolve(null))
-      }
-    }
-
-    if (hasDirective(context.currentType, ENTRY_DIRECTIVE_NAME)) {
-      return resolveEntryReference(fieldValue, args, context, info)
-    }
-
-    return fieldValue
+  if (
+    isObjectType(context.currentType) &&
+    hasDirective(context.currentType, ENTRY_DIRECTIVE_NAME)
+  ) {
+    return resolveEntryReference(fieldValue, args, context, info)
   }
 
   return fieldValue

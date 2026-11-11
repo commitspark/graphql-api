@@ -1,41 +1,18 @@
 import { FieldResolver } from './types.ts'
-import { isNamedType } from 'graphql'
+import { EntryData } from '@commitspark/git-adapter'
 import { findById } from '../../../persistence/persistence.ts'
-import { createError, ErrorCode } from '../../errors.ts'
+import { assertValidEntry } from '../../../validation/repository-validator.ts'
 
 export const resolveEntryReference: FieldResolver = async (
   fieldValue,
-  args,
+  _args,
   context,
   info,
 ) => {
-  void info
-  if (!isNamedType(context.currentType)) {
-    throw createError(
-      `Expected context.currentType type to be a named type.`,
-      ErrorCode.INTERNAL_ERROR,
-      {
-        fieldValue: fieldValue,
-      },
-    )
-  }
-
-  if (
-    fieldValue === null ||
-    typeof fieldValue !== 'object' ||
-    !('id' in fieldValue) ||
-    typeof fieldValue.id !== 'string'
-  ) {
-    throw createError(
-      'Expected fieldValue.id to be a string.',
-      ErrorCode.INTERNAL_ERROR,
-      {
-        fieldValue: fieldValue,
-      },
-    )
-  }
-
-  const entry = await findById(context, fieldValue.id)
+  // the shape of references is ensured by validating the referencing entry before its data is returned
+  const reference = fieldValue as EntryData & { id: string }
+  const entry = await findById(context, reference.id)
+  await assertValidEntry(context, info.schema, entry)
 
   return { ...entry.data, id: entry.id }
 }

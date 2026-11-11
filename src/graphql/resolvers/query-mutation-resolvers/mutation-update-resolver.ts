@@ -9,6 +9,7 @@ import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
 import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
+import { assertValidEntry } from '../../../validation/repository-validator.ts'
 
 function mergeData(
   existingEntryData: EntryData,
@@ -26,7 +27,6 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
   context,
   info,
 ) => {
-  void info
   if (!isObjectType(context.type)) {
     throw createError(
       `Type "${context.type.name}" cannot be mutated as is not an ObjectType.`,
@@ -71,5 +71,6 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
   })
 
   const updatedEntry = await findByTypeId(context, context.type.name, args.id)
+  await assertValidEntry(context, info.schema, updatedEntry)
   return { ...updatedEntry.data, id: updatedEntry.id }
 }

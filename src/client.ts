@@ -13,6 +13,29 @@ import {
   GraphQLRequest,
 } from '@apollo/server'
 import { RepositoryCacheHandler } from './persistence/cache.ts'
+import { validateRepository } from './validation/repository-validator.ts'
+import { ValidationResult } from './validation/violation.ts'
+
+const createContext = async (
+  gitAdapter: GitAdapter,
+  searchAdapter: SearchAdapter | undefined,
+  repositoryCache: RepositoryCacheHandler,
+  ref: string,
+): Promise<ApolloContext> => {
+  let currentHash = await gitAdapter.getLatestCommitHash(ref)
+  return {
+    branch: ref,
+    gitAdapter: gitAdapter,
+    searchAdapter: searchAdapter,
+    getCurrentHash(): string {
+      return currentHash
+    },
+    setCurrentHash(refArg: string) {
+      currentHash = refArg
+    },
+    repositoryCache: repositoryCache,
+  }
+}
 
 export type VariableValues = { [name: string]: unknown }
 
@@ -33,19 +56,12 @@ export const postGraphQL = async <
   ref: string,
   request: ApolloExecuteOperationRequest<TData, TVariables>,
 ): Promise<GraphQLResponse<TData | null>> => {
-  let currentHash = await gitAdapter.getLatestCommitHash(ref)
-  const context: ApolloContext = {
-    branch: ref,
-    gitAdapter: gitAdapter,
-    searchAdapter: searchAdapter,
-    getCurrentHash(): string {
-      return currentHash
-    },
-    setCurrentHash(refArg: string) {
-      currentHash = refArg
-    },
-    repositoryCache: repositoryCache,
-  }
+  const context = await createContext(
+    gitAdapter,
+    searchAdapter,
+    repositoryCache,
+    ref,
+  )
 
   const apolloDriverConfig: ApolloServerOptions<ApolloContext> =
     await createApolloConfig(context)
@@ -80,19 +96,12 @@ export const getSchema = async (
   repositoryCache: RepositoryCacheHandler,
   ref: string,
 ): Promise<SchemaResponse> => {
-  let currentHash = await gitAdapter.getLatestCommitHash(ref)
-  const context: ApolloContext = {
-    branch: ref,
-    gitAdapter: gitAdapter,
-    searchAdapter: searchAdapter,
-    getCurrentHash(): string {
-      return currentHash
-    },
-    setCurrentHash(refArg: string) {
-      currentHash = refArg
-    },
-    repositoryCache: repositoryCache,
-  }
+  const context = await createContext(
+    gitAdapter,
+    searchAdapter,
+    repositoryCache,
+    ref,
+  )
 
   const typeDefinitionStrings = (await generateSchema(context)).typeDefs
   if (!Array.isArray(typeDefinitionStrings)) {
@@ -103,6 +112,22 @@ export const getSchema = async (
     ref: context.getCurrentHash(),
     data: typeDefinitionStrings.join('\n'),
   }
+}
+
+export const validate = async (
+  gitAdapter: GitAdapter,
+  searchAdapter: SearchAdapter | undefined,
+  repositoryCache: RepositoryCacheHandler,
+  ref: string,
+): Promise<ValidationResult> => {
+  const context = await createContext(
+    gitAdapter,
+    searchAdapter,
+    repositoryCache,
+    ref,
+  )
+  const violations = await validateRepository(context)
+  return { ref: context.getCurrentHash(), violations }
 }
 
 export interface ApolloContext {

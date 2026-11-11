@@ -9,8 +9,6 @@ import {
   isUnionType,
 } from 'graphql'
 import { resolveFieldDefaultValue } from './field-resolvers/field-default-value-resolver.ts'
-import { createError, ErrorCode } from '../errors.ts'
-import { isEntryData } from '../util.ts'
 import { ContextInjectionResolver } from './types.ts'
 
 function requiresCustomDefaultValueResolver(type: GraphQLOutputType): boolean {
@@ -59,7 +57,7 @@ export function createObjectTypeFieldResolvers(
       continue
     }
 
-    // only some fields need a custom resolver that generates a default result value on missing source data
+    // only fields holding lists, unions or objects need a custom resolver
     const fieldsForCustomDefaultValueResolver =
       getFieldsForCustomDefaultValueResolver(type)
 
@@ -68,26 +66,11 @@ export function createObjectTypeFieldResolvers(
     for (const field of fieldsForCustomDefaultValueResolver) {
       // the resolvers created here serve as adapters to inject additional context information needed by actual field resolvers
       fieldResolversByFieldName[field.name] = (obj, args, context, info) => {
-        let fieldSourceData = null
-        if (obj) {
-          fieldSourceData = obj[field.name] ?? null
-          if (
-            fieldSourceData !== null &&
-            !(isEntryData(fieldSourceData) || Array.isArray(fieldSourceData))
-          ) {
-            throw createError(
-              `Expected an object or array as data for passing to resolver of field "${field.name}" in type "${typeName}".`,
-              ErrorCode.BAD_REPOSITORY_DATA,
-              {
-                fieldName: field.name,
-                typeName: typeName,
-              },
-            )
-          }
-        }
-
+        // entries are validated before their data is returned, so field data matches the field's type
         return resolveFieldDefaultValue(
-          fieldSourceData,
+          (obj?.[field.name] ?? null) as Parameters<
+            typeof resolveFieldDefaultValue
+          >[0],
           args,
           {
             ...context,

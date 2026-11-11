@@ -10,6 +10,7 @@ import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
 import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
+import { assertValidEntry } from '../../../validation/repository-validator.ts'
 
 export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   source,
@@ -17,7 +18,6 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   context,
   info,
 ) => {
-  void info
   if (!isObjectType(context.type)) {
     throw createError(
       `Entry of type "${context.type.name}" cannot be created as is not an ObjectType.`,
@@ -83,5 +83,6 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   })
 
   const newEntry = await findByTypeId(context, context.type.name, args.id)
+  await assertValidEntry(context, info.schema, newEntry)
   return { ...newEntry.data, id: newEntry.id }
 }

@@ -198,6 +198,18 @@ conditions:
 
 This keeps the number of entries low and performance up.
 
+### Changing the schema
+
+Entries are stored independently of the schema, so changing the schema can leave existing entries that no longer match
+it, e.g. after adding a non-null field, changing the type of a field or renaming a type. Commitspark does not fill in
+missing values: reading an entry that does not match the schema fails with error `BAD_REPOSITORY_DATA`, including when
+the entry is reached through a reference. The error lists the problems found in the entry under
+`extensions.commitspark.violations`. Data stored under keys that are not fields in the schema, e.g. after renaming or
+removing a field, does not prevent reading an entry.
+
+We recommend checking a repository with [`validate()`](#validate) after changing the schema, e.g. in CI, and updating
+affected entries in the same commit as the schema.
+
 ## Entry storage
 
 Entries, i.e. instances of data types annotated with `@Entry`, are stored as `.yaml` YAML text files inside
@@ -380,7 +392,7 @@ removed:
 
 ## Navigating the Git repository
 
-As Commitspark is Git-based, `postGraphQL()` and `getSchema()` take a `ref` argument that selects the commit to work
+As Commitspark is Git-based, `postGraphQL()`, `getSchema()` and `validate()` take a `ref` argument that selects the commit to work
 on. It can be a
 
 * branch name,
@@ -588,6 +600,38 @@ directive declarations and annotations, allowing for development of additional t
 
 Argument `ref` expects a branch name, tag name or commit hash (see
 [Navigating the Git repository](#navigating-the-git-repository)).
+
+### validate()
+
+This function checks the schema and all entries against the schema, and returns all problems found instead of failing
+on the first one. Entries are only checked if the schema is valid.
+
+Argument `ref` expects a branch name, tag name or commit hash (see
+[Navigating the Git repository](#navigating-the-git-repository)).
+
+The result holds the commit hash that was checked in `ref` and a list of `violations`. Each violation has a `code`, a
+`severity`, a `message`, the `entryId` of the affected entry (not set for problems of the schema) and the `path` of the
+affected value within the entry data, e.g. `['sections', 2, 'Hero', 'headline']`. Violations of severity `ERROR` make
+reading the entry fail; violations of severity `WARNING` do not.
+
+| Violation code           | Severity  | Description                                                                |
+|--------------------------|-----------|----------------------------------------------------------------------------|
+| `INVALID_SCHEMA`         | `ERROR`   | The schema is malformed or invalid                                         |
+| `UNKNOWN_ENTRY_TYPE`     | `ERROR`   | The type of an entry is not a type with directive `@Entry` in the schema   |
+| `INVALID_VALUE`          | `ERROR`   | A value does not match its field, e.g. a missing value of a non-null field |
+| `DANGLING_REFERENCE`     | `ERROR`   | A reference points to an entry that does not exist                         |
+| `INCOMPATIBLE_REFERENCE` | `ERROR`   | A reference points to an entry of a type that the field does not permit    |
+| `UNKNOWN_FIELD`          | `WARNING` | Data is stored under a key that is not a field in the schema               |
+
+Example of a check that fails on errors and warnings, e.g. in CI:
+
+```typescript
+const result = await client.validate('main')
+for (const violation of result.violations) {
+  console.log(violation.severity, violation.entryId ?? '', violation.path.join('.'), violation.message)
+}
+process.exitCode = result.violations.length > 0 ? 1 : 0
+```
 
 # License
 

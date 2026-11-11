@@ -10,36 +10,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add field `_version` to every `@Entry` type and optional argument `expectedVersion` to update and delete mutations,
-  which fail with error code `CONFLICT` if the entry has a different version, so that changes made since an entry was
-  read are not overwritten
-- Validate and commit a mutation again against the new branch head, up to three times in total, when the Git adapter
-  reports with `CONFLICT` that the branch has moved, so that concurrent changes to unrelated entries do not lead to
-  errors
+  so that saving an entry fails with `CONFLICT` instead of overwriting changes made since the entry was read
+- Repeat a mutation against the new branch head, up to three attempts in total, when another commit was added to the
+  branch in the meantime, so that concurrent changes to unrelated entries do not cause errors
 
 ### Changed
 
-- Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
 - Replace mutation argument `commitMessage` with `commit: { message, body }`, so that commits can explain a change in a
   body in addition to the single-line message; messages containing line breaks are rejected with `BAD_USER_INPUT`
-- Print mutations in the generated schema with one argument per line
+- Reject schemas with `@Entry` types that have no field `id` of type `ID!` with error `BAD_SCHEMA`
+- Print each argument of generated mutations on its own line, so that argument descriptions in the schema are readable
+- Omit the declaration `directive @oneOf` from the generated schema, as `@oneOf` is built into `graphql` since 16.9
+- Require peer dependency `graphql` in version `^16.11.0`, which `@apollo/server` already required, instead of
+  declaring support for versions 14 to 17
+- Require Node.js 22.18 or newer, as required by the upgraded `@graphql-tools` packages, and declare it in `engines`
 - Upgrade to @commitspark/git-adapter 2.0.0-beta.4
-- Require peer dependency `graphql` in version `^16.11.0`, which is the version range already required by dependency
-  `@apollo/server`, instead of declaring support for versions 14 to 17
-- Omit the declaration `directive @oneOf on INPUT_OBJECT` from the generated schema, as `@oneOf` is built into
-  `graphql` since version 16.9
-- Upgrade to @graphql-tools/schema 11.0.8 and @graphql-tools/utils 13.2.1, which require Node.js 22.18 or newer
-- Declare the required Node.js version `>=22.18.0` in field `engines` of `package.json`
 
 ### Fixed
 
-- Return errors of Git adapters during commits with their error code, e.g. `CONFLICT` or `FORBIDDEN`, instead of a
-  generic internal server error
-- Include fields of type `ID` in generated input types, except field `id` of `@Entry` types, so that e.g. `sku: ID` or
-  an `id` field of an embedded type can be written
-- Generate a commit message such as `Update MyType "my-id"` when no commit message is given to a mutation, instead of
-  passing no message to the Git adapter, which led to adapter-specific messages (`-`, `undefined`) or failing commits
-- Export `ErrorCode` as a regular enum instead of a `const enum`, so that it exists at runtime and can be used by
-  consumers, e.g. in `error.extensions.code === ErrorCode.CONFLICT`, also when compiled with `isolatedModules`
+- Return errors of Git adapters during commits with their error code, e.g. `CONFLICT` or `FORBIDDEN`, instead of
+  `INTERNAL_ERROR`
+- Allow writing fields of type `ID` other than the entry ID, e.g. `sku: ID` or `id` of an embedded type, which were
+  missing from generated input types
+- Generate a commit message such as `Update MyType "my-id"` if none is given, instead of adapter-specific messages
+  (`-`, `undefined`) or failing commits
+- Export `ErrorCode` as a regular enum instead of a `const enum`, so that it can be used at runtime, e.g. in
+  `error.extensions.code === ErrorCode.CONFLICT`
 
 ## [2.0.0-beta.4] - 2026-10-14
 

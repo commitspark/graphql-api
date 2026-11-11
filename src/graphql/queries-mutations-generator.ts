@@ -15,8 +15,7 @@ import {
   SearchQueryResolver,
   VersionResolver,
 } from './resolvers/types.ts'
-
-const commitInputTypeName = '_CommitInput'
+import * as names from './schema-utils/generated-names.ts'
 
 export function generateQueriesAndMutations(
   entryDirectiveTypes: GraphQLObjectType[],
@@ -24,9 +23,7 @@ export function generateQueriesAndMutations(
   return entryDirectiveTypes.map((objectType): GeneratedSchema => {
     const typeName = objectType.name
 
-    // The semantics of `every` aren't a perfect replacement of `all` but this way we don't need to do non-trivial
-    // pluralization of user-provided typeName
-    const queryEveryName = `every${typeName}`
+    const queryEveryName = names.queryEveryName(typeName)
     const queryEveryString = `${queryEveryName}: [${objectType.name}!]`
     const queryEveryResolverFunc: QueryMutationResolver<EntryData[]> = (
       source,
@@ -36,7 +33,7 @@ export function generateQueriesAndMutations(
     ) =>
       queryEveryResolver(source, args, { ...context, type: objectType }, info)
 
-    const queryByIdName = typeName
+    const queryByIdName = names.queryByIdName(typeName)
     const queryByIdString = `${queryByIdName}(id: ID!): ${objectType.name}`
     const queryByIdResolverFunc: QueryMutationResolver<EntryData> = (
       source,
@@ -45,20 +42,20 @@ export function generateQueriesAndMutations(
       info,
     ) => queryByIdResolver(source, args, { ...context, type: objectType }, info)
 
-    const inputTypeName = `${typeName}Input`
+    const inputTypeName = names.inputTypeName(typeName)
     // mutations are printed with one argument per line, as indented within the generated root type
     const commitArgument = (operation: string): string =>
       '    """\n' +
       `    Details of the commit. If no message is given, the message is '${operation} ${typeName} "<id>"'.\n` +
       '    """\n' +
-      `    commit: ${commitInputTypeName}\n`
+      `    commit: ${names.COMMIT_INPUT_TYPE_NAME}\n`
     const expectedVersionArgument =
       '    """\n' +
       '    Version of the entry (field `_version`) that the change is based on. If given and the entry has a different\n' +
       '    version, the mutation fails with error code CONFLICT instead of overwriting changes made since.\n' +
       '    """\n' +
       '    expectedVersion: String\n'
-    const createMutationName = `create${typeName}`
+    const createMutationName = names.createMutationName(typeName)
     const createMutationString = `${createMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${commitArgument('Create')}  ): ${typeName}`
     const createMutationResolver: QueryMutationResolver<EntryData> = (
       source,
@@ -73,7 +70,7 @@ export function generateQueriesAndMutations(
         info,
       )
 
-    const updateMutationName = `update${typeName}`
+    const updateMutationName = names.updateMutationName(typeName)
     const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${expectedVersionArgument}${commitArgument('Update')}  ): ${typeName}`
     const updateMutationResolver: QueryMutationResolver<EntryData> = (
       source,
@@ -88,7 +85,7 @@ export function generateQueriesAndMutations(
         info,
       )
 
-    const deleteMutationName = `delete${typeName}`
+    const deleteMutationName = names.deleteMutationName(typeName)
     const deleteMutationString = `${deleteMutationName}(\n    id: ID!\n${expectedVersionArgument}${commitArgument('Delete')}  ): ID`
     const deleteMutationResolver: QueryMutationResolver<string> = (
       source,
@@ -137,7 +134,7 @@ export function generateCommitInputType(): string {
   return `"""
 Details of the commit created by a mutation.
 """
-input ${commitInputTypeName} {
+input ${names.COMMIT_INPUT_TYPE_NAME} {
   """
   Commit message summarizing the change in a single line. Leading and trailing whitespace is removed, and messages
   containing line breaks are rejected with error code BAD_USER_INPUT. If omitted or empty, a message is generated.
@@ -152,7 +149,7 @@ input ${commitInputTypeName} {
 }
 
 export function generateTypeNameQuery(): GeneratedQuery {
-  const entryTypeQueryName = '_typeName'
+  const entryTypeQueryName = names.TYPE_NAME_QUERY_NAME
   const entryTypeQueryString = `${entryTypeQueryName}(id: ID!): String!`
 
   return {
@@ -163,8 +160,8 @@ export function generateTypeNameQuery(): GeneratedQuery {
 }
 
 export function generateSearchQuery(): GeneratedSearchQuery {
-  const searchQueryName = '_search'
-  const searchHitTypeName = '_SearchHit'
+  const searchQueryName = names.SEARCH_QUERY_NAME
+  const searchHitTypeName = names.SEARCH_HIT_TYPE_NAME
 
   return {
     name: searchQueryName,
@@ -184,8 +181,8 @@ export function generateSearchQuery(): GeneratedSearchQuery {
 export function generateEntryFields(
   entryDirectiveTypes: GraphQLObjectType[],
 ): GeneratedEntryFields[] {
-  const referencedByFieldName = '_referencedBy'
-  const versionFieldName = '_version'
+  const referencedByFieldName = names.REFERENCED_BY_FIELD_NAME
+  const versionFieldName = names.VERSION_FIELD_NAME
 
   return entryDirectiveTypes.map((objectType) => ({
     typeName: objectType.name,

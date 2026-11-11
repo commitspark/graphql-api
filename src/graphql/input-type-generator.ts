@@ -1,19 +1,24 @@
 import {
   GraphQLEnumType,
   GraphQLInputObjectType,
-  GraphQLInterfaceType,
   GraphQLNullableType,
   GraphQLObjectType,
   GraphQLScalarType,
   GraphQLUnionType,
-  isInterfaceType,
   isListType,
   isNonNullType,
   isObjectType,
   isUnionType,
 } from 'graphql'
 import { SchemaAnalyzerResult } from './schema-analyzer.ts'
-import { buildsOnTypeWithEntryDirective } from './schema-utils/entry-type-util.ts'
+import {
+  buildsOnTypeWithEntryDirective,
+  isUnionOfEntryTypes,
+} from './schema-utils/entry-type-util.ts'
+import {
+  idInputTypeName,
+  inputTypeName,
+} from './schema-utils/generated-names.ts'
 import {
   ENTRY_DIRECTIVE_NAME,
   hasDirective,
@@ -26,18 +31,15 @@ function generateFieldInputTypeString(type: GraphQLNullableType): string {
     return `${generateFieldInputTypeString(type.ofType)}!`
   } else if (isObjectType(type)) {
     if (hasDirective(type, ENTRY_DIRECTIVE_NAME)) {
-      return `${type.name}IdInput`
+      return idInputTypeName(type.name)
     } else {
-      return `${type.name}Input`
+      return inputTypeName(type.name)
     }
-  } else if (isInterfaceType(type)) {
-    // TODO
-    return ''
   } else if (isUnionType(type)) {
     if (buildsOnTypeWithEntryDirective(type)) {
-      return `${type.name}IdInput`
+      return idInputTypeName(type.name)
     } else {
-      return `${type.name}Input`
+      return inputTypeName(type.name)
     }
   } else {
     return (
@@ -49,19 +51,15 @@ function generateFieldInputTypeString(type: GraphQLNullableType): string {
 export function generateIdInputTypeStrings(
   schemaAnalyzerResult: SchemaAnalyzerResult,
 ): string[] {
-  let typesWithIdField: (
-    GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType
-  )[] = []
-  typesWithIdField = typesWithIdField.concat(
-    schemaAnalyzerResult.entryDirectiveTypes,
-  )
-  typesWithIdField = typesWithIdField.concat(
-    schemaAnalyzerResult.interfaceTypes,
-  )
-  typesWithIdField = typesWithIdField.concat(schemaAnalyzerResult.unionTypes)
+  const typesWithIdField: (GraphQLObjectType | GraphQLUnionType)[] = [
+    ...schemaAnalyzerResult.entryDirectiveTypes,
+    ...schemaAnalyzerResult.unionTypes.filter((unionType) =>
+      isUnionOfEntryTypes(unionType),
+    ),
+  ]
 
   return typesWithIdField.map((type): string => {
-    return `input ${type.name}IdInput {\n` + '  id: ID!\n' + '}\n'
+    return `input ${idInputTypeName(type.name)} {\n` + '  id: ID!\n' + '}\n'
   })
 }
 
@@ -70,9 +68,8 @@ export function generateObjectInputTypeStrings(
 ): string[] {
   return objectTypes.map((objectType): string => {
     const name = objectType.name
-    const inputTypeName = `${name}Input`
     const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
-    let inputType = `input ${inputTypeName} {\n`
+    let inputType = `input ${inputTypeName(name)} {\n`
     let inputTypeFieldStrings = ''
     for (const fieldsKey in objectType.getFields()) {
       const field = objectType.getFields()[fieldsKey]
@@ -105,9 +102,9 @@ export function generateUnionInputTypeStrings(
     }
 
     // `@oneOf` is a directive specified by GraphQL and built into graphql-js since 16.9
-    let unionInputType = `input ${unionType.name}Input @oneOf {\n`
+    let unionInputType = `input ${inputTypeName(unionType.name)} @oneOf {\n`
     for (const innerType of unionType.getTypes()) {
-      unionInputType += `  ${innerType.name}: ${innerType.name}Input\n`
+      unionInputType += `  ${innerType.name}: ${inputTypeName(innerType.name)}\n`
     }
     unionInputType += '}\n'
     return unionInputType

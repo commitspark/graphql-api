@@ -21,6 +21,10 @@ import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-ty
 import { ApolloContext } from '../client.ts'
 import { GraphQLTypeResolver } from 'graphql'
 import { getValidationResult } from './schema-validator.ts'
+import {
+  MUTATION_TYPE_NAME,
+  QUERY_TYPE_NAME,
+} from './schema-utils/generated-names.ts'
 import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator.ts'
 import { createError, ErrorCode } from './errors.ts'
 import { FieldResolver } from './resolvers/field-resolvers/types.ts'
@@ -84,8 +88,8 @@ export async function generateSchema(
   )
 
   const generatedSchemaString = `schema {
-  query: Query
-  mutation: Mutation
+  query: ${QUERY_TYPE_NAME}
+  mutation: ${MUTATION_TYPE_NAME}
 }
 
 ${generatedSchemaRootTypeStrings}`
@@ -144,8 +148,8 @@ ${generatedSchemaRootTypeStrings}`
       >
     | UnionTypeResolverRecord
   > = {
-    Query: generatedQueryResolvers,
-    Mutation: generatedMutationResolvers,
+    [QUERY_TYPE_NAME]: generatedQueryResolvers,
+    [MUTATION_TYPE_NAME]: generatedMutationResolvers,
   }
 
   for (const typeName of Object.keys(generatedUnionTypeResolvers)) {

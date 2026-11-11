@@ -3,6 +3,10 @@ import {
   GeneratedSchema,
   GeneratedSearchQuery,
 } from './queries-mutations-generator.ts'
+import {
+  MUTATION_TYPE_NAME,
+  QUERY_TYPE_NAME,
+} from './schema-utils/generated-names.ts'
 
 export function generateSchemaRootTypeStrings(
   generatedSchemas: GeneratedSchema[],
@@ -10,7 +14,7 @@ export function generateSchemaRootTypeStrings(
   searchQuery: GeneratedSearchQuery | undefined,
 ): string {
   return (
-    `type Query {\n` +
+    `type ${QUERY_TYPE_NAME} {\n` +
     generatedSchemas
       .map((generated) => '  ' + generated.queryEvery.schemaString)
       .join('\n') +
@@ -23,7 +27,7 @@ export function generateSchemaRootTypeStrings(
     '\n' +
     (searchQuery !== undefined ? `  ${searchQuery.schemaString}\n` : '') +
     '}\n\n' +
-    'type Mutation {\n' +
+    `type ${MUTATION_TYPE_NAME} {\n` +
     generatedSchemas
       .map((generated) => '  ' + generated.createMutation.schemaString)
       .join('\n') +

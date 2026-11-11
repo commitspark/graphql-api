@@ -1,9 +1,7 @@
 import {
-  GraphQLInterfaceType,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLUnionType,
-  isInterfaceType,
   isObjectType,
   isUnionType,
 } from 'graphql'
@@ -14,7 +12,6 @@ export function analyzeSchema(schema: GraphQLSchema): SchemaAnalyzerResult {
   const result: SchemaAnalyzerResult = {
     entryDirectiveTypes: [],
     objectTypes: [],
-    interfaceTypes: [],
     unionTypes: [],
   }
 
@@ -38,11 +35,6 @@ export function analyzeSchema(schema: GraphQLSchema): SchemaAnalyzerResult {
       }
     }
 
-    if (isInterfaceType(type)) {
-      const interfaceType = type as GraphQLInterfaceType
-      result.interfaceTypes.push(interfaceType)
-    }
-
     if (isUnionType(type)) {
       const unionType = type as GraphQLUnionType
       result.unionTypes.push(unionType)
@@ -55,6 +47,5 @@ export function analyzeSchema(schema: GraphQLSchema): SchemaAnalyzerResult {
 export interface SchemaAnalyzerResult {
   entryDirectiveTypes: GraphQLObjectType[]
   objectTypes: GraphQLObjectType[]
-  interfaceTypes: GraphQLInterfaceType[]
   unionTypes: GraphQLUnionType[]
 }

@@ -412,7 +412,7 @@ Mutations work on branch names only, as they create new commits.
 
 Each successful mutation appends a new commit on HEAD of the given branch.
 
-Before committing, Commitspark validates the resulting entry against the schema (see
+Before committing, Commitspark checks whether the entry as it would be written matches the schema (see
 [Changing the schema](#changing-the-schema)). If the entry would not match the schema, no commit is made and the
 mutation fails with error `BAD_USER_INPUT`, listing the problems under `extensions.commitspark.violations`. This also
 applies to existing data of fields not included in an update, e.g. a stored value that no longer matches a changed field
@@ -533,10 +533,10 @@ as `ref` argument, entries of hits can therefore be retrieved from exactly the s
 
 # Error handling
 
-Instead of throwing errors, this library catches known error cases and returns error information for GraphQL calls via
-the `errors` response field. The type of error is indicated in error field `extensions.code`, with additional
-information in error field `extensions.commitspark` (where available). This allows API callers to determine the cause of
-errors and take appropriate action.
+This library catches known error cases and returns error information for GraphQL calls via the `errors` response field.
+The type of error is indicated in error field `extensions.code`, with additional information in error field
+`extensions.commitspark` (where available). This allows API callers to determine the cause of errors and take
+appropriate action.
 
 Example GraphQL response with error:
 
@@ -610,8 +610,8 @@ Argument `ref` expects a branch name, tag name or commit hash (see
 
 ### validate()
 
-This function checks the schema and all entries against the schema, and returns all problems found instead of failing
-on the first one. Entries are only checked if the schema is valid.
+This function checks the schema and, if the schema is valid, all entries against the schema. All problems found are
+returned in a list.
 
 Argument `ref` expects a branch name, tag name or commit hash (see
 [Navigating the Git repository](#navigating-the-git-repository)).

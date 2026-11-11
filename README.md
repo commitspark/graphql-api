@@ -200,12 +200,11 @@ This keeps the number of entries low and performance up.
 
 ### Changing the schema
 
-Entries are stored independently of the schema, so changing the schema can leave existing entries that no longer match
-it, e.g. after adding a non-null field, changing the type of a field or renaming a type. Commitspark does not fill in
-missing values: reading an entry that does not match the schema fails with error `BAD_REPOSITORY_DATA`, including when
-the entry is reached through a reference. The error lists the problems found in the entry under
-`extensions.commitspark.violations`. Data stored under keys that are not fields in the schema, e.g. after renaming or
-removing a field, does not prevent reading an entry.
+Entries are stored independently of the schema, so changing the schema can create mismatches with existing entry data.
+Commitspark does not fill in missing values and reading an entry that does not match the schema fails with error
+`BAD_REPOSITORY_DATA`, including when the entry is reached through a reference. The error lists the problems found in
+the entry under `extensions.commitspark.violations`. Excess entry data stored under keys that are not fields in the
+schema is silently ignored and does not prevent reading an entry.
 
 We recommend checking a repository with [`validate()`](#validate) after changing the schema, e.g. in CI, and updating
 affected entries in the same commit as the schema.

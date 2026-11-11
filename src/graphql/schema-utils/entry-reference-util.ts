@@ -10,7 +10,6 @@ import {
   isUnionType,
 } from 'graphql'
 import { ApolloContext } from '../../client.ts'
-import { getTypeById } from '../../persistence/persistence.ts'
 import { EntriesRecord } from '../../persistence/cache.ts'
 import {
   getUnionTypeNameFromFieldValue,
@@ -33,38 +32,6 @@ type ReferencedByIndex = Map<string, string[]>
 // commits are immutable, so an index built from the cached entries of a commit stays valid for as long as these
 // entries remain cached
 const referencedByIndexes = new WeakMap<EntriesRecord, ReferencedByIndex>()
-
-export async function validateEntryReferences(
-  entryType: GraphQLObjectType,
-  context: ApolloContext,
-  data: EntryData,
-): Promise<void> {
-  for (const reference of getEntryReferences(entryType, data)) {
-    let referencedTypeName
-    try {
-      referencedTypeName = await getTypeById(context, reference.id)
-    } catch {
-      throw createError(
-        `Failed to resolve entry reference "${reference.id}".`,
-        ErrorCode.BAD_USER_INPUT,
-        {
-          fieldName: reference.fieldName,
-          fieldValue: reference.id,
-        },
-      )
-    }
-    if (!isPermittedReferenceType(referencedTypeName, reference.fieldType)) {
-      throw createError(
-        `Reference with ID "${reference.id}" points to entry of incompatible type "${referencedTypeName}".`,
-        ErrorCode.BAD_USER_INPUT,
-        {
-          fieldName: reference.fieldName,
-          fieldValue: reference.id,
-        },
-      )
-    }
-  }
-}
 
 export async function getReferencingEntryIds(
   context: ApolloContext,
@@ -247,16 +214,4 @@ function createEntryReference(
     )
   }
   return { id: data.id, fieldName, fieldType }
-}
-
-function isPermittedReferenceType(
-  referencedTypeName: string,
-  fieldType: GraphQLObjectType | GraphQLUnionType,
-): boolean {
-  if (isUnionType(fieldType)) {
-    return fieldType
-      .getTypes()
-      .some((concreteType) => concreteType.name === referencedTypeName)
-  }
-  return fieldType.name === referencedTypeName
 }

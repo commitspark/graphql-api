@@ -727,10 +727,7 @@ type NestedType {
     expect(result.ref).toBe(commitHash)
   })
 
-  it('should resolve missing array data to a default value', async () => {
-    // the behavior asserted here is meant to reduce the need to migrate existing entries after adding
-    // new array fields to a schema; we expect this to be done by resolving missing (undefined)
-    // array data to an empty array
+  it('should resolve missing nullable array data to null and missing non-null array data to an error', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'
     const commitHash = 'abcd'
@@ -789,15 +786,29 @@ type NestedType {
       },
     })
 
-    expect(result.errors).toBeUndefined()
-    expect(result.data).toEqual({
-      data: {
-        id: entryId,
-        oldField: 'Old value',
-        newNestedTypeArrayField: null,
-        newNestedTypeNonNullArrayField: [],
+    expect(result.errors).toMatchObject([
+      {
+        extensions: {
+          code: 'BAD_REPOSITORY_DATA',
+          commitspark: {
+            typeName: 'MyEntry',
+            fieldValue: entryId,
+            violations: [
+              {
+                severity: 'ERROR',
+                code: 'INVALID_VALUE',
+                entryId: entryId,
+              },
+            ],
+          },
+        },
       },
-    })
+    ])
+    expect(result.errors?.[0].message).toBe(
+      'Entry "A" does not match the schema: Field "newNestedTypeNonNullArrayField" of required type ' +
+        '"[NestedTypeInput]!" was not provided.',
+    )
+    expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
   })
 

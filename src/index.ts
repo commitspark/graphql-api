@@ -4,12 +4,19 @@ import {
   GraphQLResponse,
   postGraphQL,
   SchemaResponse,
+  validate,
   VariableValues,
 } from './client.ts'
 import { GitAdapter } from '@commitspark/git-adapter'
 import { SearchAdapter } from '@commitspark/search-adapter'
 import { ErrorCode, ErrorMetadata } from './graphql/errors.ts'
 import { createCacheHandler } from './persistence/cache.ts'
+import {
+  ValidationResult,
+  Violation,
+  ViolationCode,
+  ViolationSeverity,
+} from './validation/violation.ts'
 
 interface Client {
   postGraphQL<
@@ -20,6 +27,11 @@ interface Client {
     request: ApolloExecuteOperationRequest<TData, TVariables>,
   ): Promise<GraphQLResponse<TData | null>>
   getSchema(ref: string): Promise<SchemaResponse>
+  /**
+   * Validates the schema and all entries at the given ref against the schema. Returns all violations found instead
+   * of failing on the first one, e.g. to check a repository in CI after changing the schema.
+   */
+  validate(ref: string): Promise<ValidationResult>
 }
 
 interface ClientOptions {
@@ -36,6 +48,10 @@ export {
   SchemaResponse,
   ErrorCode,
   ErrorMetadata,
+  ValidationResult,
+  Violation,
+  ViolationCode,
+  ViolationSeverity,
 }
 
 export async function createClient(
@@ -49,5 +65,7 @@ export async function createClient(
       postGraphQL(gitAdapter, searchAdapter, repositoryCache, ...args),
     getSchema: (...args) =>
       getSchema(gitAdapter, searchAdapter, repositoryCache, ...args),
+    validate: (...args) =>
+      validate(gitAdapter, searchAdapter, repositoryCache, ...args),
   }
 }

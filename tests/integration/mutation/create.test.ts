@@ -313,8 +313,13 @@ type EntryB @Entry {
         extensions: {
           code: 'BAD_USER_INPUT',
           commitspark: {
-            fieldName: 'reference',
-            fieldValue: 'someUnknownId',
+            violations: [
+              {
+                severity: 'ERROR',
+                code: 'DANGLING_REFERENCE',
+                path: ['reference', 'id'],
+              },
+            ],
           },
         },
       },
@@ -414,8 +419,13 @@ type Person @Entry {
         extensions: {
           code: 'BAD_USER_INPUT',
           commitspark: {
-            fieldName: 'manager',
-            fieldValue: 'someUnknownId',
+            violations: [
+              {
+                severity: 'ERROR',
+                code: 'DANGLING_REFERENCE',
+                path: ['manager', 'id'],
+              },
+            ],
           },
         },
       },
@@ -478,8 +488,13 @@ type OtherEntry @Entry {
         extensions: {
           code: 'BAD_USER_INPUT',
           commitspark: {
-            fieldName: 'reference',
-            fieldValue: 'otherEntryId',
+            violations: [
+              {
+                severity: 'ERROR',
+                code: 'INCOMPATIBLE_REFERENCE',
+                path: ['reference', 'id'],
+              },
+            ],
           },
         },
       },

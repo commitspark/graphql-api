@@ -1,6 +1,7 @@
 import { GraphQLError } from 'graphql'
 import { ErrorCode as GitAdapterErrorCode } from '@commitspark/git-adapter'
 import { ErrorCode as SearchAdapterErrorCode } from '@commitspark/search-adapter'
+import { Violation } from '../validation/violation.ts'
 
 export enum ErrorCode {
   BAD_USER_INPUT = 'BAD_USER_INPUT',
@@ -19,6 +20,7 @@ export interface ErrorMetadata {
   argumentName?: string
   argumentValue?: unknown
   schema?: string
+  violations?: Violation[]
 }
 
 export const createError = (

@@ -45,7 +45,7 @@ function fieldTypes(
   )
 }
 
-// maps argument names to their type, e.g. `{ id: 'ID!', commitMessage: 'String' }`
+// maps argument names to their type, e.g. `{ id: 'ID!', commit: '_CommitInput' }`
 function argumentTypes(
   field: GraphQLField<unknown, unknown> | undefined,
 ): Record<string, string> {
@@ -128,17 +128,17 @@ type Mutation {
     id: ID!
     data: MyEntryInput!
     """
-    Commit message. If omitted or empty, the message is 'Create MyEntry "<id>"'.
+    Details of the commit. If no message is given, the message is 'Create MyEntry "<id>"'.
     """
-    commitMessage: String
+    commit: _CommitInput
   ): MyEntry
   createEntryA(
     id: ID!
     data: EntryAInput!
     """
-    Commit message. If omitted or empty, the message is 'Create EntryA "<id>"'.
+    Details of the commit. If no message is given, the message is 'Create EntryA "<id>"'.
     """
-    commitMessage: String
+    commit: _CommitInput
   ): EntryA
   updateMyEntry(
     id: ID!
@@ -149,9 +149,9 @@ type Mutation {
     """
     expectedVersion: String
     """
-    Commit message. If omitted or empty, the message is 'Update MyEntry "<id>"'.
+    Details of the commit. If no message is given, the message is 'Update MyEntry "<id>"'.
     """
-    commitMessage: String
+    commit: _CommitInput
   ): MyEntry
   updateEntryA(
     id: ID!
@@ -162,9 +162,9 @@ type Mutation {
     """
     expectedVersion: String
     """
-    Commit message. If omitted or empty, the message is 'Update EntryA "<id>"'.
+    Details of the commit. If no message is given, the message is 'Update EntryA "<id>"'.
     """
-    commitMessage: String
+    commit: _CommitInput
   ): EntryA
   deleteMyEntry(
     id: ID!
@@ -174,9 +174,9 @@ type Mutation {
     """
     expectedVersion: String
     """
-    Commit message. If omitted or empty, the message is 'Delete MyEntry "<id>"'.
+    Details of the commit. If no message is given, the message is 'Delete MyEntry "<id>"'.
     """
-    commitMessage: String
+    commit: _CommitInput
   ): ID
   deleteEntryA(
     id: ID!
@@ -186,10 +186,25 @@ type Mutation {
     """
     expectedVersion: String
     """
-    Commit message. If omitted or empty, the message is 'Delete EntryA "<id>"'.
+    Details of the commit. If no message is given, the message is 'Delete EntryA "<id>"'.
     """
-    commitMessage: String
+    commit: _CommitInput
   ): ID
+}
+
+"""
+Details of the commit created by a mutation.
+"""
+input _CommitInput {
+  """
+  Commit message summarizing the change in a single line. Leading and trailing whitespace is removed, and messages
+  containing line breaks are rejected with error code BAD_USER_INPUT. If omitted or empty, a message is generated.
+  """
+  message: String
+  """
+  Optional details of the change, which may span multiple lines. Leading and trailing whitespace is removed.
+  """
+  body: String
 }
 
 input MyEntryIdInput {
@@ -254,6 +269,10 @@ type EntryB @Entry {
 
     expect(fieldTypes(schema.getQueryType())._typeName).toBe('String!')
     expect(argumentTypes(queryFields._typeName)).toEqual({ id: 'ID!' })
+    expect(fieldTypes(schema.getType('_CommitInput'))).toEqual({
+      message: 'String',
+      body: 'String',
+    })
 
     for (const typeName of ['EntryA', 'EntryB']) {
       expect(fieldTypes(schema.getQueryType())).toMatchObject({
@@ -271,18 +290,18 @@ type EntryB @Entry {
       expect(argumentTypes(mutationFields[`create${typeName}`])).toEqual({
         id: 'ID!',
         data: `${typeName}Input!`,
-        commitMessage: 'String',
+        commit: '_CommitInput',
       })
       expect(argumentTypes(mutationFields[`update${typeName}`])).toEqual({
         id: 'ID!',
         data: `${typeName}Input!`,
         expectedVersion: 'String',
-        commitMessage: 'String',
+        commit: '_CommitInput',
       })
       expect(argumentTypes(mutationFields[`delete${typeName}`])).toEqual({
         id: 'ID!',
         expectedVersion: 'String',
-        commitMessage: 'String',
+        commit: '_CommitInput',
       })
 
       expect(fieldTypes(schema.getType(typeName))).toEqual({

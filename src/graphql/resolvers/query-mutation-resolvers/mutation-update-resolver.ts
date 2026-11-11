@@ -36,6 +36,12 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
   }
   // narrowed type, as narrowing does not apply within the callback below
   const entryType = context.type
+  const commitMessage = getCommitMessage(
+    args.commit,
+    'Update',
+    context.type.name,
+    args.id,
+  )
 
   await commitWithRetry(context, async () => {
     const existingEntry = await findByTypeId(
@@ -60,12 +66,7 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
           deletion: false,
         },
       ],
-      message: getCommitMessage(
-        args.commitMessage,
-        'Update',
-        context.type.name,
-        args.id,
-      ),
+      ...commitMessage,
     }
   })
 

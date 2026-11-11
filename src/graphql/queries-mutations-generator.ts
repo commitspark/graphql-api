@@ -16,6 +16,8 @@ import {
   VersionResolver,
 } from './resolvers/types.ts'
 
+const commitInputTypeName = '_CommitInput'
+
 export function generateQueriesAndMutations(
   entryDirectiveTypes: GraphQLObjectType[],
 ): GeneratedSchema[] {
@@ -45,11 +47,11 @@ export function generateQueriesAndMutations(
 
     const inputTypeName = `${typeName}Input`
     // mutations are printed with one argument per line, as indented within the generated root type
-    const commitMessageArgument = (operation: string): string =>
+    const commitArgument = (operation: string): string =>
       '    """\n' +
-      `    Commit message. If omitted or empty, the message is '${operation} ${typeName} "<id>"'.\n` +
+      `    Details of the commit. If no message is given, the message is '${operation} ${typeName} "<id>"'.\n` +
       '    """\n' +
-      '    commitMessage: String\n'
+      `    commit: ${commitInputTypeName}\n`
     const expectedVersionArgument =
       '    """\n' +
       '    Version of the entry (field `_version`) that the change is based on. If given and the entry has a different\n' +
@@ -57,7 +59,7 @@ export function generateQueriesAndMutations(
       '    """\n' +
       '    expectedVersion: String\n'
     const createMutationName = `create${typeName}`
-    const createMutationString = `${createMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${commitMessageArgument('Create')}  ): ${typeName}`
+    const createMutationString = `${createMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${commitArgument('Create')}  ): ${typeName}`
     const createMutationResolver: QueryMutationResolver<EntryData> = (
       source,
       args,
@@ -72,7 +74,7 @@ export function generateQueriesAndMutations(
       )
 
     const updateMutationName = `update${typeName}`
-    const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${expectedVersionArgument}${commitMessageArgument('Update')}  ): ${typeName}`
+    const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${expectedVersionArgument}${commitArgument('Update')}  ): ${typeName}`
     const updateMutationResolver: QueryMutationResolver<EntryData> = (
       source,
       args,
@@ -87,7 +89,7 @@ export function generateQueriesAndMutations(
       )
 
     const deleteMutationName = `delete${typeName}`
-    const deleteMutationString = `${deleteMutationName}(\n    id: ID!\n${expectedVersionArgument}${commitMessageArgument('Delete')}  ): ID`
+    const deleteMutationString = `${deleteMutationName}(\n    id: ID!\n${expectedVersionArgument}${commitArgument('Delete')}  ): ID`
     const deleteMutationResolver: QueryMutationResolver<string> = (
       source,
       args,
@@ -129,6 +131,24 @@ export function generateQueriesAndMutations(
       },
     }
   })
+}
+
+export function generateCommitInputType(): string {
+  return `"""
+Details of the commit created by a mutation.
+"""
+input ${commitInputTypeName} {
+  """
+  Commit message summarizing the change in a single line. Leading and trailing whitespace is removed, and messages
+  containing line breaks are rejected with error code BAD_USER_INPUT. If omitted or empty, a message is generated.
+  """
+  message: String
+  """
+  Optional details of the change, which may span multiple lines. Leading and trailing whitespace is removed.
+  """
+  body: String
+}
+`
 }
 
 export function generateTypeNameQuery(): GeneratedQuery {

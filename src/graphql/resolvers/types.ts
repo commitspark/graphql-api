@@ -8,6 +8,11 @@ import { EntryData } from '@commitspark/git-adapter'
 import { SearchHit } from '@commitspark/search-adapter'
 import { RecursiveArray } from './field-resolvers/types.ts'
 
+export interface CommitInput {
+  message?: string | null
+  body?: string | null
+}
+
 interface QueryMutationResolverContext extends ApolloContext {
   type: GraphQLNamedType
 }
@@ -18,7 +23,7 @@ export type QueryMutationResolver<ResultType> = GraphQLFieldResolver<
   {
     id: string
     data?: EntryData
-    commitMessage?: string | null
+    commit?: CommitInput | null
     expectedVersion?: string | null
   },
   Promise<ResultType>

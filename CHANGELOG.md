@@ -19,9 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
-- Trim argument `commitMessage` of mutations and document it in the generated schema; mutations in the generated schema
-  are now printed with one argument per line
-- Upgrade to @commitspark/git-adapter 2.0.0-beta.3
+- Replace mutation argument `commitMessage` with `commit: { message, body }`, so that commits can explain a change in a
+  body in addition to the single-line message; messages containing line breaks are rejected with `BAD_USER_INPUT`
+- Print mutations in the generated schema with one argument per line
+- Upgrade to @commitspark/git-adapter 2.0.0-beta.4
 - Require peer dependency `graphql` in version `^16.11.0`, which is the version range already required by dependency
   `@apollo/server`, instead of declaring support for versions 14 to 17
 - Omit the declaration `directive @oneOf on INPUT_OBJECT` from the generated schema, as `@oneOf` is built into
@@ -35,9 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   generic internal server error
 - Include fields of type `ID` in generated input types, except field `id` of `@Entry` types, so that e.g. `sku: ID` or
   an `id` field of an embedded type can be written
-- Generate a commit message such as `Update MyType "my-id"` when argument `commitMessage` of a mutation is omitted or
-  empty, instead of passing no message to the Git adapter, which led to adapter-specific messages (`-`, `undefined`) or
-  failing commits
+- Generate a commit message such as `Update MyType "my-id"` when no commit message is given to a mutation, instead of
+  passing no message to the Git adapter, which led to adapter-specific messages (`-`, `undefined`) or failing commits
 - Export `ErrorCode` as a regular enum instead of a `const enum`, so that it exists at runtime and can be used by
   consumers, e.g. in `error.extensions.code === ErrorCode.CONFLICT`, also when compiled with `isolatedModules`
 

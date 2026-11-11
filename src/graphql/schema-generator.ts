@@ -1,4 +1,5 @@
 import {
+  generateCommitInputType,
   generateQueriesAndMutations,
   generateEntryFields,
   generateSearchQuery,
@@ -169,6 +170,7 @@ ${generatedSchemaRootTypeStrings}`
   const typeDefs = [
     filteredOriginalSchemaString,
     generatedSchemaString,
+    generateCommitInputType(),
     generatedIdInputTypeStrings.join('\n'),
     generatedObjectInputTypeStrings.join('\n'),
     generatedUnionInputTypeStrings.join('\n'),

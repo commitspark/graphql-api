@@ -76,8 +76,8 @@ type EntryA @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
-        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+        data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
           name
         }
@@ -87,7 +87,7 @@ type EntryA @Entry {
         mutationData: {
           name: `${mutationData.name}2`,
         },
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 
@@ -226,15 +226,15 @@ type SubType {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
-        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+        data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
         }
       }`,
       variables: {
         id: entryId,
         mutationData: mutationData,
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 
@@ -267,8 +267,8 @@ type EntryA @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
-        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+        data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
           name
         }
@@ -278,7 +278,7 @@ type EntryA @Entry {
         mutationData: {
           name: '2',
         },
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 
@@ -372,8 +372,8 @@ type Box @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commitMessage: String!) {
-        data: updateItem(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commit: _CommitInput!) {
+        data: updateItem(id: $id, data: $mutationData, commit: $commit) {
           id
         }
       }`,
@@ -382,7 +382,7 @@ type Box @Entry {
         mutationData: {
           box: { id: box2Id },
         },
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 
@@ -477,8 +477,8 @@ enum MyEnum {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commitMessage: String!) {
-        data: updateEntryA(id: $id, data: $mutationData, commitMessage: $commitMessage) {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+        data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
           string
           int
@@ -490,7 +490,7 @@ enum MyEnum {
       variables: {
         id: entryAId,
         mutationData: mutationData,
-        commitMessage: commitMessage,
+        commit: { message: commitMessage },
       },
     })
 

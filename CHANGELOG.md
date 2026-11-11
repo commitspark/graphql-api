@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validate the resulting entry against the schema before committing a create or update mutation and fail with
   `BAD_USER_INPUT` without committing if it does not match, so that mutations cannot write entries that fail to read;
   errors list all problems under `violations` instead of naming a single field
+- Reject schemas with interfaces, `input` types, custom scalars, field arguments, schema definitions or type extensions
+  with `BAD_SCHEMA`, as these constructs were silently ignored or led to an invalid generated schema
+- Report all problems of an invalid schema in error `BAD_SCHEMA` and in `validate()` instead of only the first one of
+  each kind
 - Stop generating input type `<Union>IdInput` for unions whose members do not have directive `@Entry`, as no field
   uses it, so that its name no longer collides with user types
 

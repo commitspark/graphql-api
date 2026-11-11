@@ -19,7 +19,7 @@ import { generateSchemaRootTypeStrings } from './schema-root-type-generator.ts'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver.ts'
 import { ApolloContext } from '../client.ts'
-import { GraphQLTypeResolver } from 'graphql'
+import { GraphQLTypeResolver, parse } from 'graphql'
 import { getValidationResult } from './schema-validator.ts'
 import {
   MUTATION_TYPE_NAME,
@@ -49,7 +49,10 @@ export async function generateSchema(
     typeDefs: originalSchemaString,
   })
 
-  const validationResult = getValidationResult(schema)
+  const validationResult = getValidationResult(
+    schema,
+    parse(originalSchemaString),
+  )
   if (validationResult.length > 0) {
     throw createError(`Invalid schema.`, ErrorCode.BAD_SCHEMA, {
       schema: printSchemaWithDirectives(schema),

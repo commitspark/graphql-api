@@ -175,6 +175,13 @@ Commitspark currently supports the following GraphQL types:
 * `type`
 * `union`
 * `enum`
+* the built-in scalars `String`, `Int`, `Float`, `Boolean` and `ID`
+
+Directives can be declared and used freely, e.g. to annotate types and fields for other tools.
+
+Schemas with other constructs are rejected with error `BAD_SCHEMA`, as Commitspark cannot handle them correctly. This
+applies to interfaces, `input` types, custom scalars, field arguments, schema definitions (`schema { ... }`) and type
+extensions (`extend`).
 
 ### Data entries
 

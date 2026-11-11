@@ -1,4 +1,4 @@
-import { GraphQLSchema } from 'graphql'
+import { GraphQLSchema, parse } from 'graphql'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { Entry, EntryDraft } from '@commitspark/git-adapter'
 import { ApolloContext } from '../client.ts'
@@ -36,9 +36,10 @@ export async function validateRepository(
       ),
     ]
   }
-  const schemaViolations = getValidationResult(originalSchema).map((message) =>
-    createViolation(ViolationCode.INVALID_SCHEMA, message, []),
-  )
+  const schemaViolations = getValidationResult(
+    originalSchema,
+    parse(schemaString),
+  ).map((message) => createViolation(ViolationCode.INVALID_SCHEMA, message, []))
   if (schemaViolations.length > 0) {
     return schemaViolations
   }

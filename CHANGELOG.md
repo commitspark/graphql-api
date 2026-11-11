@@ -19,11 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Return error `BAD_SCHEMA` for `@Entry` types without a field `id` of type `ID!`
-- Replace argument `commitMessage` of mutations with optional argument `commit` of generated input type `_CommitInput`,
-  with fields `message` for a single-line message and `body` for optional details, which are passed to the Git adapter
-  separately; messages containing line breaks are rejected with error code `BAD_USER_INPUT`, both fields are trimmed,
-  and both are documented in the generated schema; mutations in the generated schema are now printed with one argument
-  per line
+- Replace mutation argument `commitMessage` with `commit: { message, body }`, so that commits can explain a change in a
+  body in addition to the single-line message; messages containing line breaks are rejected with `BAD_USER_INPUT`
+- Print mutations in the generated schema with one argument per line
 - Upgrade to @commitspark/git-adapter 2.0.0-beta.4
 - Require peer dependency `graphql` in version `^16.11.0`, which is the version range already required by dependency
   `@apollo/server`, instead of declaring support for versions 14 to 17

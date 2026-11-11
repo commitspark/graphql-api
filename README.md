@@ -557,6 +557,37 @@ Example GraphQL response with error:
 }
 ```
 
+If data does not match the schema, the error lists all problems found under `extensions.commitspark.violations`, in the
+same format as returned by [`validate()`](#validate). This applies to error `BAD_REPOSITORY_DATA` when reading an
+entry and to error `BAD_USER_INPUT` when a mutation would write such an entry. Example of reading an entry after field
+`readingTime` was changed from type `String` to `Int`:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Entry \"welcome\" does not match the schema: readingTime: Int cannot represent non-integer value: \"5 min\"",
+      "extensions": {
+        "code": "BAD_REPOSITORY_DATA",
+        "commitspark": {
+          "typeName": "Article",
+          "fieldValue": "welcome",
+          "violations": [
+            {
+              "severity": "ERROR",
+              "code": "INVALID_VALUE",
+              "message": "Int cannot represent non-integer value: \"5 min\"",
+              "path": ["readingTime"],
+              "entryId": "welcome"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
 The following error codes are returned together with error codes of Git adapters as
 documented [here](https://github.com/commitspark/git-adapter) and error codes of search adapters as
 documented [here](https://github.com/commitspark/search-adapter):

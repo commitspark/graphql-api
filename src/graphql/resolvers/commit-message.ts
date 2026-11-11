@@ -25,8 +25,10 @@ export function getCommitMessage(
   }
   const body = commit?.body?.trim() ?? ''
 
-  return {
-    message: message !== '' ? message : `${operation} ${typeName} "${id}"`,
-    ...(body !== '' ? { body } : {}),
+  const commitMessage =
+    message !== '' ? message : `${operation} ${typeName} "${id}"`
+  if (body === '') {
+    return { message: commitMessage }
   }
+  return { message: commitMessage, body: body }
 }

@@ -153,6 +153,10 @@ type Product @Entry { name: String }`,
         },
       },
     ])
+    expect(result.errors?.[0].message).toBe(
+      'Entry "pen" does not match the schema: category.id: Reference points to entry "shirt" of type ' +
+        '"Product", but field permits only type "Category".',
+    )
     expect(result.data).toEqual({ data: null })
   })
 

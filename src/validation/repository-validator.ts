@@ -85,16 +85,17 @@ export async function assertValidEntryDrafts(
   if (errors.length === 0) {
     return
   }
-  throw createError(
-    `The resulting entry data does not match the schema: ${formatViolations(errors)}`,
-    ErrorCode.BAD_USER_INPUT,
-    {
-      fieldValue: [...new Set(errors.map((violation) => violation.entryId))]
-        .sort()
-        .join(', '),
-      violations: errors,
-    },
-  )
+  const affectedEntryIds = [
+    ...new Set(errors.map((violation) => violation.entryId)),
+  ].sort()
+  const message =
+    affectedEntryIds.length === 1
+      ? `Entry "${affectedEntryIds[0]}" would not match the schema: ${formatViolations(errors, false)}`
+      : `Entries would not match the schema: ${formatViolations(errors, true)}`
+  throw createError(message, ErrorCode.BAD_USER_INPUT, {
+    fieldValue: affectedEntryIds.join(', '),
+    violations: errors,
+  })
 }
 
 /**
@@ -119,7 +120,7 @@ export async function assertValidEntry(
     return
   }
   throw createError(
-    `Entry "${entry.id}" does not match the schema: ${formatViolations(errors)}`,
+    `Entry "${entry.id}" does not match the schema: ${formatViolations(errors, false)}`,
     ErrorCode.BAD_REPOSITORY_DATA,
     {
       typeName: entry.metadata.type,
@@ -129,16 +130,25 @@ export async function assertValidEntry(
   )
 }
 
-function formatViolations(violations: Violation[]): string {
+/**
+ * Formats violations for an error message. Entry IDs are only included if requested, so that messages that already
+ * name the single affected entry do not repeat its ID for every violation.
+ */
+function formatViolations(
+  violations: Violation[],
+  includeEntryId: boolean,
+): string {
   return violations
     .map((violation) => {
       const location = [
-        violation.entryId,
+        ...(includeEntryId && violation.entryId !== undefined
+          ? [violation.entryId]
+          : []),
         ...(violation.path.length > 0 ? [violation.path.join('.')] : []),
-      ]
-        .filter((part) => part !== undefined)
-        .join(' ')
-      return `${location}: ${violation.message}`
+      ].join(' ')
+      return location.length > 0
+        ? `${location}: ${violation.message}`
+        : violation.message
     })
     .join(' ')
 }

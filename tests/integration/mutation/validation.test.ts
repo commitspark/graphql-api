@@ -60,6 +60,9 @@ describe('Validation of mutation results', () => {
         },
       },
     ])
+    expect(result.errors?.[0].message).toBe(
+      'Entry "shirt" would not match the schema: rating: Int cannot represent non-integer value: 4.5',
+    )
     expect(result.data).toEqual({ data: null })
     expect(gitAdapter.createCommit).not.toHaveBeenCalled()
   })

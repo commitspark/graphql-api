@@ -804,10 +804,10 @@ type NestedType {
         },
       },
     ])
-    expect(result.errors?.[0].message).toContain(
-      'newNestedTypeNonNullArrayField',
+    expect(result.errors?.[0].message).toBe(
+      'Entry "A" does not match the schema: Field "newNestedTypeNonNullArrayField" of required type ' +
+        '"[NestedTypeInput]!" was not provided.',
     )
-    expect(result.errors?.[0].message).not.toContain('newNestedTypeArrayField"')
     expect(result.data).toEqual({ data: null })
     expect(result.ref).toBe(commitHash)
   })

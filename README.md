@@ -206,8 +206,8 @@ Commitspark does not fill in missing values and reading an entry that does not m
 the entry under `extensions.commitspark.violations`. Excess entry data stored under keys that are not fields in the
 schema is silently ignored and does not prevent reading an entry.
 
-We recommend checking a repository with [`validate()`](#validate) after changing the schema, e.g. in CI, and updating
-affected entries in the same commit as the schema.
+It is recommended to check a repository with [`validate()`](#validate) after changing the schema, e.g. in CI, and
+to update affected entries in the same commit as the schema.
 
 ## Entry storage
 

@@ -183,6 +183,16 @@ Schemas with other constructs are rejected with error `BAD_SCHEMA`, as Commitspa
 applies to interfaces, `input` types, custom scalars, field arguments, schema definitions (`schema { ... }`) and type
 extensions (`extend`).
 
+Commitspark adds generated types and fields to the schema (see [Reading and writing data](#reading-and-writing-data)).
+Schemas are also rejected with error `BAD_SCHEMA` if a name collides with a generated name, e.g.:
+
+* a type named like a generated input type, such as `ProductInput` or `ProductIdInput` for an `@Entry` type `Product`
+* types whose generated names coincide, such as an `@Entry` type `Product` (reference input type `ProductIdInput`) and
+  a type `ProductId` (input type `ProductIdInput`)
+* a type named `Query`, `Mutation`, `Subscription`, `_CommitInput` or `_SearchHit`
+* an `@Entry` type named like a generated query, such as `everyProduct` next to `Product`, or `_typeName` or `_search`
+* a field `_referencedBy` or `_version` in an `@Entry` type
+
 ### Data entries
 
 To denote which data is to be given a unique identity for referencing, Commitspark expects type annotation with

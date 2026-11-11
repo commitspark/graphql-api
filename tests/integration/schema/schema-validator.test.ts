@@ -105,6 +105,89 @@ describe('Schema validator', () => {
     expect(await getSchemaViolationMessages(originalSchema)).toEqual([])
   })
 
+  it.each([
+    [
+      'a type named like the input type of another type',
+      'type ProductInput { name: String }',
+      'Type name "ProductInput" is reserved for the input type of type "Product"; rename the type.',
+    ],
+    [
+      'a type named like the reference input type of an @Entry type',
+      'type ProductIdInput { name: String }',
+      'Type name "ProductIdInput" is reserved for the reference input type of type "Product"; rename the type.',
+    ],
+    [
+      'a type named like the input type of a union',
+      'type Hero { title: String }\nunion Block = Hero\ntype BlockInput { name: String }',
+      'Type name "BlockInput" is reserved for the input type of union "Block"; rename the type.',
+    ],
+    [
+      'a type named like a root type',
+      'type Query { name: String }',
+      'Type name "Query" is reserved for a root type; rename the type.',
+    ],
+    [
+      'a type named like a type of Commitspark',
+      'type _CommitInput { message: String }',
+      'Type name "_CommitInput" is reserved for a type of Commitspark; rename the type.',
+    ],
+    [
+      'types whose generated type names collide',
+      'type ProductId { value: String }',
+      'Generated type name "ProductIdInput" would be used for the input type of type "ProductId" and for the ' +
+        'reference input type of type "Product"; rename one of the types.',
+    ],
+    [
+      '@Entry types whose generated query names collide',
+      'type everyProduct @Entry { id: ID! }',
+      'Generated query name "everyProduct" would be used for the query of all entries of type "Product" and for ' +
+        'the query of a single entry of type "everyProduct"; rename one of the types.',
+    ],
+    [
+      'an @Entry type named like a query of Commitspark',
+      'type _search @Entry { id: ID! }',
+      'Generated query name "_search" would be used for a query of Commitspark and for the query of a single ' +
+        'entry of type "_search"; rename one of the types.',
+    ],
+    [
+      'an @Entry type with a field named like a field added by Commitspark',
+      'type Category @Entry { id: ID!, _version: Int }',
+      'Field name "Category._version" is reserved for a field that Commitspark adds to every type with "@Entry" ' +
+        'directive; rename the field.',
+    ],
+  ])(
+    'should reject a schema with %s',
+    async (_description, definitions, expectedMessage) => {
+      const originalSchema = entryDirective + productType + definitions
+
+      expect(await getSchemaViolationMessages(originalSchema)).toEqual([
+        expectedMessage,
+      ])
+
+      const client = await createTestClient(originalSchema)
+      await expect(client.getSchema(gitRef)).rejects.toMatchObject({
+        extensions: {
+          code: 'BAD_SCHEMA',
+          commitspark: { argumentValue: expectedMessage },
+        },
+      })
+    },
+  )
+
+  it('should accept names that only resemble generated names', async () => {
+    // unions of types without @Entry directive have no reference input type, so `BlockIdInput` is free
+    const originalSchema =
+      entryDirective +
+      productType +
+      'type Hero { title: String }\n' +
+      'union Block = Hero\n' +
+      'type BlockIdInput { name: String }\n' +
+      'type ProductInputs { name: String }\n' +
+      'type Note { _version: Int }'
+
+    expect(await getSchemaViolationMessages(originalSchema)).toEqual([])
+  })
+
   it('should report all problems of a schema', async () => {
     const originalSchema =
       entryDirective +

@@ -5,6 +5,8 @@
 
 export const QUERY_TYPE_NAME = 'Query'
 export const MUTATION_TYPE_NAME = 'Mutation'
+// not generated, but reserved, as a user type with this name would become the root type for subscriptions
+export const SUBSCRIPTION_TYPE_NAME = 'Subscription'
 export const COMMIT_INPUT_TYPE_NAME = '_CommitInput'
 export const SEARCH_HIT_TYPE_NAME = '_SearchHit'
 

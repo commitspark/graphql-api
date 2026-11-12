@@ -20,7 +20,7 @@ export function createObjectTypeFieldResolvers(
     const resolversByField: Record<string, EntryFieldResolver> = {}
     for (const field of Object.values(type.getFields())) {
       resolversByField[field.name] = (source, _args, context, info) => {
-        const sourceContext = getDataSourceContext(source)
+        const sourceContext = getDataSourceContext(context, source)
         return resolveFieldValue(
           source[field.name],
           field.type,

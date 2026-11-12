@@ -22,9 +22,8 @@ export interface DataSourceContext {
   errors: Violation[]
 }
 
-// keyed by the objects returned to GraphQL, which are created for this purpose, so that cached entry data is never
-// modified and the information is released together with the objects
-const dataSourceContexts = new WeakMap<object, DataSourceContext>()
+// The information is stored in `context.dataSourceContexts`, which is created per request, keyed by the objects
+// returned to GraphQL. These objects are created for this purpose, so that cached entry data is never modified.
 
 /**
  * Validates an entry and returns the object that GraphQL resolves the fields of the entry from. Violations are not
@@ -55,7 +54,7 @@ export async function createEntrySource(
   throwViolationsAt(sourceContext, [])
 
   const source = { ...(entry.data ?? {}), id: entry.id }
-  dataSourceContexts.set(source, sourceContext)
+  context.dataSourceContexts.set(source, sourceContext)
   return source
 }
 
@@ -64,18 +63,22 @@ export async function createEntrySource(
  * field at `path` within the entry.
  */
 export function createEmbeddedSource(
+  context: ApolloContext,
   parent: DataSourceContext,
   data: EntryData,
   path: Path,
   additionalFields: EntryData = {},
-): EntryData {
+): Record<string, unknown> {
   const source = { ...data, ...additionalFields }
-  dataSourceContexts.set(source, { ...parent, path })
+  context.dataSourceContexts.set(source, { ...parent, path })
   return source
 }
 
-export function getDataSourceContext(source: object): DataSourceContext {
-  const sourceContext = dataSourceContexts.get(source)
+export function getDataSourceContext(
+  context: ApolloContext,
+  source: object,
+): DataSourceContext {
+  const sourceContext = context.dataSourceContexts.get(source)
   if (sourceContext === undefined) {
     throw createError(
       'Missing information about the entry of resolved data.',

@@ -82,6 +82,7 @@ export function resolveFieldValue(
     // type resolver, so that the value itself has the shape of the member type
     const memberTypeName = Object.keys(value)[0]
     return createEmbeddedSource(
+      context,
       sourceContext,
       (value as Record<string, EntryData>)[memberTypeName],
       [...path, memberTypeName],
@@ -90,7 +91,12 @@ export function resolveFieldValue(
   }
 
   if (isObjectType(nullableType)) {
-    return createEmbeddedSource(sourceContext, value as EntryData, path)
+    return createEmbeddedSource(
+      context,
+      sourceContext,
+      value as EntryData,
+      path,
+    )
   }
 
   return value as ResolvedValue

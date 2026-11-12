@@ -34,14 +34,15 @@ export const resolveFieldDefaultValue: FieldResolver = async (
 
   if (isListType(context.currentType)) {
     const itemType = context.currentType.ofType
-    return Promise.all(
-      (fieldValue as unknown[]).map((item) =>
-        resolveFieldDefaultValue(
-          item as typeof fieldValue,
-          args,
-          { ...context, currentType: itemType },
-          info,
-        ),
+    // elements are returned as separate promises instead of being awaited together, so that an error of one element
+    // (e.g. a reference to an entry that cannot be read) only affects this element if the element type is nullable,
+    // as GraphQL does for list elements
+    return (fieldValue as unknown[]).map((item) =>
+      resolveFieldDefaultValue(
+        item as typeof fieldValue,
+        args,
+        { ...context, currentType: itemType },
+        info,
       ),
     )
   }

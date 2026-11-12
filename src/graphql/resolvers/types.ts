@@ -6,7 +6,7 @@ import {
 } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
 import { SearchHit } from '@commitspark/search-adapter'
-import { RecursiveArray } from './field-resolvers/types.ts'
+import { ResolvedValue } from './field-resolvers/types.ts'
 
 export interface CommitInput {
   message?: string | null
@@ -50,7 +50,7 @@ export type ContextInjectionResolver = GraphQLFieldResolver<
   EntryData,
   ApolloContext,
   Record<string, unknown>,
-  Promise<RecursiveArray<EntryData>>
+  Promise<ResolvedValue>
 >
 
 export type ReferencedByResolver = GraphQLFieldResolver<

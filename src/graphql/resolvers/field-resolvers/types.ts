@@ -13,7 +13,12 @@ export type FieldResolver<
   TSource = FieldResolverSource,
   TContext = FieldResolverContext,
   TArgs = Record<string, unknown>,
-  TResult = Promise<RecursiveArray<EntryData>>,
+  TResult = Promise<ResolvedValue>,
 > = GraphQLFieldResolver<TSource, TContext, TArgs, TResult>
 
-export type RecursiveArray<T> = T | Array<RecursiveArray<T>>
+/**
+ * Value returned by field resolvers. Elements of lists may be promises, so that GraphQL completes every element on its
+ * own and applies the nullability of the element type to errors of single elements.
+ */
+export type ResolvedValue =
+  EntryData | null | Array<ResolvedValue | Promise<ResolvedValue>>

@@ -17,6 +17,11 @@ interface QueryMutationResolverContext extends ApolloContext {
   type: GraphQLNamedType
 }
 
+/**
+ * Result of a generated query or mutation: an entry, the entries of a list as separate promises, or an ID or type name.
+ */
+export type QueryMutationResult = EntryData | Promise<EntryData>[] | string
+
 export type QueryMutationResolver<ResultType> = GraphQLFieldResolver<
   unknown,
   QueryMutationResolverContext,

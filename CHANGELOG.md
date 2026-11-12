@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Generate list queries as `every<Type>: [<Type>]` instead of `[<Type>!]`, so that an entry that cannot be read only
+  nulls its own element and reports its own error instead of nulling the whole list
+- Generate `_typeName` as nullable `String` and `_search` as nullable list, so that an unknown ID or a search error only
+  nulls this field instead of the data of the whole response
+- Generate `_referencedBy` as nullable list, so that incoming references that cannot be determined, e.g. due to an entry
+  of a type unknown to the schema, only null this field instead of the whole entry
+
 ### Fixed
 
 - Null only the failing element of a list with nullable elements, e.g. a reference to an entry that cannot be read,

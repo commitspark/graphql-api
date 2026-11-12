@@ -129,3 +129,74 @@ describe('Error propagation in lists', () => {
     })
   })
 })
+
+describe('Error propagation in generated fields', () => {
+  async function queryWith(entriesOfTest: Entry[], queryString: string) {
+    const gitAdapter = mock<GitAdapter>()
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, entriesOfTest)
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, { query: queryString })
+    return {
+      data: result.data,
+      errorPaths: result.errors?.map((error) => error.path),
+      errorCodes: result.errors?.map((error) => error.extensions?.code),
+    }
+  }
+
+  it('should null only the entries of a list query that cannot be read', async () => {
+    const result = await queryWith(
+      [
+        { id: 'p1', metadata: { type: 'Person' }, data: { name: 'Ada' } },
+        { id: 'p2', metadata: { type: 'Person' }, data: {} },
+        { id: 'p3', metadata: { type: 'Person' }, data: { name: 'Grace' } },
+        { id: 'p4', metadata: { type: 'Person' }, data: { name: 4 } },
+      ],
+      '{ everyPerson { id name } }',
+    )
+
+    expect(result.data).toEqual({
+      everyPerson: [
+        { id: 'p1', name: 'Ada' },
+        null,
+        { id: 'p3', name: 'Grace' },
+        null,
+      ],
+    })
+    expect(result.errorPaths).toEqual([
+      ['everyPerson', 1],
+      ['everyPerson', 3],
+    ])
+  })
+
+  it('should null only the type name query for an unknown ID', async () => {
+    const result = await queryWith(
+      [{ id: 'p1', metadata: { type: 'Person' }, data: { name: 'Ada' } }],
+      '{ unknown: _typeName(id: "missing") known: _typeName(id: "p1") }',
+    )
+
+    expect(result.data).toEqual({ unknown: null, known: 'Person' })
+    expect(result.errorPaths).toEqual([['unknown']])
+    expect(result.errorCodes).toEqual(['NOT_FOUND'])
+  })
+
+  it('should null only the incoming references if they cannot be determined', async () => {
+    // the references of an entry of a type unknown to the schema cannot be determined
+    const result = await queryWith(
+      [
+        { id: 'p1', metadata: { type: 'Person' }, data: { name: 'Ada' } },
+        { id: 'orphan', metadata: { type: 'RemovedType' }, data: {} },
+      ],
+      '{ Person(id: "p1") { id name _referencedBy } }',
+    )
+
+    expect(result.data).toEqual({
+      Person: { id: 'p1', name: 'Ada', _referencedBy: null },
+    })
+    expect(result.errorPaths).toEqual([['Person', '_referencedBy']])
+    expect(result.errorCodes).toEqual(['BAD_REPOSITORY_DATA'])
+  })
+})

@@ -116,11 +116,11 @@ schema {
 }
 
 type Query {
-  everyMyEntry: [MyEntry!]
-  everyEntryA: [EntryA!]
+  everyMyEntry: [MyEntry]
+  everyEntryA: [EntryA]
   MyEntry(id: ID!): MyEntry
   EntryA(id: ID!): EntryA
-  _typeName(id: ID!): String!
+  _typeName(id: ID!): String
 }
 
 type Mutation {
@@ -231,7 +231,7 @@ input EntryAInput {
 }
 
 extend type MyEntry {
-  _referencedBy: [ID!]!
+  _referencedBy: [ID!]
   """
   Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
   and delete mutations to prevent overwriting changes made since the entry was read.
@@ -240,7 +240,7 @@ extend type MyEntry {
 }
 
 extend type EntryA {
-  _referencedBy: [ID!]!
+  _referencedBy: [ID!]
   """
   Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
   and delete mutations to prevent overwriting changes made since the entry was read.
@@ -267,7 +267,7 @@ type EntryB @Entry {
     const queryFields = schema.getQueryType()?.getFields() ?? {}
     const mutationFields = schema.getMutationType()?.getFields() ?? {}
 
-    expect(fieldTypes(schema.getQueryType())._typeName).toBe('String!')
+    expect(fieldTypes(schema.getQueryType())._typeName).toBe('String')
     expect(argumentTypes(queryFields._typeName)).toEqual({ id: 'ID!' })
     expect(fieldTypes(schema.getType('_CommitInput'))).toEqual({
       message: 'String',
@@ -276,7 +276,7 @@ type EntryB @Entry {
 
     for (const typeName of ['EntryA', 'EntryB']) {
       expect(fieldTypes(schema.getQueryType())).toMatchObject({
-        [`every${typeName}`]: `[${typeName}!]`,
+        [`every${typeName}`]: `[${typeName}]`,
         [typeName]: typeName,
       })
       expect(argumentTypes(queryFields[`every${typeName}`])).toEqual({})
@@ -306,7 +306,7 @@ type EntryB @Entry {
 
       expect(fieldTypes(schema.getType(typeName))).toEqual({
         id: 'ID!',
-        _referencedBy: '[ID!]!',
+        _referencedBy: '[ID!]',
         _version: 'String!',
       })
       expect(fieldTypes(schema.getType(`${typeName}IdInput`))).toEqual({

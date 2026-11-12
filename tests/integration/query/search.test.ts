@@ -70,7 +70,7 @@ describe('Search query', () => {
     const result = await client.getSchema(gitRef)
 
     expect(result.data).toContain(
-      '_search(query: String!, types: [String!], first: Int): [_SearchHit!]!',
+      '_search(query: String!, types: [String!], first: Int): [_SearchHit!]',
     )
     expect(result.data).toContain(`type _SearchHit {
   entryId: ID!
@@ -227,5 +227,7 @@ describe('Search query', () => {
 
     expect(result.errors?.[0].message).toBe('Rate limit exceeded')
     expect(result.errors?.[0].extensions?.code).toBe('TOO_MANY_REQUESTS')
+    // only the search result is nulled, not the data of the whole response
+    expect(result.data).toEqual({ hits: null })
   })
 })

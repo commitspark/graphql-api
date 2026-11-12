@@ -221,6 +221,9 @@ the error propagates to the closest nullable parent, e.g. the entry in the list 
 queried do not lead to errors. Excess entry data stored under keys that are not fields in the schema is silently
 ignored and does not prevent reading an entry.
 
+A `null` value in a response can therefore mean that no value is stored or that the stored value cannot be read. API
+callers should check the `errors` of a response to tell these apart, e.g. to avoid publishing incomplete content.
+
 It is recommended to check a repository with [`validate()`](#validate) after changing the schema, e.g. in CI, and
 to update affected entries in the same commit as the schema.
 
@@ -419,6 +422,9 @@ on. It can be a
 
 The given `ref` is resolved to a commit when request processing starts. All queries in a request read data from this
 commit, which is returned as `ref` of the response.
+
+If no entry exists for the ID given to a query by ID, i.e. `<Type>(id)` or `_typeName(id)`, the query returns `null`
+together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entry with this ID has a different type.
 
 ### Mutations
 

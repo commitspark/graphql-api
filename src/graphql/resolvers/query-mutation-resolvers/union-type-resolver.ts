@@ -16,6 +16,4 @@ export const unionTypeResolver: UnionTypeResolver = async (
     // in UnionValueResolver. This artificial field holds the type information we need here.
     return source.__typename
   }
-
-  // TODO same for interface type: https://www.apollographql.com/docs/apollo-server/data/resolvers/#resolving-unions-and-interfaces
 }

@@ -5,10 +5,7 @@ import {
   generateSearchQuery,
   generateTypeNameQuery,
 } from './queries-mutations-generator.ts'
-import {
-  IExecutableSchemaDefinition,
-  makeExecutableSchema,
-} from '@graphql-tools/schema'
+import { IExecutableSchemaDefinition } from '@graphql-tools/schema'
 import { analyzeSchema } from './schema-analyzer.ts'
 import {
   generateIdInputTypeStrings,
@@ -20,7 +17,11 @@ import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver.ts'
 import { ApolloContext } from '../client.ts'
 import { GraphQLTypeResolver } from 'graphql'
-import { getValidationResult } from './schema-validator.ts'
+import { validateSchemaDefinition } from './schema-validator.ts'
+import {
+  MUTATION_TYPE_NAME,
+  QUERY_TYPE_NAME,
+} from './schema-utils/generated-names.ts'
 import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator.ts'
 import { createError, ErrorCode } from './errors.ts'
 import { FieldResolver } from './resolvers/field-resolvers/types.ts'
@@ -41,15 +42,14 @@ export async function generateSchema(
     context,
     context.getCurrentHash(),
   )
-  const schema = makeExecutableSchema({
-    typeDefs: originalSchemaString,
-  })
-
-  const validationResult = getValidationResult(schema)
-  if (validationResult.length > 0) {
+  const { schema, problems } = validateSchemaDefinition(originalSchemaString)
+  if (schema === undefined || problems.length > 0) {
     throw createError(`Invalid schema.`, ErrorCode.BAD_SCHEMA, {
-      schema: printSchemaWithDirectives(schema),
-      argumentValue: validationResult.join('\n'),
+      schema:
+        schema !== undefined
+          ? printSchemaWithDirectives(schema)
+          : originalSchemaString,
+      argumentValue: problems.join('\n'),
     })
   }
   const schemaAnalyzerResult = analyzeSchema(schema)
@@ -84,8 +84,8 @@ export async function generateSchema(
   )
 
   const generatedSchemaString = `schema {
-  query: Query
-  mutation: Mutation
+  query: ${QUERY_TYPE_NAME}
+  mutation: ${MUTATION_TYPE_NAME}
 }
 
 ${generatedSchemaRootTypeStrings}`
@@ -144,8 +144,8 @@ ${generatedSchemaRootTypeStrings}`
       >
     | UnionTypeResolverRecord
   > = {
-    Query: generatedQueryResolvers,
-    Mutation: generatedMutationResolvers,
+    [QUERY_TYPE_NAME]: generatedQueryResolvers,
+    [MUTATION_TYPE_NAME]: generatedMutationResolvers,
   }
 
   for (const typeName of Object.keys(generatedUnionTypeResolvers)) {

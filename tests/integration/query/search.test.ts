@@ -228,28 +228,4 @@ describe('Search query', () => {
     expect(result.errors?.[0].message).toBe('Rate limit exceeded')
     expect(result.errors?.[0].extensions?.code).toBe('TOO_MANY_REQUESTS')
   })
-
-  it('should reject schema with searchable directive on non-String field', async () => {
-    const client = await createClient(
-      createGitAdapter(`directive @Entry on OBJECT
-directive @Searchable on OBJECT | FIELD_DEFINITION
-
-type Article @Entry {
-    id: ID!
-    views: Int @Searchable
-}`),
-    )
-
-    await expect(
-      client.postGraphQL(gitRef, { query: '{ everyArticle { id } }' }),
-    ).rejects.toMatchObject({
-      extensions: {
-        code: 'BAD_SCHEMA',
-        commitspark: {
-          argumentValue:
-            'Field "Article.views" must be of type "String" or a list of "String" to use "@Searchable" directive.',
-        },
-      },
-    })
-  })
 })

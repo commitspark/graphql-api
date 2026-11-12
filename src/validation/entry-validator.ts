@@ -16,6 +16,10 @@ import {
   hasDirective,
 } from '../graphql/schema-utils/directive-util.ts'
 import { isUnionOfEntryTypes } from '../graphql/schema-utils/entry-type-util.ts'
+import {
+  idInputTypeName,
+  inputTypeName,
+} from '../graphql/schema-utils/generated-names.ts'
 import { createViolation, Violation, ViolationCode } from './violation.ts'
 
 type Path = (string | number)[]
@@ -52,7 +56,7 @@ export function validateEntry(
     ]
   }
 
-  const inputType = schema.getType(`${entryType.name}Input`)
+  const inputType = schema.getType(inputTypeName(entryType.name))
   if (!isInputObjectType(inputType)) {
     throw new Error(
       `Expected generated input type for type "${entryType.name}".`,
@@ -179,7 +183,7 @@ class DataWalker {
     const result: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(data)) {
       if (key !== 'id') {
-        this.reportUnknownField(`${type.name}IdInput`, key, [...path, key])
+        this.reportUnknownField(idInputTypeName(type.name), key, [...path, key])
         continue
       }
       result[key] = value

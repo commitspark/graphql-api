@@ -3,7 +3,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema'
 import { Entry, EntryDraft } from '@commitspark/git-adapter'
 import { ApolloContext } from '../client.ts'
 import { generateSchema } from '../graphql/schema-generator.ts'
-import { getValidationResult } from '../graphql/schema-validator.ts'
+import { validateSchemaDefinition } from '../graphql/schema-validator.ts'
 import { createError, ErrorCode } from '../graphql/errors.ts'
 import { validateEntry } from './entry-validator.ts'
 import {
@@ -24,23 +24,11 @@ export async function validateRepository(
     context,
     context.getCurrentHash(),
   )
-  let originalSchema: GraphQLSchema
-  try {
-    originalSchema = makeExecutableSchema({ typeDefs: schemaString })
-  } catch (error) {
-    return [
-      createViolation(
-        ViolationCode.INVALID_SCHEMA,
-        error instanceof Error ? error.message : String(error),
-        [],
-      ),
-    ]
-  }
-  const schemaViolations = getValidationResult(originalSchema).map((message) =>
-    createViolation(ViolationCode.INVALID_SCHEMA, message, []),
-  )
-  if (schemaViolations.length > 0) {
-    return schemaViolations
+  const { problems } = validateSchemaDefinition(schemaString)
+  if (problems.length > 0) {
+    return problems.map((message) =>
+      createViolation(ViolationCode.INVALID_SCHEMA, message, []),
+    )
   }
 
   const generatedSchema = makeExecutableSchema(await generateSchema(context))

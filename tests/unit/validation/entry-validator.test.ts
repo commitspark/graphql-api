@@ -261,6 +261,72 @@ describe('Entry validator', () => {
     ])
   })
 
+  it('should report the invalid value exactly as stored', () => {
+    const violations = validateEntry(
+      schema,
+      page({
+        ...validPageData,
+        title: { de: 'Titel', en: 'Title' },
+        rating: ['five'],
+        tags: 'a',
+        align: null,
+        seo: null,
+        author: { id: 'missing', name: 'Copied' },
+        related: [{ id: 'page' }, 'person'],
+        sections: [{ Hero: 'Hello' }, { Banner: { headline: 'x' } }],
+      }),
+      getEntryType,
+    )
+
+    expect(
+      violations
+        .filter((violation) => violation.severity === 'ERROR')
+        .map(({ path, value }) => ({ path, value })),
+    ).toEqual([
+      { path: ['title'], value: { de: 'Titel', en: 'Title' } },
+      { path: ['rating'], value: ['five'] },
+      { path: ['tags'], value: 'a' },
+      { path: ['author'], value: { id: 'missing', name: 'Copied' } },
+      { path: ['related', 1], value: 'person' },
+      { path: ['sections', 0, 'Hero'], value: 'Hello' },
+      { path: ['sections', 1], value: { Banner: { headline: 'x' } } },
+    ])
+  })
+
+  it('should report null stored for a non-null field as value but not a missing value', () => {
+    const violations = validateEntry(
+      schema,
+      page({ ...validPageData, title: null, tags: undefined }),
+      getEntryType,
+    )
+
+    expect(violations).toHaveLength(2)
+    expect(violations[0]).toMatchObject({ path: ['title'], value: null })
+    expect(violations[1].path).toEqual(['tags'])
+    expect(violations[1]).not.toHaveProperty('value')
+  })
+
+  it('should report entry data that is not an object as value', () => {
+    expect(
+      validateEntry(
+        schema,
+        { id: 'page', metadata: { type: 'Page' }, data: ['text'] as never },
+        getEntryType,
+      ),
+    ).toMatchObject([{ path: [], value: ['text'] }])
+  })
+
+  it('should not report a value for warnings', () => {
+    const violations = validateEntry(
+      schema,
+      page({ ...validPageData, titel: 'Typo' }),
+      getEntryType,
+    )
+
+    expect(violations).toHaveLength(1)
+    expect(violations[0]).not.toHaveProperty('value')
+  })
+
   it('should report unknown keys as warnings only', () => {
     const violations = validateEntry(
       schema,

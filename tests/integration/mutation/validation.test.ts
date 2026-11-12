@@ -54,6 +54,7 @@ describe('Validation of mutation results', () => {
                 code: 'INVALID_VALUE',
                 entryId: 'shirt',
                 path: ['rating'],
+                value: 4.5,
               },
             ],
           },

@@ -599,7 +599,8 @@ Example of reading an entry after field `readingTime` was changed from type `Str
               "code": "INVALID_VALUE",
               "message": "Int cannot represent non-integer value: \"5 min\"",
               "path": ["readingTime"],
-              "entryId": "welcome"
+              "entryId": "welcome",
+              "value": "5 min"
             }
           ]
         }
@@ -672,6 +673,10 @@ The result holds the commit hash that was checked in `ref` and a list of `violat
 `severity`, a `message`, the `entryId` of the affected entry (not set for problems of the schema) and the `path` of the
 affected value within the entry data, e.g. `['sections', 2, 'Hero', 'headline']`. Violations of severity `ERROR` make
 reading the entry fail; violations of severity `WARNING` do not.
+
+Violations of severity `ERROR` that concern a stored value also hold this `value` exactly as stored in the repository,
+e.g. the whole object stored for a field of type `String`, so that the value can be shown and corrected, e.g. in an
+editor. `value` is `null` if `null` is stored and not set if no value is stored.
 
 | Violation code           | Severity  | Description                                                                |
 |--------------------------|-----------|----------------------------------------------------------------------------|

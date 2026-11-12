@@ -56,7 +56,7 @@ export function validateEntry(
         `Entry is of type "${entry.metadata.type}", which is not a type with directive @${ENTRY_DIRECTIVE_NAME} in ` +
           `the schema.`,
         [],
-        entry.id,
+        { entryId: entry.id },
       ),
     ]
   }
@@ -94,6 +94,7 @@ class DataWalker {
       this.reportInvalidValue(
         `Expected an object of type "${type.name}".`,
         path,
+        data,
       )
       return
     }
@@ -106,7 +107,7 @@ class DataWalker {
             ViolationCode.UNKNOWN_FIELD,
             `Key "${key}" is not a field of type "${type.name}" in the schema.`,
             [...path, key],
-            this.entryId,
+            { entryId: this.entryId },
           ),
         )
       }
@@ -126,6 +127,7 @@ class DataWalker {
             ? `Field "${field.name}" of required type "${field.type}" was not provided.`
             : `Field "${field.name}" of required type "${field.type}" must not be null.`,
           [...path, field.name],
+          value,
         )
         continue
       }
@@ -139,6 +141,7 @@ class DataWalker {
         this.reportInvalidValue(
           `Value of required type "${type}" must not be null.`,
           path,
+          data,
         )
         return
       }
@@ -151,7 +154,11 @@ class DataWalker {
 
     if (isListType(type)) {
       if (!Array.isArray(data)) {
-        this.reportInvalidValue(`Expected a list of type "${type}".`, path)
+        this.reportInvalidValue(
+          `Expected a list of type "${type}".`,
+          path,
+          data,
+        )
         return
       }
       data.forEach((element, index) =>
@@ -186,7 +193,7 @@ class DataWalker {
     path: Path,
   ): void {
     coerceInputValue(data, type, (_path, _invalidValue, error) =>
-      this.reportInvalidValue(error.message, path),
+      this.reportInvalidValue(error.message, path, data),
     )
   }
 
@@ -207,6 +214,7 @@ class DataWalker {
             .map((member) => `"${member.name}"`)
             .join(', ')}.`,
         path,
+        data,
       )
       return
     }
@@ -226,6 +234,7 @@ class DataWalker {
         `Expected a reference to an entry of type "${type.name}", i.e. an object with key "id" holding the ID of ` +
           `the entry.`,
         path,
+        data,
       )
       return
     }
@@ -236,17 +245,18 @@ class DataWalker {
             ViolationCode.UNKNOWN_FIELD,
             `Key "${key}" is not a field of type "${idInputTypeName(type.name)}" in the schema.`,
             [...path, key],
-            this.entryId,
+            { entryId: this.entryId },
           ),
         )
       }
     }
-    this.checkReferenceTarget(type, data.id, path)
+    this.checkReferenceTarget(type, data.id, data, path)
   }
 
   private checkReferenceTarget(
     type: GraphQLObjectType | GraphQLUnionType,
     id: string,
+    reference: Record<string, unknown>,
     path: Path,
   ): void {
     const referencedTypeName = this.getEntryType(id)
@@ -256,7 +266,7 @@ class DataWalker {
           ViolationCode.DANGLING_REFERENCE,
           `Reference points to entry "${id}", which does not exist.`,
           path,
-          this.entryId,
+          { entryId: this.entryId, value: reference },
         ),
       )
       return
@@ -271,15 +281,25 @@ class DataWalker {
           `Reference points to entry "${id}" of type "${referencedTypeName}", but field permits only type ` +
             `${permittedTypeNames.map((name) => `"${name}"`).join(', ')}.`,
           path,
-          this.entryId,
+          { entryId: this.entryId, value: reference },
         ),
       )
     }
   }
 
-  private reportInvalidValue(message: string, path: Path): void {
+  /**
+   * Records an invalid value together with the value as stored; a missing value (`undefined`) is recorded without one.
+   */
+  private reportInvalidValue(
+    message: string,
+    path: Path,
+    value: unknown,
+  ): void {
     this.violations.push(
-      createViolation(ViolationCode.INVALID_VALUE, message, path, this.entryId),
+      createViolation(ViolationCode.INVALID_VALUE, message, path, {
+        entryId: this.entryId,
+        value,
+      }),
     )
   }
 }

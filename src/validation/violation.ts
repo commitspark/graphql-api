@@ -58,6 +58,12 @@ export interface Violation {
    * Path of the affected value within the entry data, e.g. `['sections', 2, 'Hero', 'headline']`.
    */
   path: (string | number)[]
+  /**
+   * The value stored at `path`, exactly as read from the repository, e.g. an object stored for a field of type
+   * `String`. Set for violations of severity error that concern a stored value, including `null`; not set for missing
+   * values and for violations that do not concern a single value, e.g. an unknown entry type.
+   */
+  value?: unknown
 }
 
 export interface ValidationResult {
@@ -68,11 +74,15 @@ export interface ValidationResult {
   violations: Violation[]
 }
 
+/**
+ * Creates a violation. `value` is only set on the violation if it is passed and not `undefined`, as `undefined`
+ * stands for a missing value, which has no value to report.
+ */
 export function createViolation(
   code: ViolationCode,
   message: string,
   path: (string | number)[],
-  entryId?: string,
+  details: { entryId?: string; value?: unknown } = {},
 ): Violation {
   const violation: Violation = {
     severity: severityByCode[code],
@@ -80,8 +90,11 @@ export function createViolation(
     message,
     path,
   }
-  if (entryId !== undefined) {
-    violation.entryId = entryId
+  if (details.entryId !== undefined) {
+    violation.entryId = details.entryId
+  }
+  if (details.value !== undefined) {
+    violation.value = details.value
   }
   return violation
 }

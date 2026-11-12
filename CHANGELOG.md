@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add the stored value as `value` to violations of severity `ERROR` that concern a stored value, in errors and in
+  `validate()`, so that an invalid value can be shown and corrected instead of being lost, e.g. in an editor
+
 ### Changed
 
 - Generate list queries as `every<Type>: [<Type>]` instead of `[<Type>!]`, so that an entry that cannot be read only

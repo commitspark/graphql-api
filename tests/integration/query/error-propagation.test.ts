@@ -283,7 +283,9 @@ type Author @Entry {
       path: ['everyArticle', 0, 'block'],
       extensions: {
         code: 'BAD_REPOSITORY_DATA',
-        commitspark: { violations: [{ path: ['block', 'Hero'] }] },
+        commitspark: {
+          violations: [{ path: ['block', 'Hero'], value: 'text' }],
+        },
       },
     })
   })

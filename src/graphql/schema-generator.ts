@@ -5,10 +5,7 @@ import {
   generateSearchQuery,
   generateTypeNameQuery,
 } from './queries-mutations-generator.ts'
-import {
-  IExecutableSchemaDefinition,
-  makeExecutableSchema,
-} from '@graphql-tools/schema'
+import { IExecutableSchemaDefinition } from '@graphql-tools/schema'
 import { analyzeSchema } from './schema-analyzer.ts'
 import {
   generateIdInputTypeStrings,
@@ -19,8 +16,8 @@ import { generateSchemaRootTypeStrings } from './schema-root-type-generator.ts'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver.ts'
 import { ApolloContext } from '../client.ts'
-import { GraphQLTypeResolver, parse } from 'graphql'
-import { getValidationResult } from './schema-validator.ts'
+import { GraphQLTypeResolver } from 'graphql'
+import { validateSchemaDefinition } from './schema-validator.ts'
 import {
   MUTATION_TYPE_NAME,
   QUERY_TYPE_NAME,
@@ -45,18 +42,14 @@ export async function generateSchema(
     context,
     context.getCurrentHash(),
   )
-  const schema = makeExecutableSchema({
-    typeDefs: originalSchemaString,
-  })
-
-  const validationResult = getValidationResult(
-    schema,
-    parse(originalSchemaString),
-  )
-  if (validationResult.length > 0) {
+  const { schema, problems } = validateSchemaDefinition(originalSchemaString)
+  if (schema === undefined || problems.length > 0) {
     throw createError(`Invalid schema.`, ErrorCode.BAD_SCHEMA, {
-      schema: printSchemaWithDirectives(schema),
-      argumentValue: validationResult.join('\n'),
+      schema:
+        schema !== undefined
+          ? printSchemaWithDirectives(schema)
+          : originalSchemaString,
+      argumentValue: problems.join('\n'),
     })
   }
   const schemaAnalyzerResult = analyzeSchema(schema)

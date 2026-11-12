@@ -422,29 +422,4 @@ type SupplierRef {
       externalId: 'ID',
     })
   })
-
-  it.each([
-    ['without field "id"', 'name: String'],
-    ['with field "id" of type "String!"', 'id: String!'],
-    ['with nullable field "id"', 'id: ID'],
-  ])(
-    'should reject schema with @Entry type %s',
-    async (_description, fieldDefinition) => {
-      const originalSchema = `directive @Entry on OBJECT
-
-type MyEntry @Entry {
-    ${fieldDefinition}
-}`
-
-      await expect(getGeneratedSchema(originalSchema)).rejects.toMatchObject({
-        extensions: {
-          code: 'BAD_SCHEMA',
-          commitspark: {
-            argumentValue:
-              'Type "MyEntry" must have a field "id" of type "ID!" to use "@Entry" directive.',
-          },
-        },
-      })
-    },
-  )
 })

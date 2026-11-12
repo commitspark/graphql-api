@@ -12,7 +12,9 @@ import {
   isTypeExtensionNode,
   isUnionType,
   Kind,
+  parse,
 } from 'graphql'
+import { makeExecutableSchema } from '@graphql-tools/schema'
 import {
   ENTRY_DIRECTIVE_NAME,
   hasDirective,
@@ -306,19 +308,45 @@ function checkEntryTypesHaveIdField(schema: GraphQLSchema): string[] {
     )
 }
 
+interface SchemaDefinitionValidationResult {
+  /**
+   * The schema built from the schema definition, for further processing if there are no problems; `undefined` if the
+   * schema definition cannot be built at all, e.g. due to a syntax error.
+   */
+  schema: GraphQLSchema | undefined
+  /**
+   * A message for every problem found.
+   */
+  problems: string[]
+}
+
 /**
- * Validates the schema defined by the user and returns a message for every problem found. `document` is the parsed
- * schema definition the schema was built from.
+ * Builds the schema from the schema definition provided by the user and validates it. All callers use this function,
+ * so that validation always applies to a schema built the same way, which matters for checks that depend on how the
+ * schema is built.
  */
-export function getValidationResult(
-  schema: GraphQLSchema,
-  document: DocumentNode,
-): string[] {
-  return [
-    ...checkSupportedConstructs(schema, document),
-    ...checkGeneratedNameCollisions(schema),
-    ...checkEntryTypesHaveIdField(schema),
-    ...checkUnionMembersConsistentUseOfEntryDirective(schema),
-    ...checkSearchableDirectiveOnlyOnStringFields(schema),
-  ]
+export function validateSchemaDefinition(
+  schemaDefinition: string,
+): SchemaDefinitionValidationResult {
+  let schema: GraphQLSchema
+  try {
+    schema = makeExecutableSchema({ typeDefs: schemaDefinition })
+  } catch (error) {
+    return {
+      schema: undefined,
+      problems: [error instanceof Error ? error.message : String(error)],
+    }
+  }
+  const document = parse(schemaDefinition)
+
+  return {
+    schema,
+    problems: [
+      ...checkSupportedConstructs(schema, document),
+      ...checkGeneratedNameCollisions(schema),
+      ...checkEntryTypesHaveIdField(schema),
+      ...checkUnionMembersConsistentUseOfEntryDirective(schema),
+      ...checkSearchableDirectiveOnlyOnStringFields(schema),
+    ],
+  }
 }

@@ -162,9 +162,9 @@ const rocketFlight = response.data.rocketFlight
 
 # Technical documentation
 
-## Data model
+## Schema
 
-The data model (i.e. schema) is defined in a single GraphQL type definition text file using the
+The schema (i.e. data model) is defined in a single GraphQL type definition text file using the
 [GraphQL type system](https://graphql.org/learn/schema/).
 
 The schema file must be located at `commitspark/schema/schema.graphql` inside the Git repository (unless otherwise
@@ -213,19 +213,21 @@ Commitspark.
 
 ### Changing the schema
 
-Entries are stored independently of the schema, so changing the schema can create mismatches with existing entry data.
-Commitspark does not fill in missing values. Reading a value that does not match the schema fails with error
-`BAD_REPOSITORY_DATA` at the position of this value in the response, listing the problem under
-`extensions.commitspark.violations`. As usual in GraphQL, the value becomes `null` if its type is nullable, otherwise
-the error propagates to the closest nullable parent, e.g. the entry in the list of `every<Type>`. Values that are not
-queried do not lead to errors. Excess entry data stored under keys that are not fields in the schema is silently
-ignored and does not prevent reading an entry.
+A Commitspark schema can be changed by modifying the schema file stored in the repository.
+
+It is recommended to update affected entries in the same commit as the schema and to check the repository with
+[`validate()`](#validate), e.g. in CI before merging.
+
+### Data not matching the schema
+
+Reading a value that does not match the schema fails with error `BAD_REPOSITORY_DATA` at the position of this value in
+the response, listing the problem under `extensions.commitspark.violations` (see [Violations](#violations)). As
+usual in GraphQL, the value becomes `null` if its type is nullable, otherwise the error propagates to the closest
+nullable parent. Values that are not queried do not lead to errors. Excess entry data stored under keys that are not
+fields in the schema is ignored and does not prevent reading an entry.
 
 A `null` value in a response can therefore mean that no value is stored or that the stored value cannot be read. API
 callers should check the `errors` of a response to tell these apart, e.g. to avoid publishing incomplete content.
-
-It is recommended to check a repository with [`validate()`](#validate) after changing the schema, e.g. in CI, and
-to update affected entries in the same commit as the schema.
 
 ## Entry storage
 
@@ -432,12 +434,11 @@ Mutations work on branch names only, as they create new commits.
 
 Each successful mutation appends a new commit on HEAD of the given branch.
 
-Before committing, Commitspark checks whether the entry as it would be written matches the schema (see
-[Changing the schema](#changing-the-schema)). If the entry would not match the schema, no commit is made and the
-mutation fails with error `BAD_USER_INPUT`, listing the problems under `extensions.commitspark.violations`. This also
-applies to existing data of fields not included in an update, e.g. a stored value that no longer matches a changed field
-type; such a value can be fixed by including the field in the update. Data stored under keys that are not fields in the
-schema is retained by updates.
+Before committing, Commitspark checks whether the entry as it would be written matches the schema. If the entry would
+not match the schema, no commit is made and the mutation fails with error `BAD_USER_INPUT`, listing the problems under
+`extensions.commitspark.violations`. This also applies to existing data of fields not included in an update, e.g. a
+stored value that no longer matches a changed field type; such a value can be fixed by including the field in the
+update. Data stored under keys that are not fields in the schema is retained by updates.
 
 #### Multiple mutations in one request
 
@@ -577,11 +578,27 @@ Example GraphQL response with error:
 }
 ```
 
-If data does not match the schema, the error lists the problems under `extensions.commitspark.violations`, in the same
-format as returned by [`validate()`](#violations). When reading, error `BAD_REPOSITORY_DATA` is reported at the position
-of the affected value and lists the problems of this value (see [Changing the schema](#changing-the-schema)). When a
-mutation would write an entry that does not match the schema, error `BAD_USER_INPUT` lists all problems of the entry.
-Example of reading an entry after field `readingTime` was changed from type `String` to `Int`:
+## Error codes
+
+The following error codes are returned together with error codes of Git adapters as
+documented [here](https://github.com/commitspark/git-adapter) and error codes of search adapters as
+documented [here](https://github.com/commitspark/search-adapter):
+
+| Error code            | Description                                                                                  |
+|-----------------------|----------------------------------------------------------------------------------------------|
+| `BAD_USER_INPUT`      | Invalid input data provided by the caller                                                    |
+| `NOT_FOUND`           | Requested resource (entry, type, etc.) does not exist                                        |
+| `BAD_REPOSITORY_DATA` | Data in the repository is malformed or invalid according to the schema                       |
+| `BAD_SCHEMA`          | Schema definition is malformed or invalid                                                    |
+| `IN_USE`              | Entry cannot be deleted because it is referenced by other entries                            |
+| `CONFLICT`            | Entry or branch was changed concurrently (see "Mutations from multiple concurrent requests") |
+| `INTERNAL_ERROR`      | Internal processing error                                                                    |
+
+## Errors for data not matching the schema
+
+If data does not match the schema, the problems are listed under `extensions.commitspark.violations`, in the same
+format as returned by [`validate()`](#violations). For example, reading an entry after field `readingTime` was changed
+from type `String` to `Int`, without updating the entry data to match, produces the following error:
 
 ```json
 {
@@ -609,20 +626,6 @@ Example of reading an entry after field `readingTime` was changed from type `Str
   ]
 }
 ```
-
-The following error codes are returned together with error codes of Git adapters as
-documented [here](https://github.com/commitspark/git-adapter) and error codes of search adapters as
-documented [here](https://github.com/commitspark/search-adapter):
-
-| Error code            | Description                                                                                  |
-|-----------------------|----------------------------------------------------------------------------------------------|
-| `BAD_USER_INPUT`      | Invalid input data provided by the caller                                                    |
-| `NOT_FOUND`           | Requested resource (entry, type, etc.) does not exist                                        |
-| `BAD_REPOSITORY_DATA` | Data in the repository is malformed or invalid according to schema                           |
-| `BAD_SCHEMA`          | Schema definition is malformed or invalid                                                    |
-| `IN_USE`              | Entry cannot be deleted because it is referenced by other entries                            |
-| `CONFLICT`            | Entry or branch was changed concurrently (see "Mutations from multiple concurrent requests") |
-| `INTERNAL_ERROR`      | Internal processing error                                                                    |
 
 # TypeScript API
 
@@ -690,9 +693,9 @@ Violations that concern a stored value hold it as `value`, exactly as stored, in
 | `INCOMPATIBLE_REFERENCE` | `ERROR`   | A reference points to an entry of a type that the field does not permit    |
 | `UNKNOWN_FIELD`          | `WARNING` | Data is stored under a key that is not a field in the schema               |
 
-#### Validation example
+#### CI pipeline validation example
 
-Example of a check that fails on errors and warnings, e.g. in CI:
+Example of a check that fails on errors and warnings:
 
 ```typescript
 const result = await client.validate('main')

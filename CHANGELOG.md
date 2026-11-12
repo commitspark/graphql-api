@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Execute GraphQL requests with graphql-js instead of Apollo Server, so that requests are faster and fewer dependencies
+  are installed
+- Report request errors that prevent execution, e.g. syntax errors, validation errors or invalid variable values, with
+  error code `BAD_GRAPHQL_REQUEST` instead of Apollo Server's codes `GRAPHQL_PARSE_FAILED`,
+  `GRAPHQL_VALIDATION_FAILED`, `BAD_USER_INPUT`, `OPERATION_RESOLUTION_FAILURE` and `BAD_REQUEST`, so that all error
+  codes are defined by Commitspark
+- Report unexpected errors with error code `INTERNAL_ERROR` instead of `INTERNAL_SERVER_ERROR`, so that a single code
+  is used for internal errors
+- Allow introspection and never include stack traces in errors, independent of environment variable `NODE_ENV`, so that
+  the API behaves the same in every environment
+- Replace type `ApolloExecuteOperationRequest` of argument `request` of `postGraphQL()` with `GraphQLRequest`, which
+  supports `query`, `operationName` and `variables`
+
+### Removed
+
+- Remove dependency `@apollo/server`
+
 ## [2.0.0-beta.7] - 2026-11-12
 
 ### Added

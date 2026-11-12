@@ -586,6 +586,7 @@ documented [here](https://github.com/commitspark/search-adapter):
 
 | Error code            | Description                                                                                  |
 |-----------------------|----------------------------------------------------------------------------------------------|
+| `BAD_GRAPHQL_REQUEST` | Request cannot be executed, e.g. due to a syntax error or invalid variable values            |
 | `BAD_USER_INPUT`      | Invalid input data provided by the caller                                                    |
 | `NOT_FOUND`           | Requested resource (entry, type, etc.) does not exist                                        |
 | `BAD_REPOSITORY_DATA` | Data in the repository is malformed or invalid according to the schema                       |
@@ -647,12 +648,11 @@ Optional argument `options` supports the following settings:
 
 This function is used to make GraphQL requests.
 
-Request execution is handled by ApolloServer behind the scenes.
-
 Argument `ref` expects a branch name, tag name or commit hash (see
 [Navigating the Git repository](#navigating-the-git-repository)).
 
-Argument `request` expects a conventional GraphQL query and supports query variables as well as introspection.
+Argument `request` expects a conventional GraphQL query and supports query variables as well as introspection. Errors
+are returned in field `errors` of the response (see [Error handling](#error-handling)).
 
 ### getSchema()
 

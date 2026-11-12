@@ -1,17 +1,13 @@
-import { createApolloConfig } from './graphql/apollo-config-factory.ts'
 import { generateSchema } from './graphql/schema-generator.ts'
 import {
   DocumentNode,
   GraphQLFormattedError,
   TypedQueryDocumentNode,
 } from 'graphql'
+import { makeExecutableSchema } from '@graphql-tools/schema'
 import { GitAdapter } from '@commitspark/git-adapter'
 import { SearchAdapter } from '@commitspark/search-adapter'
-import {
-  ApolloServer,
-  ApolloServerOptions,
-  GraphQLRequest,
-} from '@apollo/server'
+import { executeRequest } from './graphql/request-executor.ts'
 import { RepositoryCacheHandler } from './persistence/cache.ts'
 import { validateRepository } from './validation/repository-validator.ts'
 import { ValidationResult } from './validation/violation.ts'
@@ -41,11 +37,19 @@ const createContext = async (
 
 export type VariableValues = { [name: string]: unknown }
 
-export type ApolloExecuteOperationRequest<
+export interface GraphQLRequest<
   TData = Record<string, unknown>,
   TVariables extends VariableValues = VariableValues,
-> = Omit<GraphQLRequest<TVariables>, 'query'> & {
-  query?: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
+> {
+  /**
+   * The GraphQL document, as string or parsed.
+   */
+  query: string | DocumentNode | TypedQueryDocumentNode<TData, TVariables>
+  /**
+   * The operation to execute; required if the document contains more than one operation.
+   */
+  operationName?: string
+  variables?: TVariables
 }
 
 export const postGraphQL = async <
@@ -56,7 +60,7 @@ export const postGraphQL = async <
   searchAdapter: SearchAdapter | undefined,
   repositoryCache: RepositoryCacheHandler,
   ref: string,
-  request: ApolloExecuteOperationRequest<TData, TVariables>,
+  request: GraphQLRequest<TData, TVariables>,
 ): Promise<GraphQLResponse<TData | null>> => {
   const context = await createContext(
     gitAdapter,
@@ -65,30 +69,19 @@ export const postGraphQL = async <
     ref,
   )
 
-  const apolloDriverConfig: ApolloServerOptions<ApolloContext> =
-    await createApolloConfig(context)
-
-  const apolloServer = new ApolloServer<ApolloContext>({
-    ...apolloDriverConfig,
-  })
-
-  const result = await apolloServer.executeOperation<TData, TVariables>(
-    request,
-    {
-      contextValue: context,
-    },
+  const schema = makeExecutableSchema(await generateSchema(context))
+  const result = await executeRequest<TData>(
+    schema,
+    request.query,
+    request.variables,
+    request.operationName,
+    context,
   )
-
-  await apolloServer.stop()
 
   return {
     ref: context.getCurrentHash(),
-    data:
-      result.body.kind === 'single' ? result.body.singleResult.data : undefined,
-    errors:
-      result.body.kind === 'single'
-        ? result.body.singleResult.errors
-        : undefined,
+    data: result.data,
+    errors: result.errors,
   }
 }
 

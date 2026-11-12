@@ -135,6 +135,25 @@ describe('Field value resolver', () => {
     })
   })
 
+  it('should not cause an unhandled rejection for a failing list element that GraphQL does not complete', async () => {
+    // GraphQL stops completing a list when an earlier element with a non-null type fails, so later elements may never
+    // get a rejection handler from GraphQL
+    const unhandledRejections: unknown[] = []
+    const onUnhandledRejection = (reason: unknown) =>
+      unhandledRejections.push(reason)
+    process.on('unhandledRejection', onUnhandledRejection)
+    try {
+      resolve(['a', 4], 'tags', articleContext([violationAt(['tags', 1])]), [
+        'tags',
+      ])
+      await new Promise((resolveTimeout) => setTimeout(resolveTimeout, 10))
+    } finally {
+      process.off('unhandledRejection', onUnhandledRejection)
+    }
+
+    expect(unhandledRejections).toEqual([])
+  })
+
   it('should resolve elements of nested lists separately', async () => {
     const result = resolve(
       [['a', 4]],
@@ -178,6 +197,21 @@ describe('Field value resolver', () => {
       'block',
       'Hero',
     ])
+  })
+
+  it('should throw the violations of an inline union member value as a whole at the union field', () => {
+    const violation = violationAt(['block', 'Hero'])
+
+    expect(() =>
+      resolve({ Hero: null }, 'block', articleContext([violation]), ['block']),
+    ).toThrow(
+      expect.objectContaining({
+        extensions: expect.objectContaining({
+          code: 'BAD_REPOSITORY_DATA',
+          commitspark: expect.objectContaining({ violations: [violation] }),
+        }),
+      }),
+    )
   })
 
   it.each([

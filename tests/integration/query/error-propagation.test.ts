@@ -272,6 +272,22 @@ type Author @Entry {
     },
   )
 
+  it('should report an inline union member value that is not an object at the union field', async () => {
+    const result = await queryArticles([article({ block: { Hero: 'text' } })])
+
+    expect(result.data).toEqual({
+      everyArticle: [{ ...validArticle, id: 'article', block: null }],
+    })
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors?.[0]).toMatchObject({
+      path: ['everyArticle', 0, 'block'],
+      extensions: {
+        code: 'BAD_REPOSITORY_DATA',
+        commitspark: { violations: [{ path: ['block', 'Hero'] }] },
+      },
+    })
+  })
+
   it('should null the entry for a missing value of a non-null field', async () => {
     const result = await queryArticles([
       article({ title: undefined }),

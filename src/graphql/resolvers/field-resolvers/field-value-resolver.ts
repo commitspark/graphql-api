@@ -59,7 +59,12 @@ export function resolveFieldValue(
           info,
         )
       } catch (error) {
-        return Promise.reject(error)
+        const rejectedElement = Promise.reject(error)
+        // GraphQL stops completing a list as soon as an element with a non-null type fails, so it may never handle the
+        // rejection of a later element; handling it here prevents an unhandled rejection, which terminates Node.js,
+        // while GraphQL still receives the rejection when it completes this element
+        rejectedElement.catch(() => undefined)
+        return rejectedElement
       }
     })
   }
@@ -81,6 +86,9 @@ export function resolveFieldValue(
     // the value of an inline union is stored under the name of its member type; the type name is passed to the union
     // type resolver, so that the value itself has the shape of the member type
     const memberTypeName = Object.keys(value)[0]
+    // violations of the stored member value as a whole, e.g. a value that is not an object, are reported at the union
+    // field, as the response has no position of its own for the member value
+    throwViolationsAt(sourceContext, [...path, memberTypeName])
     return createEmbeddedSource(
       context,
       sourceContext,

@@ -674,9 +674,10 @@ The result holds the commit hash that was checked in `ref` and a list of `violat
 affected value within the entry data, e.g. `['sections', 2, 'Hero', 'headline']`. Violations of severity `ERROR` make
 reading the entry fail; violations of severity `WARNING` do not.
 
-Violations of severity `ERROR` that concern a stored value also hold this `value` exactly as stored in the repository,
-e.g. the whole object stored for a field of type `String`, so that the value can be shown and corrected, e.g. in an
-editor. `value` is `null` if `null` is stored and not set if no value is stored.
+Violations that concern a stored value also hold this `value` exactly as stored in the repository, e.g. the whole
+object stored for a field of type `String` or the data stored under a key that is not a field in the schema, so that
+the value can be shown and corrected, e.g. in an editor, or moved to another field. `value` is `null` if `null` is
+stored and not set if no value is stored.
 
 | Violation code           | Severity  | Description                                                                |
 |--------------------------|-----------|----------------------------------------------------------------------------|

@@ -60,8 +60,9 @@ export interface Violation {
   path: (string | number)[]
   /**
    * The value stored at `path`, exactly as read from the repository, e.g. an object stored for a field of type
-   * `String`. Set for violations of severity error that concern a stored value, including `null`; not set for missing
-   * values and for violations that do not concern a single value, e.g. an unknown entry type.
+   * `String`, or the data stored under a key that is not part of the schema. Set for every violation that concerns a
+   * stored value, including `null`; not set for missing values and for violations that do not concern a single value,
+   * e.g. an unknown entry type.
    */
   value?: unknown
 }

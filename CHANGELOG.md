@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add the stored value as `value` to violations of severity `ERROR` that concern a stored value, in errors and in
-  `validate()`, so that an invalid value can be shown and corrected instead of being lost, e.g. in an editor
+- Add the stored value as `value` to violations that concern a stored value, in errors and in `validate()`, so that an
+  invalid value can be shown and corrected instead of being lost, e.g. in an editor, and data stored under a key that
+  is not a field in the schema can be moved to another field
 
 ### Changed
 

@@ -107,7 +107,7 @@ class DataWalker {
             ViolationCode.UNKNOWN_FIELD,
             `Key "${key}" is not a field of type "${type.name}" in the schema.`,
             [...path, key],
-            { entryId: this.entryId },
+            { entryId: this.entryId, value: data[key] },
           ),
         )
       }
@@ -245,7 +245,7 @@ class DataWalker {
             ViolationCode.UNKNOWN_FIELD,
             `Key "${key}" is not a field of type "${idInputTypeName(type.name)}" in the schema.`,
             [...path, key],
-            { entryId: this.entryId },
+            { entryId: this.entryId, value: data[key] },
           ),
         )
       }

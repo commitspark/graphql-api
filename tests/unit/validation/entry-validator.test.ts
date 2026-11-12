@@ -316,15 +316,29 @@ describe('Entry validator', () => {
     ).toMatchObject([{ path: [], value: ['text'] }])
   })
 
-  it('should not report a value for warnings', () => {
+  it('should report the data stored under unknown keys as value of warnings', () => {
     const violations = validateEntry(
       schema,
-      page({ ...validPageData, titel: 'Typo' }),
+      page({
+        ...validPageData,
+        titel: null,
+        seo: { title: 'SEO', twitter: { handle: '@x', card: 'summary' } },
+        author: { id: 'person', name: 'Copied' },
+      }),
       getEntryType,
     )
 
-    expect(violations).toHaveLength(1)
-    expect(violations[0]).not.toHaveProperty('value')
+    expect(
+      violations.map(({ code, path, value }) => ({ code, path, value })),
+    ).toEqual([
+      { code: 'UNKNOWN_FIELD', path: ['titel'], value: null },
+      {
+        code: 'UNKNOWN_FIELD',
+        path: ['seo', 'twitter'],
+        value: { handle: '@x', card: 'summary' },
+      },
+      { code: 'UNKNOWN_FIELD', path: ['author', 'name'], value: 'Copied' },
+    ])
   })
 
   it('should report unknown keys as warnings only', () => {

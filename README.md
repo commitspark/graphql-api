@@ -578,7 +578,7 @@ Example GraphQL response with error:
 ```
 
 If data does not match the schema, the error lists the problems under `extensions.commitspark.violations`, in the same
-format as returned by [`validate()`](#validate). When reading, error `BAD_REPOSITORY_DATA` is reported at the position
+format as returned by [`validate()`](#violations). When reading, error `BAD_REPOSITORY_DATA` is reported at the position
 of the affected value and lists the problems of this value (see [Changing the schema](#changing-the-schema)). When a
 mutation would write an entry that does not match the schema, error `BAD_USER_INPUT` lists all problems of the entry.
 Example of reading an entry after field `readingTime` was changed from type `String` to `Int`:
@@ -669,15 +669,17 @@ returned in a list.
 Argument `ref` expects a branch name, tag name or commit hash (see
 [Navigating the Git repository](#navigating-the-git-repository)).
 
-The result holds the commit hash that was checked in `ref` and a list of `violations`. Each violation has a `code`, a
-`severity`, a `message`, the `entryId` of the affected entry (not set for problems of the schema) and the `path` of the
-affected value within the entry data, e.g. `['sections', 2, 'Hero', 'headline']`. Violations of severity `ERROR` make
-reading the entry fail; violations of severity `WARNING` do not.
+A validation result holds the commit hash that was checked in `ref` and a list of `violations`.
 
-Violations that concern a stored value also hold this `value` exactly as stored in the repository, e.g. the whole
-object stored for a field of type `String` or the data stored under a key that is not a field in the schema, so that
-the value can be shown and corrected, e.g. in an editor, or moved to another field. `value` is `null` if `null` is
-stored and not set if no value is stored.
+#### Violations
+
+Each violation has a `code`, a `severity`, a `message`, the `entryId` of the affected entry (not set for problems of the
+schema) and the `path` of the affected value within the entry data, e.g. `['sections', 2, 'Hero', 'headline']`.
+`ERROR` means that the affected data cannot be read or written, `WARNING` that it is ignored when reading and retained
+by updates.
+
+Violations that concern a stored value hold it as `value`, exactly as stored, including `null`. If nothing is stored,
+`value` is not set.
 
 | Violation code           | Severity  | Description                                                                |
 |--------------------------|-----------|----------------------------------------------------------------------------|
@@ -687,6 +689,8 @@ stored and not set if no value is stored.
 | `DANGLING_REFERENCE`     | `ERROR`   | A reference points to an entry that does not exist                         |
 | `INCOMPATIBLE_REFERENCE` | `ERROR`   | A reference points to an entry of a type that the field does not permit    |
 | `UNKNOWN_FIELD`          | `WARNING` | Data is stored under a key that is not a field in the schema               |
+
+#### Validation example
 
 Example of a check that fails on errors and warnings, e.g. in CI:
 

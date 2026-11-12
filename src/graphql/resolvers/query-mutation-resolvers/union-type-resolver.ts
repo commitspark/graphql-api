@@ -12,8 +12,7 @@ export const unionTypeResolver: UnionTypeResolver = async (
     // resolved references always carry the ID of the referenced entry
     return getTypeById(context, source.id as string)
   } else {
-    // We have injected an internal `__typename` field into the data of fields pointing to a non-entry union
-    // in UnionValueResolver. This artificial field holds the type information we need here.
+    // the field value resolver adds field `__typename` to the value of an inline union, naming its member type
     return source.__typename
   }
 }

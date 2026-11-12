@@ -56,13 +56,18 @@ describe('Validation', () => {
 
     expect(result.ref).toBe(commitHash)
     expect(result.violations).toMatchObject([
-      { entryId: 'apple', severity: 'ERROR', code: 'INVALID_VALUE', path: [] },
+      {
+        entryId: 'apple',
+        severity: 'ERROR',
+        code: 'INVALID_VALUE',
+        path: ['name'],
+      },
       { entryId: 'old', severity: 'ERROR', code: 'UNKNOWN_ENTRY_TYPE' },
       {
         entryId: 'pen',
         severity: 'ERROR',
         code: 'INCOMPATIBLE_REFERENCE',
-        path: ['category', 'id'],
+        path: ['category'],
       },
       {
         entryId: 'shirt',
@@ -128,7 +133,7 @@ type Product @Entry { name: String }`,
     expect(result.data).toEqual({ data: { id: 'shirt', name: 'Shirt' } })
   })
 
-  it('should fail reading a reference to an entry of an incompatible type', async () => {
+  it('should null a reference to an entry of an incompatible type', async () => {
     const client = await createTestClient(schema, [
       { id: 'shirt', metadata: { type: 'Product' }, data: { name: 'Shirt' } },
       {
@@ -144,23 +149,27 @@ type Product @Entry { name: String }`,
 
     expect(result.errors).toMatchObject([
       {
+        path: ['data', 'category'],
         extensions: {
           code: 'BAD_REPOSITORY_DATA',
           commitspark: {
             fieldValue: 'pen',
-            violations: [{ code: 'INCOMPATIBLE_REFERENCE' }],
+            violations: [
+              { code: 'INCOMPATIBLE_REFERENCE', path: ['category'] },
+            ],
           },
         },
       },
     ])
     expect(result.errors?.[0].message).toBe(
-      'Entry "pen" does not match the schema: category.id: Reference points to entry "shirt" of type ' +
+      'Entry "pen" does not match the schema: category: Reference points to entry "shirt" of type ' +
         '"Product", but field permits only type "Category".',
     )
-    expect(result.data).toEqual({ data: null })
+    // only the nullable field holding the reference is nulled
+    expect(result.data).toEqual({ data: { id: 'pen', category: null } })
   })
 
-  it('should fail reading a referenced entry that does not match the schema', async () => {
+  it('should report data of a referenced entry that does not match the schema at the affected field', async () => {
     const client = await createTestClient(schema, [
       { id: 'books', metadata: { type: 'Category' }, data: {} },
       {
@@ -171,12 +180,13 @@ type Product @Entry { name: String }`,
     ])
 
     const result = await client.postGraphQL(gitRef, {
-      query: `{ data: Product(id: "novel") { id category { id } } }`,
+      query: `{ data: Product(id: "novel") { id category { id name } } }`,
     })
 
+    // the missing value of non-null field `name` nulls the referenced entry, as the reference itself is nullable
     expect(result.errors).toMatchObject([
       {
-        path: ['data', 'category'],
+        path: ['data', 'category', 'name'],
         extensions: {
           code: 'BAD_REPOSITORY_DATA',
           commitspark: { fieldValue: 'books' },

@@ -6,7 +6,7 @@ import {
 } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
 import { SearchHit } from '@commitspark/search-adapter'
-import { RecursiveArray } from './field-resolvers/types.ts'
+import { ResolvedValue } from './field-resolvers/types.ts'
 
 export interface CommitInput {
   message?: string | null
@@ -16,6 +16,11 @@ export interface CommitInput {
 interface QueryMutationResolverContext extends ApolloContext {
   type: GraphQLNamedType
 }
+
+/**
+ * Result of a generated query or mutation: an entry, the entries of a list as separate promises, or an ID or type name.
+ */
+export type QueryMutationResult = EntryData | Promise<EntryData>[] | string
 
 export type QueryMutationResolver<ResultType> = GraphQLFieldResolver<
   unknown,
@@ -46,11 +51,11 @@ export type SearchQueryResolver = GraphQLFieldResolver<
   Promise<SearchHit[]>
 >
 
-export type ContextInjectionResolver = GraphQLFieldResolver<
-  EntryData,
+export type EntryFieldResolver = GraphQLFieldResolver<
+  Record<string, unknown>,
   ApolloContext,
   Record<string, unknown>,
-  Promise<RecursiveArray<EntryData>>
+  ResolvedValue | Promise<ResolvedValue>
 >
 
 export type ReferencedByResolver = GraphQLFieldResolver<

@@ -1,13 +1,16 @@
 import {
   coerceInputValue,
+  GraphQLEnumType,
   GraphQLObjectType,
   GraphQLOutputType,
+  GraphQLScalarType,
   GraphQLSchema,
   GraphQLUnionType,
-  isInputObjectType,
+  isEnumType,
   isListType,
   isNonNullType,
   isObjectType,
+  isScalarType,
   isUnionType,
 } from 'graphql'
 import { Entry } from '@commitspark/git-adapter'
@@ -18,7 +21,8 @@ import {
 import { isUnionOfEntryTypes } from '../graphql/schema-utils/entry-type-util.ts'
 import {
   idInputTypeName,
-  inputTypeName,
+  REFERENCED_BY_FIELD_NAME,
+  VERSION_FIELD_NAME,
 } from '../graphql/schema-utils/generated-names.ts'
 import { createViolation, Violation, ViolationCode } from './violation.ts'
 
@@ -30,10 +34,11 @@ type Path = (string | number)[]
 type EntryTypeLookup = (id: string) => string | undefined
 
 /**
- * Validates an entry against a generated schema, i.e. a schema that contains the generated input types. Entry data
- * is stored in the shape of the generated input type of its entry type, so values are validated by coercing the data
- * to that input type. Keys that are not part of the schema are reported separately as warnings and do not take part
- * in the coercion. References are checked for existence and type of the referenced entry.
+ * Validates an entry against the schema. Every violation is reported with the path of the value it concerns, e.g.
+ * `['seo', 'title']` for a missing value of a non-null field `title` of an object in field `seo`, so that reads can
+ * report it at the corresponding position of a response. Values of scalars and enums are validated by coercing them
+ * as GraphQL input values, as entry data is stored in the shape of the generated input types. Keys that are not part
+ * of the schema are reported as warnings. References are checked for existence and type of the referenced entry.
  */
 export function validateEntry(
   schema: GraphQLSchema,
@@ -51,41 +56,26 @@ export function validateEntry(
         `Entry is of type "${entry.metadata.type}", which is not a type with directive @${ENTRY_DIRECTIVE_NAME} in ` +
           `the schema.`,
         [],
-        entry.id,
+        { entryId: entry.id },
       ),
     ]
   }
 
-  const inputType = schema.getType(inputTypeName(entryType.name))
-  if (!isInputObjectType(inputType)) {
-    throw new Error(
-      `Expected generated input type for type "${entryType.name}".`,
-    )
-  }
-
   const violations: Violation[] = []
   const walker = new DataWalker(entry.id, getEntryType, violations)
-  // the ID of an entry is not part of its data
-  const data = walker.walkObject(entryType, entry.data ?? {}, [], ['id'])
-
-  coerceInputValue(data, inputType, (path, _invalidValue, error) => {
-    violations.push(
-      createViolation(
-        ViolationCode.INVALID_VALUE,
-        error.message,
-        [...path],
-        entry.id,
-      ),
-    )
-  })
-
+  // the ID of an entry is not part of its data, and fields generated for entries are not stored
+  walker.walkObject(
+    entryType,
+    entry.data ?? {},
+    [],
+    ['id', REFERENCED_BY_FIELD_NAME, VERSION_FIELD_NAME],
+  )
   return violations
 }
 
 /**
- * Walks entry data along the object types of the schema. It reports unknown keys and checks references, and returns
- * a copy of the data without unknown keys. Values that do not have the expected shape are returned unchanged, so that
- * they are reported by the coercion to the input type.
+ * Walks entry data along the types of the schema and records a violation for every value that does not match its
+ * type. The walk does not descend into values of the wrong shape, so that every value is reported at most once.
  */
 class DataWalker {
   constructor(
@@ -99,104 +89,174 @@ class DataWalker {
     data: unknown,
     path: Path,
     ignoredFieldNames: string[] = [],
-  ): unknown {
+  ): void {
     if (!isPlainObject(data)) {
-      return data
+      this.reportInvalidValue(
+        `Expected an object of type "${type.name}".`,
+        path,
+        data,
+      )
+      return
     }
+
     const fields = type.getFields()
-    const result: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(data)) {
-      const field = fields[key]
-      if (field === undefined || ignoredFieldNames.includes(key)) {
-        this.reportUnknownField(type.name, key, [...path, key])
+    for (const key of Object.keys(data)) {
+      if (fields[key] === undefined || ignoredFieldNames.includes(key)) {
+        this.violations.push(
+          createViolation(
+            ViolationCode.UNKNOWN_FIELD,
+            `Key "${key}" is not a field of type "${type.name}" in the schema.`,
+            [...path, key],
+            { entryId: this.entryId, value: data[key] },
+          ),
+        )
+      }
+    }
+
+    for (const field of Object.values(fields)) {
+      if (ignoredFieldNames.includes(field.name)) {
         continue
       }
-      result[key] = this.walkValue(field.type, value, [...path, key])
+      const value = data[field.name]
+      if (
+        (value === undefined || value === null) &&
+        isNonNullType(field.type)
+      ) {
+        this.reportInvalidValue(
+          value === undefined
+            ? `Field "${field.name}" of required type "${field.type}" was not provided.`
+            : `Field "${field.name}" of required type "${field.type}" must not be null.`,
+          [...path, field.name],
+          value,
+        )
+        continue
+      }
+      this.walkValue(field.type, value, [...path, field.name])
     }
-    return result
   }
 
-  private walkValue(
-    type: GraphQLOutputType,
-    data: unknown,
-    path: Path,
-  ): unknown {
-    if (data === null || data === undefined) {
-      return data
-    }
+  private walkValue(type: GraphQLOutputType, data: unknown, path: Path): void {
     if (isNonNullType(type)) {
-      return this.walkValue(type.ofType, data, path)
+      if (data === undefined || data === null) {
+        this.reportInvalidValue(
+          `Value of required type "${type}" must not be null.`,
+          path,
+          data,
+        )
+        return
+      }
+      this.walkValue(type.ofType, data, path)
+      return
     }
+    if (data === undefined || data === null) {
+      return
+    }
+
     if (isListType(type)) {
       if (!Array.isArray(data)) {
-        return data
+        this.reportInvalidValue(
+          `Expected a list of type "${type}".`,
+          path,
+          data,
+        )
+        return
       }
-      return data.map((element, index) =>
+      data.forEach((element, index) =>
         this.walkValue(type.ofType, element, [...path, index]),
       )
+      return
     }
     if (isUnionType(type)) {
       if (isUnionOfEntryTypes(type)) {
-        return this.walkReference(type, data, path)
+        this.walkReference(type, data, path)
+      } else {
+        this.walkUnionValue(type, data, path)
       }
-      return this.walkUnionValue(type, data, path)
+      return
     }
     if (isObjectType(type)) {
       if (hasDirective(type, ENTRY_DIRECTIVE_NAME)) {
-        return this.walkReference(type, data, path)
+        this.walkReference(type, data, path)
+      } else {
+        this.walkObject(type, data, path)
       }
-      return this.walkObject(type, data, path)
+      return
     }
-    return data
+    if (isScalarType(type) || isEnumType(type)) {
+      this.walkLeafValue(type, data, path)
+    }
+  }
+
+  private walkLeafValue(
+    type: GraphQLScalarType | GraphQLEnumType,
+    data: unknown,
+    path: Path,
+  ): void {
+    coerceInputValue(data, type, (_path, _invalidValue, error) =>
+      this.reportInvalidValue(error.message, path, data),
+    )
   }
 
   private walkUnionValue(
     type: GraphQLUnionType,
     data: unknown,
     path: Path,
-  ): unknown {
-    if (!isPlainObject(data)) {
-      return data
+  ): void {
+    const keys = isPlainObject(data) ? Object.keys(data) : []
+    const memberType = type
+      .getTypes()
+      .find((member) => keys.length === 1 && member.name === keys[0])
+    if (!isPlainObject(data) || memberType === undefined) {
+      this.reportInvalidValue(
+        `Expected an object with a single key naming the member type of union "${type.name}", one of ` +
+          `${type
+            .getTypes()
+            .map((member) => `"${member.name}"`)
+            .join(', ')}.`,
+        path,
+        data,
+      )
+      return
     }
-    const keys = Object.keys(data)
-    const memberType = type.getTypes().find((member) => member.name === keys[0])
-    // other shapes are left to the coercion, which reports them as invalid `@oneOf` input
-    if (keys.length !== 1 || memberType === undefined) {
-      return data
-    }
-    return {
-      [memberType.name]: this.walkObject(memberType, data[memberType.name], [
-        ...path,
-        memberType.name,
-      ]),
-    }
+    this.walkObject(memberType, data[memberType.name], [
+      ...path,
+      memberType.name,
+    ])
   }
 
   private walkReference(
     type: GraphQLObjectType | GraphQLUnionType,
     data: unknown,
     path: Path,
-  ): unknown {
-    if (!isPlainObject(data)) {
-      return data
+  ): void {
+    if (!isPlainObject(data) || typeof data.id !== 'string') {
+      this.reportInvalidValue(
+        `Expected a reference to an entry of type "${type.name}", i.e. an object with key "id" holding the ID of ` +
+          `the entry.`,
+        path,
+        data,
+      )
+      return
     }
-    const result: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(data)) {
+    for (const key of Object.keys(data)) {
       if (key !== 'id') {
-        this.reportUnknownField(idInputTypeName(type.name), key, [...path, key])
-        continue
+        this.violations.push(
+          createViolation(
+            ViolationCode.UNKNOWN_FIELD,
+            `Key "${key}" is not a field of type "${idInputTypeName(type.name)}" in the schema.`,
+            [...path, key],
+            { entryId: this.entryId, value: data[key] },
+          ),
+        )
       }
-      result[key] = value
     }
-    if (typeof result.id === 'string') {
-      this.checkReferenceTarget(type, result.id, [...path, 'id'])
-    }
-    return result
+    this.checkReferenceTarget(type, data.id, data, path)
   }
 
   private checkReferenceTarget(
     type: GraphQLObjectType | GraphQLUnionType,
     id: string,
+    reference: Record<string, unknown>,
     path: Path,
   ): void {
     const referencedTypeName = this.getEntryType(id)
@@ -206,7 +266,7 @@ class DataWalker {
           ViolationCode.DANGLING_REFERENCE,
           `Reference points to entry "${id}", which does not exist.`,
           path,
-          this.entryId,
+          { entryId: this.entryId, value: reference },
         ),
       )
       return
@@ -221,20 +281,25 @@ class DataWalker {
           `Reference points to entry "${id}" of type "${referencedTypeName}", but field permits only type ` +
             `${permittedTypeNames.map((name) => `"${name}"`).join(', ')}.`,
           path,
-          this.entryId,
+          { entryId: this.entryId, value: reference },
         ),
       )
     }
   }
 
-  private reportUnknownField(typeName: string, key: string, path: Path): void {
+  /**
+   * Records an invalid value together with the value as stored; a missing value (`undefined`) is recorded without one.
+   */
+  private reportInvalidValue(
+    message: string,
+    path: Path,
+    value: unknown,
+  ): void {
     this.violations.push(
-      createViolation(
-        ViolationCode.UNKNOWN_FIELD,
-        `Key "${key}" is not a field of type "${typeName}" in the schema.`,
-        path,
-        this.entryId,
-      ),
+      createViolation(ViolationCode.INVALID_VALUE, message, path, {
+        entryId: this.entryId,
+        value,
+      }),
     )
   }
 }

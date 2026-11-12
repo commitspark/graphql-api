@@ -317,7 +317,7 @@ type EntryB @Entry {
               {
                 severity: 'ERROR',
                 code: 'DANGLING_REFERENCE',
-                path: ['reference', 'id'],
+                path: ['reference'],
               },
             ],
           },
@@ -423,7 +423,7 @@ type Person @Entry {
               {
                 severity: 'ERROR',
                 code: 'DANGLING_REFERENCE',
-                path: ['manager', 'id'],
+                path: ['manager'],
               },
             ],
           },
@@ -492,7 +492,7 @@ type OtherEntry @Entry {
               {
                 severity: 'ERROR',
                 code: 'INCOMPATIBLE_REFERENCE',
-                path: ['reference', 'id'],
+                path: ['reference'],
               },
             ],
           },

@@ -99,15 +99,43 @@ describe('Entry validator', () => {
     }
   })
 
-  it('should report missing non-null values including lists', () => {
-    const violations = validateEntry(schema, page({}), getEntryType)
-    expect(violations).toHaveLength(2)
-    expect(violations).toMatchObject([
-      { severity: 'ERROR', code: 'INVALID_VALUE', path: [] },
-      { severity: 'ERROR', code: 'INVALID_VALUE', path: [] },
+  it('should report missing non-null values including lists at their field', () => {
+    expect(validateEntry(schema, page({}), getEntryType)).toEqual([
+      {
+        severity: 'ERROR',
+        code: 'INVALID_VALUE',
+        message: 'Field "title" of required type "String!" was not provided.',
+        path: ['title'],
+        entryId: 'page',
+      },
+      {
+        severity: 'ERROR',
+        code: 'INVALID_VALUE',
+        message: 'Field "tags" of required type "[String!]!" was not provided.',
+        path: ['tags'],
+        entryId: 'page',
+      },
     ])
-    expect(violations[0].message).toContain('"title"')
-    expect(violations[1].message).toContain('"tags"')
+  })
+
+  it('should report null values of non-null fields and list elements', () => {
+    const violations = validateEntry(
+      schema,
+      page({ ...validPageData, title: null, tags: ['a', null] }),
+      getEntryType,
+    )
+    expect(violations).toMatchObject([
+      {
+        code: 'INVALID_VALUE',
+        message: 'Field "title" of required type "String!" must not be null.',
+        path: ['title'],
+      },
+      {
+        code: 'INVALID_VALUE',
+        message: 'Value of required type "String!" must not be null.',
+        path: ['tags', 1],
+      },
+    ])
   })
 
   it('should report an entry without data like an entry with empty data', () => {
@@ -132,8 +160,10 @@ describe('Entry validator', () => {
       }),
       getEntryType,
     )
+    // unlike GraphQL input coercion, a single value is not accepted for a list, as reading it would fail
     expect(violations.map((violation) => violation.path)).toEqual([
       ['rating'],
+      ['tags'],
       ['align'],
       ['seo', 'title'],
     ])
@@ -155,12 +185,10 @@ describe('Entry validator', () => {
       }),
       getEntryType,
     )
-    // a type that is not a union member is reported as unknown field and as missing `@oneOf` value
     expect(violations.map((violation) => violation.path)).toEqual([
       ['sections', 0],
-      ['sections', 0],
       ['sections', 1],
-      ['sections', 2, 'Hero'],
+      ['sections', 2, 'Hero', 'headline'],
     ])
     expect(
       violations.every((violation) => violation.code === 'INVALID_VALUE'),
@@ -181,12 +209,12 @@ describe('Entry validator', () => {
       {
         severity: 'ERROR',
         code: 'INCOMPATIBLE_REFERENCE',
-        path: ['author', 'id'],
+        path: ['author'],
       },
       {
         severity: 'ERROR',
         code: 'DANGLING_REFERENCE',
-        path: ['related', 0, 'id'],
+        path: ['related', 0],
       },
     ])
   })
@@ -199,6 +227,118 @@ describe('Entry validator', () => {
         getEntryType,
       ),
     ).toMatchObject([{ code: 'INVALID_VALUE', path: ['author'] }])
+  })
+
+  it('should report invalid list elements at their index', () => {
+    expect(
+      validateEntry(
+        schema,
+        page({ ...validPageData, tags: ['a', 4, 'c'] }),
+        getEntryType,
+      ),
+    ).toMatchObject([
+      {
+        code: 'INVALID_VALUE',
+        message: 'String cannot represent a non string value: 4',
+        path: ['tags', 1],
+      },
+    ])
+  })
+
+  it('should report entry data that is not an object at the entry itself', () => {
+    expect(
+      validateEntry(
+        schema,
+        { id: 'page', metadata: { type: 'Page' }, data: 'text' as never },
+        getEntryType,
+      ),
+    ).toMatchObject([
+      {
+        code: 'INVALID_VALUE',
+        message: 'Expected an object of type "Page".',
+        path: [],
+      },
+    ])
+  })
+
+  it('should report the invalid value exactly as stored', () => {
+    const violations = validateEntry(
+      schema,
+      page({
+        ...validPageData,
+        title: { de: 'Titel', en: 'Title' },
+        rating: ['five'],
+        tags: 'a',
+        align: null,
+        seo: null,
+        author: { id: 'missing', name: 'Copied' },
+        related: [{ id: 'page' }, 'person'],
+        sections: [{ Hero: 'Hello' }, { Banner: { headline: 'x' } }],
+      }),
+      getEntryType,
+    )
+
+    expect(
+      violations
+        .filter((violation) => violation.severity === 'ERROR')
+        .map(({ path, value }) => ({ path, value })),
+    ).toEqual([
+      { path: ['title'], value: { de: 'Titel', en: 'Title' } },
+      { path: ['rating'], value: ['five'] },
+      { path: ['tags'], value: 'a' },
+      { path: ['author'], value: { id: 'missing', name: 'Copied' } },
+      { path: ['related', 1], value: 'person' },
+      { path: ['sections', 0, 'Hero'], value: 'Hello' },
+      { path: ['sections', 1], value: { Banner: { headline: 'x' } } },
+    ])
+  })
+
+  it('should report null stored for a non-null field as value but not a missing value', () => {
+    const violations = validateEntry(
+      schema,
+      page({ ...validPageData, title: null, tags: undefined }),
+      getEntryType,
+    )
+
+    expect(violations).toHaveLength(2)
+    expect(violations[0]).toMatchObject({ path: ['title'], value: null })
+    expect(violations[1].path).toEqual(['tags'])
+    expect(violations[1]).not.toHaveProperty('value')
+  })
+
+  it('should report entry data that is not an object as value', () => {
+    expect(
+      validateEntry(
+        schema,
+        { id: 'page', metadata: { type: 'Page' }, data: ['text'] as never },
+        getEntryType,
+      ),
+    ).toMatchObject([{ path: [], value: ['text'] }])
+  })
+
+  it('should report the data stored under unknown keys as value of warnings', () => {
+    const violations = validateEntry(
+      schema,
+      page({
+        ...validPageData,
+        titel: null,
+        seo: { title: 'SEO', twitter: { handle: '@x', card: 'summary' } },
+        author: { id: 'person', name: 'Copied' },
+      }),
+      getEntryType,
+    )
+
+    expect(
+      violations.map(({ code, path, value }) => ({ code, path, value })),
+    ).toEqual([
+      { code: 'UNKNOWN_FIELD', path: ['titel'], value: null },
+      {
+        code: 'UNKNOWN_FIELD',
+        path: ['seo', 'twitter'],
+        value: { handle: '@x', card: 'summary' },
+      },
+      { code: 'UNKNOWN_FIELD', path: ['author', 'name'], value: 'Copied' },
+    ])
   })
 
   it('should report unknown keys as warnings only', () => {
@@ -214,12 +354,13 @@ describe('Entry validator', () => {
       }),
       getEntryType,
     )
+    // unknown keys of an object are reported before its fields are validated
     expect(violations.map((violation) => violation.path)).toEqual([
+      ['id'],
+      ['titel'],
       ['seo', 'twitter'],
       ['author', 'name'],
       ['sections', 0, 'Hero', 'subline'],
-      ['id'],
-      ['titel'],
     ])
     expect(
       violations.every(

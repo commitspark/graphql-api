@@ -15,6 +15,7 @@ import {
 import { RepositoryCacheHandler } from './persistence/cache.ts'
 import { validateRepository } from './validation/repository-validator.ts'
 import { ValidationResult } from './validation/violation.ts'
+import { DataSourceContext } from './graphql/resolvers/entry-data-source.ts'
 
 const createContext = async (
   gitAdapter: GitAdapter,
@@ -34,6 +35,7 @@ const createContext = async (
       currentHash = refArg
     },
     repositoryCache: repositoryCache,
+    dataSourceContexts: new WeakMap(),
   }
 }
 
@@ -137,6 +139,11 @@ export interface ApolloContext {
   getCurrentHash(): string
   setCurrentHash(sha: string): void
   repositoryCache: RepositoryCacheHandler
+  /**
+   * Information about the objects returned to GraphQL for entries during this request, keyed by these objects. It is
+   * created per request, so that it can never be shared between requests.
+   */
+  dataSourceContexts: WeakMap<object, DataSourceContext>
 }
 
 export interface GraphQLResponse<TData> {

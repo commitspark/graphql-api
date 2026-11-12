@@ -11,6 +11,7 @@ import { referencedByResolver } from './resolvers/field-resolvers/referenced-by-
 import { versionResolver } from './resolvers/field-resolvers/version-resolver.ts'
 import {
   QueryMutationResolver,
+  QueryMutationResult,
   ReferencedByResolver,
   SearchQueryResolver,
   VersionResolver,
@@ -24,13 +25,11 @@ export function generateQueriesAndMutations(
     const typeName = objectType.name
 
     const queryEveryName = names.queryEveryName(typeName)
-    const queryEveryString = `${queryEveryName}: [${objectType.name}!]`
-    const queryEveryResolverFunc: QueryMutationResolver<EntryData[]> = (
-      source,
-      args,
-      context,
-      info,
-    ) =>
+    // elements are nullable, so that an entry that cannot be read does not null the whole list
+    const queryEveryString = `${queryEveryName}: [${objectType.name}]`
+    const queryEveryResolverFunc: QueryMutationResolver<
+      Promise<EntryData>[]
+    > = (source, args, context, info) =>
       queryEveryResolver(source, args, { ...context, type: objectType }, info)
 
     const queryByIdName = names.queryByIdName(typeName)
@@ -150,7 +149,7 @@ input ${names.COMMIT_INPUT_TYPE_NAME} {
 
 export function generateTypeNameQuery(): GeneratedQuery {
   const entryTypeQueryName = names.TYPE_NAME_QUERY_NAME
-  const entryTypeQueryString = `${entryTypeQueryName}(id: ID!): String!`
+  const entryTypeQueryString = `${entryTypeQueryName}(id: ID!): String`
 
   return {
     name: entryTypeQueryName,
@@ -165,7 +164,7 @@ export function generateSearchQuery(): GeneratedSearchQuery {
 
   return {
     name: searchQueryName,
-    schemaString: `${searchQueryName}(query: String!, types: [String!], first: Int): [${searchHitTypeName}!]!`,
+    schemaString: `${searchQueryName}(query: String!, types: [String!], first: Int): [${searchHitTypeName}!]`,
     typeDefinitionString: `type ${searchHitTypeName} {
   entryId: ID!
   entryType: String!
@@ -187,7 +186,7 @@ export function generateEntryFields(
   return entryDirectiveTypes.map((objectType) => ({
     typeName: objectType.name,
     typeExtensionString: `extend type ${objectType.name} {
-  ${referencedByFieldName}: [ID!]!
+  ${referencedByFieldName}: [ID!]
   """
   Version of the entry, which changes whenever the stored entry changes. Pass it as \`expectedVersion\` to update
   and delete mutations to prevent overwriting changes made since the entry was read.
@@ -226,5 +225,5 @@ export interface GeneratedSchema {
 export interface GeneratedQuery {
   name: string
   schemaString: string
-  resolver: QueryMutationResolver<EntryData | EntryData[] | string>
+  resolver: QueryMutationResolver<QueryMutationResult>
 }

@@ -22,18 +22,17 @@ import {
   MUTATION_TYPE_NAME,
   QUERY_TYPE_NAME,
 } from './schema-utils/generated-names.ts'
-import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator.ts'
+import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-resolver-generator.ts'
 import { createError, ErrorCode } from './errors.ts'
-import { FieldResolver } from './resolvers/field-resolvers/types.ts'
 import {
-  ContextInjectionResolver,
+  EntryFieldResolver,
   QueryMutationResolver,
+  QueryMutationResult,
   ReferencedByResolver,
   SearchQueryResolver,
   UnionTypeResolver,
   VersionResolver,
 } from './resolvers/types.ts'
-import { EntryData } from '@commitspark/git-adapter'
 
 export async function generateSchema(
   context: ApolloContext,
@@ -104,12 +103,11 @@ ${generatedSchemaRootTypeStrings}`
 
   const generatedQueryResolvers: Record<
     string,
-    | QueryMutationResolver<EntryData | EntryData[] | string>
-    | SearchQueryResolver
+    QueryMutationResolver<QueryMutationResult> | SearchQueryResolver
   > = {}
   const generatedMutationResolvers: Record<
     string,
-    QueryMutationResolver<EntryData | EntryData[] | string>
+    QueryMutationResolver<QueryMutationResult>
   > = {}
 
   for (const element of generatedQueriesMutations) {
@@ -134,11 +132,10 @@ ${generatedSchemaRootTypeStrings}`
     string,
     | Record<
         string,
-        | QueryMutationResolver<EntryData | EntryData[] | string>
+        | QueryMutationResolver<QueryMutationResult>
         | SearchQueryResolver
         | GraphQLTypeResolver<unknown, ApolloContext>
-        | ContextInjectionResolver
-        | FieldResolver
+        | EntryFieldResolver
         | ReferencedByResolver
         | VersionResolver
       >

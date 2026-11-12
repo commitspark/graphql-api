@@ -9,10 +9,8 @@ import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
 import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
-import {
-  assertValidEntry,
-  assertValidEntryDrafts,
-} from '../../../validation/repository-validator.ts'
+import { assertValidEntryDrafts } from '../../../validation/repository-validator.ts'
+import { createEntrySource } from '../entry-data-source.ts'
 
 export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   source,
@@ -81,6 +79,5 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
   })
 
   const newEntry = await findByTypeId(context, context.type.name, args.id)
-  await assertValidEntry(context, info.schema, newEntry)
-  return { ...newEntry.data, id: newEntry.id }
+  return createEntrySource(context, info.schema, newEntry)
 }

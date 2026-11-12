@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add the stored value as `value` to violations that concern a stored value, in errors and in `validate()`, so that an
+  invalid value can be shown and corrected instead of being lost, e.g. in an editor, and data stored under a key that
+  is not a field in the schema can be moved to another field
+
+### Changed
+
+- Generate list queries as `every<Type>: [<Type>]` instead of `[<Type>!]`, so that an entry that cannot be read only
+  nulls its own element and reports its own error instead of nulling the whole list
+- Generate `_typeName` as nullable `String` and `_search` as nullable list, so that an unknown ID or a search error only
+  nulls this field instead of the data of the whole response
+- Generate `_referencedBy` as nullable list, so that incoming references that cannot be determined, e.g. due to an entry
+  of a type unknown to the schema, only null this field instead of the whole entry
+- Report entry data that does not match the schema as error of the affected field or list element instead of failing
+  the whole entry, so that, as usual in GraphQL, only this value becomes `null` if its type is nullable and values that
+  are not queried do not lead to errors
+- Report violations in `validate()` and in errors at the path of the affected value, e.g. at `title` for a missing value
+  of field `title` instead of at the object containing it, and at the field holding a reference instead of at its `id`
+- Report a single value stored for a list field as invalid in `validate()`, as reading it fails
+
+### Fixed
+
+- Null only the failing element of a list with nullable elements, e.g. a reference to an entry that cannot be read,
+  instead of the whole list or its parent, as GraphQL does for list elements
+
 ## [2.0.0-beta.6] - 2026-11-12
 
 ### Added

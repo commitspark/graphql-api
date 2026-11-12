@@ -86,9 +86,9 @@ schema {
 }
 
 type Query {
-    everyRocketFlight: [RocketFlight!]
+    everyRocketFlight: [RocketFlight]
     RocketFlight(id: ID!): RocketFlight
-    _typeName(id: ID!): String!
+    _typeName(id: ID!): String
 }
 
 type Mutation {
@@ -116,7 +116,7 @@ input PayloadInput {
 }
 
 extend type RocketFlight {
-    _referencedBy: [ID!]!
+    _referencedBy: [ID!]
     _version: String!
 }
 ```
@@ -214,10 +214,12 @@ Commitspark.
 ### Changing the schema
 
 Entries are stored independently of the schema, so changing the schema can create mismatches with existing entry data.
-Commitspark does not fill in missing values and reading an entry that does not match the schema fails with error
-`BAD_REPOSITORY_DATA`, including when the entry is reached through a reference. The error lists the problems found in
-the entry under `extensions.commitspark.violations`. Excess entry data stored under keys that are not fields in the
-schema is silently ignored and does not prevent reading an entry.
+Commitspark does not fill in missing values. Reading a value that does not match the schema fails with error
+`BAD_REPOSITORY_DATA` at the position of this value in the response, listing the problem under
+`extensions.commitspark.violations`. As usual in GraphQL, the value becomes `null` if its type is nullable, otherwise
+the error propagates to the closest nullable parent, e.g. the entry in the list of `every<Type>`. Values that are not
+queried do not lead to errors. Excess entry data stored under keys that are not fields in the schema is silently
+ignored and does not prevent reading an entry.
 
 It is recommended to check a repository with [`validate()`](#validate) after changing the schema, e.g. in CI, and
 to update affected entries in the same commit as the schema.
@@ -569,10 +571,11 @@ Example GraphQL response with error:
 }
 ```
 
-If data does not match the schema, the error lists all problems found under `extensions.commitspark.violations`, in the
-same format as returned by [`validate()`](#validate). This applies to error `BAD_REPOSITORY_DATA` when reading an
-entry and to error `BAD_USER_INPUT` when a mutation would write such an entry. Example of reading an entry after field
-`readingTime` was changed from type `String` to `Int`:
+If data does not match the schema, the error lists the problems under `extensions.commitspark.violations`, in the same
+format as returned by [`validate()`](#validate). When reading, error `BAD_REPOSITORY_DATA` is reported at the position
+of the affected value and lists the problems of this value (see [Changing the schema](#changing-the-schema)). When a
+mutation would write an entry that does not match the schema, error `BAD_USER_INPUT` lists all problems of the entry.
+Example of reading an entry after field `readingTime` was changed from type `String` to `Int`:
 
 ```json
 {

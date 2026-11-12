@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nulls this field instead of the data of the whole response
 - Generate `_referencedBy` as nullable list, so that incoming references that cannot be determined, e.g. due to an entry
   of a type unknown to the schema, only null this field instead of the whole entry
+- Report entry data that does not match the schema as error of the affected field or list element instead of failing
+  the whole entry, so that, as usual in GraphQL, only this value becomes `null` if its type is nullable and values that
+  are not queried do not lead to errors
+- Report violations in `validate()` and in errors at the path of the affected value, e.g. at `title` for a missing value
+  of field `title` instead of at the object containing it, and at the field holding a reference instead of at its `id`
+- Report a single value stored for a list field as invalid in `validate()`, as reading it fails
 
 ### Fixed
 

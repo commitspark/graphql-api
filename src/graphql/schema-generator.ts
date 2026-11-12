@@ -22,11 +22,10 @@ import {
   MUTATION_TYPE_NAME,
   QUERY_TYPE_NAME,
 } from './schema-utils/generated-names.ts'
-import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-default-value-resolver-generator.ts'
+import { createObjectTypeFieldResolvers } from './resolvers/object-type-field-resolver-generator.ts'
 import { createError, ErrorCode } from './errors.ts'
-import { FieldResolver } from './resolvers/field-resolvers/types.ts'
 import {
-  ContextInjectionResolver,
+  EntryFieldResolver,
   QueryMutationResolver,
   QueryMutationResult,
   ReferencedByResolver,
@@ -136,8 +135,7 @@ ${generatedSchemaRootTypeStrings}`
         | QueryMutationResolver<QueryMutationResult>
         | SearchQueryResolver
         | GraphQLTypeResolver<unknown, ApolloContext>
-        | ContextInjectionResolver
-        | FieldResolver
+        | EntryFieldResolver
         | ReferencedByResolver
         | VersionResolver
       >

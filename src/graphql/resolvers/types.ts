@@ -51,11 +51,11 @@ export type SearchQueryResolver = GraphQLFieldResolver<
   Promise<SearchHit[]>
 >
 
-export type ContextInjectionResolver = GraphQLFieldResolver<
-  EntryData,
+export type EntryFieldResolver = GraphQLFieldResolver<
+  Record<string, unknown>,
   ApolloContext,
   Record<string, unknown>,
-  Promise<ResolvedValue>
+  ResolvedValue | Promise<ResolvedValue>
 >
 
 export type ReferencedByResolver = GraphQLFieldResolver<

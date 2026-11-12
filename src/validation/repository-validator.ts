@@ -1,6 +1,6 @@
 import { GraphQLSchema } from 'graphql'
 import { makeExecutableSchema } from '@graphql-tools/schema'
-import { Entry, EntryDraft } from '@commitspark/git-adapter'
+import { EntryDraft } from '@commitspark/git-adapter'
 import { ApolloContext } from '../client.ts'
 import { generateSchema } from '../graphql/schema-generator.ts'
 import { validateSchemaDefinition } from '../graphql/schema-validator.ts'
@@ -8,6 +8,7 @@ import { createError, ErrorCode } from '../graphql/errors.ts'
 import { validateEntry } from './entry-validator.ts'
 import {
   createViolation,
+  formatViolations,
   Violation,
   ViolationCode,
   ViolationSeverity,
@@ -84,59 +85,4 @@ export async function assertValidEntryDrafts(
     fieldValue: affectedEntryIds.join(', '),
     violations: errors,
   })
-}
-
-/**
- * Throws `BAD_REPOSITORY_DATA` if an entry has violations of severity error at the current commit of the context.
- * Called for every entry before its data is returned, so that resolvers only process data that matches the schema.
- */
-export async function assertValidEntry(
-  context: ApolloContext,
-  generatedSchema: GraphQLSchema,
-  entry: Entry,
-): Promise<void> {
-  const entriesRecord = await context.repositoryCache.getEntriesRecord(
-    context,
-    context.getCurrentHash(),
-  )
-  const errors = validateEntry(
-    generatedSchema,
-    entry,
-    (id) => entriesRecord.byId.get(id)?.metadata.type,
-  ).filter((violation) => violation.severity === ViolationSeverity.ERROR)
-  if (errors.length === 0) {
-    return
-  }
-  throw createError(
-    `Entry "${entry.id}" does not match the schema: ${formatViolations(errors, false)}`,
-    ErrorCode.BAD_REPOSITORY_DATA,
-    {
-      typeName: entry.metadata.type,
-      fieldValue: entry.id,
-      violations: errors,
-    },
-  )
-}
-
-/**
- * Formats violations for an error message. Entry IDs are only included if requested, so that messages that already
- * name the single affected entry do not repeat its ID for every violation.
- */
-function formatViolations(
-  violations: Violation[],
-  includeEntryId: boolean,
-): string {
-  return violations
-    .map((violation) => {
-      const location = [
-        ...(includeEntryId && violation.entryId !== undefined
-          ? [violation.entryId]
-          : []),
-        ...(violation.path.length > 0 ? [violation.path.join('.')] : []),
-      ].join(' ')
-      return location.length > 0
-        ? `${location}: ${violation.message}`
-        : violation.message
-    })
-    .join(' ')
 }

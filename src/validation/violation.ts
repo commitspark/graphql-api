@@ -85,3 +85,26 @@ export function createViolation(
   }
   return violation
 }
+
+/**
+ * Formats violations for an error message. Entry IDs are only included if requested, so that messages that already
+ * name the single affected entry do not repeat its ID for every violation.
+ */
+export function formatViolations(
+  violations: Violation[],
+  includeEntryId: boolean,
+): string {
+  return violations
+    .map((violation) => {
+      const location = [
+        ...(includeEntryId && violation.entryId !== undefined
+          ? [violation.entryId]
+          : []),
+        ...(violation.path.length > 0 ? [violation.path.join('.')] : []),
+      ].join(' ')
+      return location.length > 0
+        ? `${location}: ${violation.message}`
+        : violation.message
+    })
+    .join(' ')
+}

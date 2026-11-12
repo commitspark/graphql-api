@@ -72,7 +72,7 @@ describe('Error propagation in lists', () => {
       await query('{ data: NullableList(id: "a") { id people { id name } } }'),
     ).toEqual({
       data: { data: { id: 'a', people: [ada, null] } },
-      errorPaths: [['data', 'people', 1]],
+      errorPaths: [['data', 'people', 1, 'name']],
     })
   })
 
@@ -83,7 +83,7 @@ describe('Error propagation in lists', () => {
       ),
     ).toEqual({
       data: { data: { id: 'b', people: null } },
-      errorPaths: [['data', 'people', 1]],
+      errorPaths: [['data', 'people', 1, 'name']],
     })
   })
 
@@ -92,7 +92,7 @@ describe('Error propagation in lists', () => {
       await query('{ data: NonNullList(id: "c") { id people { id name } } }'),
     ).toEqual({
       data: { data: { id: 'c', people: [ada, null] } },
-      errorPaths: [['data', 'people', 1]],
+      errorPaths: [['data', 'people', 1, 'name']],
     })
   })
 
@@ -103,7 +103,7 @@ describe('Error propagation in lists', () => {
       ),
     ).toEqual({
       data: { data: null },
-      errorPaths: [['data', 'people', 1]],
+      errorPaths: [['data', 'people', 1, 'name']],
     })
   })
 
@@ -112,7 +112,7 @@ describe('Error propagation in lists', () => {
       await query('{ data: NestedList(id: "e") { id groups { id name } } }'),
     ).toEqual({
       data: { data: { id: 'e', groups: [[ada, null]] } },
-      errorPaths: [['data', 'groups', 0, 1]],
+      errorPaths: [['data', 'groups', 0, 1, 'name']],
     })
   })
 
@@ -125,7 +125,7 @@ describe('Error propagation in lists', () => {
       data: {
         data: { id: 'f', contacts: [{ id: 'acme', name: 'Acme' }, null] },
       },
-      errorPaths: [['data', 'contacts', 1]],
+      errorPaths: [['data', 'contacts', 1, 'name']],
     })
   })
 })
@@ -167,8 +167,8 @@ describe('Error propagation in generated fields', () => {
       ],
     })
     expect(result.errorPaths).toEqual([
-      ['everyPerson', 1],
-      ['everyPerson', 3],
+      ['everyPerson', 1, 'name'],
+      ['everyPerson', 3, 'name'],
     ])
   })
 
@@ -198,5 +198,173 @@ describe('Error propagation in generated fields', () => {
     })
     expect(result.errorPaths).toEqual([['Person', '_referencedBy']])
     expect(result.errorCodes).toEqual(['BAD_REPOSITORY_DATA'])
+  })
+})
+
+describe('Error propagation for entry data that does not match the schema', () => {
+  const articleSchema = `directive @Entry on OBJECT
+
+type Article @Entry {
+    id: ID!
+    title: String!
+    readingTime: Int
+    seo: Seo
+    tags: [String]
+    keywords: [String!]
+    block: Block
+    author: Author
+}
+
+type Seo {
+    description: String!
+}
+
+type Hero {
+    headline: String
+}
+
+union Block = Hero
+
+type Author @Entry {
+    id: ID!
+    name: String
+}
+`
+  const query =
+    '{ everyArticle { id title readingTime seo { description } tags keywords block { ... on Hero { headline } } author { id } } }'
+  const validArticle = {
+    id: 'valid',
+    title: 'Valid',
+    readingTime: 5,
+    seo: { description: 'Text' },
+    tags: ['a'],
+    keywords: ['b'],
+    block: { headline: 'Hello' },
+    author: { id: 'ada' },
+  }
+
+  async function queryArticles(articles: Entry[], queryString = query) {
+    const gitAdapter = mock<GitAdapter>()
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(articleSchema)
+    mockEntries(gitAdapter, commitHash, [
+      { id: 'ada', metadata: { type: 'Author' }, data: { name: 'Ada' } },
+      ...articles,
+    ])
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, { query: queryString })
+    return { data: result.data, errors: result.errors }
+  }
+
+  const article = (data: Record<string, unknown>): Entry => ({
+    id: 'article',
+    metadata: { type: 'Article' },
+    data: {
+      title: 'Valid',
+      readingTime: 5,
+      seo: { description: 'Text' },
+      tags: ['a'],
+      keywords: ['b'],
+      block: { Hero: { headline: 'Hello' } },
+      author: { id: 'ada' },
+      ...data,
+    },
+  })
+
+  it.each([
+    [
+      'a value of the wrong type in a nullable field',
+      { readingTime: '5 min' },
+      { readingTime: null },
+      ['readingTime'],
+    ],
+    [
+      'a missing value of a non-null field in a nullable object',
+      { seo: {} },
+      { seo: null },
+      ['seo', 'description'],
+    ],
+    [
+      'an invalid element of a list with nullable elements',
+      { tags: ['a', 4, 'c'] },
+      { tags: ['a', null, 'c'] },
+      ['tags', 1],
+    ],
+    [
+      'an invalid element of a list with non-null elements',
+      { keywords: ['b', 4] },
+      { keywords: null },
+      ['keywords', 1],
+    ],
+    [
+      'a union value naming a type that is not a member',
+      { block: { Banner: { headline: 'Hello' } } },
+      { block: null },
+      ['block'],
+    ],
+    [
+      'a reference to an entry that does not exist',
+      { author: { id: 'missing' } },
+      { author: null },
+      ['author'],
+    ],
+  ])(
+    'should null only the affected value for %s',
+    async (_description, invalidData, expectedChange, dataPath) => {
+      const result = await queryArticles([article(invalidData)])
+
+      expect(result.data).toEqual({
+        everyArticle: [{ ...validArticle, id: 'article', ...expectedChange }],
+      })
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors?.[0]).toMatchObject({
+        path: ['everyArticle', 0, ...dataPath],
+        extensions: {
+          code: 'BAD_REPOSITORY_DATA',
+          commitspark: {
+            typeName: 'Article',
+            fieldValue: 'article',
+            violations: [{ path: dataPath }],
+          },
+        },
+      })
+    },
+  )
+
+  it('should null the entry for a missing value of a non-null field', async () => {
+    const result = await queryArticles([
+      article({ title: undefined }),
+      { id: 'valid', metadata: { type: 'Article' }, data: article({}).data },
+    ])
+
+    expect(result.data).toEqual({ everyArticle: [null, validArticle] })
+    expect(result.errors?.map((error) => error.path)).toEqual([
+      ['everyArticle', 0, 'title'],
+    ])
+  })
+
+  it('should not report data that does not match the schema in fields that are not queried', async () => {
+    const result = await queryArticles(
+      [article({ readingTime: '5 min', tags: 'a' })],
+      '{ everyArticle { id title } }',
+    )
+
+    expect(result.data).toEqual({
+      everyArticle: [{ id: 'article', title: 'Valid' }],
+    })
+    expect(result.errors).toBeUndefined()
+  })
+
+  it('should report entry data that is not an object at the position of the entry', async () => {
+    const result = await queryArticles([
+      { id: 'article', metadata: { type: 'Article' }, data: 'text' as never },
+    ])
+
+    expect(result.data).toEqual({ everyArticle: [null] })
+    expect(result.errors?.map((error) => error.path)).toEqual([
+      ['everyArticle', 0],
+    ])
   })
 })

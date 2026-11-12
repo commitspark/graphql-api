@@ -8,10 +8,8 @@ import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
 import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
-import {
-  assertValidEntry,
-  assertValidEntryDrafts,
-} from '../../../validation/repository-validator.ts'
+import { assertValidEntryDrafts } from '../../../validation/repository-validator.ts'
+import { createEntrySource } from '../entry-data-source.ts'
 
 function mergeData(
   existingEntryData: EntryData,
@@ -70,6 +68,5 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
   })
 
   const updatedEntry = await findByTypeId(context, context.type.name, args.id)
-  await assertValidEntry(context, info.schema, updatedEntry)
-  return { ...updatedEntry.data, id: updatedEntry.id }
+  return createEntrySource(context, info.schema, updatedEntry)
 }

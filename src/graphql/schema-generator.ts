@@ -15,7 +15,7 @@ import {
 import { generateSchemaRootTypeStrings } from './schema-root-type-generator.ts'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
 import { unionTypeResolver } from './resolvers/query-mutation-resolvers/union-type-resolver.ts'
-import { ApolloContext } from '../client.ts'
+import { RequestContext } from '../client.ts'
 import { GraphQLTypeResolver } from 'graphql'
 import { validateSchemaDefinition } from './schema-validator.ts'
 import {
@@ -35,7 +35,7 @@ import {
 } from './resolvers/types.ts'
 
 export async function generateSchema(
-  context: ApolloContext,
+  context: RequestContext,
 ): Promise<IExecutableSchemaDefinition> {
   const originalSchemaString = await context.repositoryCache.getSchema(
     context,
@@ -134,7 +134,7 @@ ${generatedSchemaRootTypeStrings}`
         string,
         | QueryMutationResolver<QueryMutationResult>
         | SearchQueryResolver
-        | GraphQLTypeResolver<unknown, ApolloContext>
+        | GraphQLTypeResolver<unknown, RequestContext>
         | EntryFieldResolver
         | ReferencedByResolver
         | VersionResolver

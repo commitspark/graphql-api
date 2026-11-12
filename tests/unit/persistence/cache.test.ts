@@ -1,5 +1,5 @@
 import { createCacheHandler } from '../../../src/persistence/cache'
-import type { ApolloContext } from '../../../src/client'
+import type { RequestContext } from '../../../src/client'
 import {
   Entry,
   ErrorCode,
@@ -47,9 +47,9 @@ const makeContext = (
       ),
     ),
   } as unknown as GitAdapter
-  const context: ApolloContext = {
+  const context: RequestContext = {
     gitAdapter: gitAdapter,
-  } as unknown as ApolloContext
+  } as unknown as RequestContext
 
   return { context, gitAdapter }
 }
@@ -61,9 +61,9 @@ const makeContextForSchema = (
   const gitAdapter = {
     getSchema: jest.fn(getSchemaImpl),
   } as unknown as GitAdapter
-  const context: ApolloContext = {
+  const context: RequestContext = {
     gitAdapter: gitAdapter,
-  } as unknown as ApolloContext
+  } as unknown as RequestContext
 
   return { context, gitAdapter }
 }

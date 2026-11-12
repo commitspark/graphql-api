@@ -1,12 +1,12 @@
 import { GraphQLError } from 'graphql'
 import { ErrorCode } from '../../../src'
 import { findById, findByTypeId } from '../../../src/persistence/persistence'
-import type { ApolloContext } from '../../../src/client'
+import type { RequestContext } from '../../../src/client'
 import { Entry } from '@commitspark/git-adapter'
 
-function mockApolloContext(
+function mockRequestContext(
   entries: Array<{ id: string; type: string }>,
-): ApolloContext {
+): RequestContext {
   const byId = new Map<string, Entry>()
   const byType = new Map<string, Entry[]>()
 
@@ -26,12 +26,12 @@ function mockApolloContext(
     repositoryCache: {
       getEntriesRecord: jest.fn().mockResolvedValue({ byId, byType }),
     },
-  } as unknown as ApolloContext
+  } as unknown as RequestContext
 }
 
 describe('Persistence', () => {
   it('findById throws GraphQLError when entry does not exist', async () => {
-    const context = mockApolloContext([])
+    const context = mockRequestContext([])
     const missingId = 'missing-id'
 
     try {
@@ -50,7 +50,7 @@ describe('Persistence', () => {
   })
 
   it('findByTypeId propagates GraphQLError when id does not exist', async () => {
-    const context = mockApolloContext([])
+    const context = mockRequestContext([])
     const missingId = '42'
 
     await expect(
@@ -73,7 +73,7 @@ describe('Persistence', () => {
   })
 
   it('findByTypeId throws GraphQLError when type does not match', async () => {
-    const context = mockApolloContext([{ id: '1', type: 'Post' }])
+    const context = mockRequestContext([{ id: '1', type: 'Post' }])
 
     const requestedType = 'User'
     const id = '1'

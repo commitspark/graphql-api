@@ -3,7 +3,7 @@ import {
   ErrorCode as GitAdapterErrorCode,
   GitAdapterError,
 } from '@commitspark/git-adapter'
-import { ApolloContext } from '../client.ts'
+import { RequestContext } from '../client.ts'
 import { callGitAdapter, toGraphQLError } from './git-adapter-call.ts'
 
 const MAX_COMMIT_ATTEMPTS = 3
@@ -21,7 +21,7 @@ const MAX_COMMIT_ATTEMPTS = 3
  * Errors thrown by `createDraft` are not retried, as the draft was validated against the latest known state.
  */
 export const commitWithRetry = async (
-  context: ApolloContext,
+  context: RequestContext,
   createDraft: () => Promise<CommitDraft>,
 ): Promise<void> => {
   for (let attempt = 1; ; attempt++) {

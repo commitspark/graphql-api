@@ -5,7 +5,7 @@ import {
   GraphQLOutputType,
   GraphQLResolveInfo,
 } from 'graphql'
-import { ApolloContext } from '../../../src/client'
+import { RequestContext } from '../../../src/client'
 import {
   DataSourceContext,
   getDataSourceContext,
@@ -41,7 +41,7 @@ const entries: Entry[] = [
   { id: 'acme', metadata: { type: 'Company' }, data: { name: 'Acme' } },
 ]
 
-const createRequestContext = (): ApolloContext =>
+const createRequestContext = (): RequestContext =>
   ({
     dataSourceContexts: new WeakMap(),
     getCurrentHash: () => 'commit',
@@ -50,7 +50,7 @@ const createRequestContext = (): ApolloContext =>
         byId: new Map(entries.map((entry) => [entry.id, entry])),
       }),
     },
-  }) as unknown as ApolloContext
+  }) as unknown as RequestContext
 
 const info = { schema } as GraphQLResolveInfo
 

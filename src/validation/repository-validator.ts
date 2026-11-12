@@ -1,7 +1,7 @@
 import { GraphQLSchema } from 'graphql'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { EntryDraft } from '@commitspark/git-adapter'
-import { ApolloContext } from '../client.ts'
+import { RequestContext } from '../client.ts'
 import { generateSchema } from '../graphql/schema-generator.ts'
 import { validateSchemaDefinition } from '../graphql/schema-validator.ts'
 import { createError, ErrorCode } from '../graphql/errors.ts'
@@ -19,7 +19,7 @@ import {
  * schema is valid.
  */
 export async function validateRepository(
-  context: ApolloContext,
+  context: RequestContext,
 ): Promise<Violation[]> {
   const schemaString = await context.repositoryCache.getSchema(
     context,
@@ -50,7 +50,7 @@ export async function validateRepository(
  * as warnings, so they do not prevent the commit.
  */
 export async function assertValidEntryDrafts(
-  context: ApolloContext,
+  context: RequestContext,
   generatedSchema: GraphQLSchema,
   entryDrafts: EntryDraft[],
 ): Promise<void> {

@@ -18,7 +18,7 @@ const createContext = async (
   searchAdapter: SearchAdapter | undefined,
   repositoryCache: RepositoryCacheHandler,
   ref: string,
-): Promise<ApolloContext> => {
+): Promise<RequestContext> => {
   let currentHash = await gitAdapter.getLatestCommitHash(ref)
   return {
     branch: ref,
@@ -125,7 +125,7 @@ export const validate = async (
   return { ref: context.getCurrentHash(), violations }
 }
 
-export interface ApolloContext {
+export interface RequestContext {
   branch: string
   gitAdapter: GitAdapter
   searchAdapter?: SearchAdapter

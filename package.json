@@ -61,7 +61,7 @@
     "@graphql-tools/utils": "^13.2.1"
   },
   "peerDependencies": {
-    "graphql": "^16.11.0"
+    "graphql": "^16.11.0 || ^17.0.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

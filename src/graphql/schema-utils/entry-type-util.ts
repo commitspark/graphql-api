@@ -1,5 +1,5 @@
 import {
-  GraphQLNullableType,
+  GraphQLType,
   GraphQLUnionType,
   isListType,
   isNonNullType,
@@ -14,9 +14,7 @@ export function isUnionOfEntryTypes(type: GraphQLUnionType): boolean {
     .every((unionType) => buildsOnTypeWithEntryDirective(unionType))
 }
 
-export function buildsOnTypeWithEntryDirective(
-  type: GraphQLNullableType,
-): boolean {
+export function buildsOnTypeWithEntryDirective(type: GraphQLType): boolean {
   if (isNonNullType(type)) {
     return buildsOnTypeWithEntryDirective(type.ofType)
   } else if (isListType(type)) {

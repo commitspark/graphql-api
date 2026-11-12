@@ -1,5 +1,5 @@
 import {
-  GraphQLNullableType,
+  GraphQLType,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLUnionType,
@@ -125,7 +125,7 @@ function getReferencesInObjectFields(
 
 function getReferencesInField(
   fieldName: string,
-  type: GraphQLNullableType,
+  type: GraphQLType,
   data: unknown,
 ): EntryReference[] {
   if (data === null || data === undefined || isScalarType(type)) {

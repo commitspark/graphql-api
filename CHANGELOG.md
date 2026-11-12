@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support version 17 of peer dependency `graphql` in addition to version 16, so that the library can be used in
+  applications that use `graphql` 17
+
 ### Changed
 
 - Execute GraphQL requests with graphql-js instead of Apollo Server, so that requests are faster and fewer dependencies

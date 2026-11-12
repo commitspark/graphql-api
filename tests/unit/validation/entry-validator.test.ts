@@ -229,6 +229,38 @@ describe('Entry validator', () => {
     ).toMatchObject([{ code: 'INVALID_VALUE', path: ['author'] }])
   })
 
+  it('should report invalid list elements at their index', () => {
+    expect(
+      validateEntry(
+        schema,
+        page({ ...validPageData, tags: ['a', 4, 'c'] }),
+        getEntryType,
+      ),
+    ).toMatchObject([
+      {
+        code: 'INVALID_VALUE',
+        message: 'String cannot represent a non string value: 4',
+        path: ['tags', 1],
+      },
+    ])
+  })
+
+  it('should report entry data that is not an object at the entry itself', () => {
+    expect(
+      validateEntry(
+        schema,
+        { id: 'page', metadata: { type: 'Page' }, data: 'text' as never },
+        getEntryType,
+      ),
+    ).toMatchObject([
+      {
+        code: 'INVALID_VALUE',
+        message: 'Expected an object of type "Page".',
+        path: [],
+      },
+    ])
+  })
+
   it('should report unknown keys as warnings only', () => {
     const violations = validateEntry(
       schema,

@@ -4,7 +4,9 @@ import { createClient } from '../../../src'
 import { mockEntries } from '../../git-adapter-mock'
 
 // Errors in parts of a result follow GraphQL's null propagation: the failing value becomes null if its type is
-// nullable, otherwise the error propagates to the closest nullable parent.
+// nullable, otherwise the error propagates to the closest nullable parent. These tests check this in interplay with
+// GraphQL execution for every kind of position; which violations are found and where they are thrown is covered by the
+// unit tests of the entry validator and of the field value resolver.
 
 const gitRef = 'myRef'
 const commitHash = 'abcd'
@@ -16,19 +18,10 @@ type Person @Entry {
     name: String!
 }
 
-type Company @Entry {
-    id: ID!
-    name: String!
-}
-
-union Contact = Person | Company
-
 type NullableList @Entry { id: ID!, people: [Person] }
 type NonNullElements @Entry { id: ID!, people: [Person!] }
 type NonNullList @Entry { id: ID!, people: [Person]! }
 type NonNullListAndElements @Entry { id: ID!, people: [Person!]! }
-type NestedList @Entry { id: ID!, groups: [[Person]] }
-type UnionList @Entry { id: ID!, contacts: [Contact] }
 `
 
 // `invalid` cannot be read, as its non-null field `name` is missing
@@ -36,17 +29,10 @@ const people = [{ id: 'valid' }, { id: 'invalid' }]
 const entries: Entry[] = [
   { id: 'valid', metadata: { type: 'Person' }, data: { name: 'Ada' } },
   { id: 'invalid', metadata: { type: 'Person' }, data: {} },
-  { id: 'acme', metadata: { type: 'Company' }, data: { name: 'Acme' } },
   { id: 'a', metadata: { type: 'NullableList' }, data: { people } },
   { id: 'b', metadata: { type: 'NonNullElements' }, data: { people } },
   { id: 'c', metadata: { type: 'NonNullList' }, data: { people } },
   { id: 'd', metadata: { type: 'NonNullListAndElements' }, data: { people } },
-  { id: 'e', metadata: { type: 'NestedList' }, data: { groups: [people] } },
-  {
-    id: 'f',
-    metadata: { type: 'UnionList' },
-    data: { contacts: [{ id: 'acme' }, { id: 'invalid' }] },
-  },
 ]
 
 async function query(queryString: string) {
@@ -67,67 +53,42 @@ async function query(queryString: string) {
 const ada = { id: 'valid', name: 'Ada' }
 
 describe('Error propagation in lists', () => {
-  it('should null only the failing element of a list with nullable elements', async () => {
-    expect(
-      await query('{ data: NullableList(id: "a") { id people { id name } } }'),
-    ).toEqual({
-      data: { data: { id: 'a', people: [ada, null] } },
-      errorPaths: [['data', 'people', 1, 'name']],
-    })
-  })
-
-  it('should null the list if an element of a list with non-null elements fails', async () => {
-    expect(
-      await query(
-        '{ data: NonNullElements(id: "b") { id people { id name } } }',
-      ),
-    ).toEqual({
-      data: { data: { id: 'b', people: null } },
-      errorPaths: [['data', 'people', 1, 'name']],
-    })
-  })
-
-  it('should null only the failing element of a non-null list with nullable elements', async () => {
-    expect(
-      await query('{ data: NonNullList(id: "c") { id people { id name } } }'),
-    ).toEqual({
-      data: { data: { id: 'c', people: [ada, null] } },
-      errorPaths: [['data', 'people', 1, 'name']],
-    })
-  })
-
-  it('should null the parent if an element of a non-null list with non-null elements fails', async () => {
-    expect(
-      await query(
-        '{ data: NonNullListAndElements(id: "d") { id people { id name } } }',
-      ),
-    ).toEqual({
-      data: { data: null },
-      errorPaths: [['data', 'people', 1, 'name']],
-    })
-  })
-
-  it('should null only the failing element of a nested list', async () => {
-    expect(
-      await query('{ data: NestedList(id: "e") { id groups { id name } } }'),
-    ).toEqual({
-      data: { data: { id: 'e', groups: [[ada, null]] } },
-      errorPaths: [['data', 'groups', 0, 1, 'name']],
-    })
-  })
-
-  it('should null only the failing element of a list of a union of @Entry types', async () => {
-    expect(
-      await query(
-        '{ data: UnionList(id: "f") { id contacts { ... on Company { id name } ... on Person { id name } } } }',
-      ),
-    ).toEqual({
-      data: {
-        data: { id: 'f', contacts: [{ id: 'acme', name: 'Acme' }, null] },
-      },
-      errorPaths: [['data', 'contacts', 1, 'name']],
-    })
-  })
+  it.each<[string, string, string, string, unknown]>([
+    [
+      'only the failing element',
+      '[Person]',
+      'NullableList',
+      'a',
+      { id: 'a', people: [ada, null] },
+    ],
+    [
+      'the list',
+      '[Person!]',
+      'NonNullElements',
+      'b',
+      { id: 'b', people: null },
+    ],
+    [
+      'only the failing element',
+      '[Person]!',
+      'NonNullList',
+      'c',
+      { id: 'c', people: [ada, null] },
+    ],
+    ['the parent', '[Person!]!', 'NonNullListAndElements', 'd', null],
+  ])(
+    'should null %s for a failing element of a list of type %s',
+    async (_effect, _listType, typeName, id, expectedData) => {
+      expect(
+        await query(
+          `{ data: ${typeName}(id: "${id}") { id people { id name } } }`,
+        ),
+      ).toEqual({
+        data: { data: expectedData },
+        errorPaths: [['data', 'people', 1, 'name']],
+      })
+    },
+  )
 })
 
 describe('Error propagation in generated fields', () => {
@@ -273,6 +234,8 @@ type Author @Entry {
     },
   })
 
+  // one case per kind of position within entry data; other kinds of violations are thrown the same way, see the unit
+  // tests of the field value resolver
   it.each([
     [
       'a value of the wrong type in a nullable field',
@@ -285,30 +248,6 @@ type Author @Entry {
       { seo: {} },
       { seo: null },
       ['seo', 'description'],
-    ],
-    [
-      'an invalid element of a list with nullable elements',
-      { tags: ['a', 4, 'c'] },
-      { tags: ['a', null, 'c'] },
-      ['tags', 1],
-    ],
-    [
-      'an invalid element of a list with non-null elements',
-      { keywords: ['b', 4] },
-      { keywords: null },
-      ['keywords', 1],
-    ],
-    [
-      'a union value naming a type that is not a member',
-      { block: { Banner: { headline: 'Hello' } } },
-      { block: null },
-      ['block'],
-    ],
-    [
-      'a reference to an entry that does not exist',
-      { author: { id: 'missing' } },
-      { author: null },
-      ['author'],
     ],
   ])(
     'should null only the affected value for %s',

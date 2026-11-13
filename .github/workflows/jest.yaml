@@ -5,8 +5,8 @@ jobs:
         runs-on: ubuntu-26.04
         strategy:
             matrix:
-                # lowest and highest supported major version of peer dependency graphql
-                graphql: ["16", "17"]
+                # the major versions of the peer dependency range of graphql
+                graphql: ["^16.11.0", "^17.0.0"]
         steps:
             - uses: actions/checkout@v6
             - name: Setup Node.js
@@ -18,8 +18,7 @@ jobs:
               run: npm ci
 
             - name: Install graphql ${{ matrix.graphql }}
-              if: matrix.graphql != '16'
-              run: npm pkg set devDependencies.graphql=^${{ matrix.graphql }}.0.0 && npm install --ignore-scripts
+              run: npm pkg set "devDependencies.graphql=${{ matrix.graphql }}" && npm install --ignore-scripts
 
             - name: Run tests
               run: npm test

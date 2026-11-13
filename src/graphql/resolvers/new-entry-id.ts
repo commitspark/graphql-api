@@ -4,7 +4,9 @@ import { createError, ErrorCode } from '../errors.ts'
 /**
  * Throws an error with code `BAD_USER_INPUT` if the given ID is not valid for a new entry. In addition to the rules of
  * `validateEntryId()`, which also apply when reading existing entries, a new ID must be in composed Unicode form (NFC),
- * so that an ID always has a single spelling, and no `/`-separated segment may end with `.` or a space.
+ * so that an ID always has a single spelling, and no folder name, i.e. no segment before the last `/`, may end with `.`
+ * or a space, as Windows removes these characters from folder names. The file name may end with them, as it is followed
+ * by the file extension.
  */
 export function assertValidNewEntryId(id: string): void {
   const details = { argumentName: 'id', argumentValue: id }
@@ -24,9 +26,10 @@ export function assertValidNewEntryId(id: string): void {
       details,
     )
   }
-  if (id.split('/').some((segment) => /[. ]$/.test(segment))) {
+  const folderNames = id.split('/').slice(0, -1)
+  if (folderNames.some((folderName) => /[. ]$/.test(folderName))) {
     throw createError(
-      `Entry ID "${id}" must not contain segments ending with "." or a space.`,
+      `Entry ID "${id}" must not contain folder names ending with "." or a space.`,
       ErrorCode.BAD_USER_INPUT,
       details,
     )

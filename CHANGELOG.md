@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Reject IDs of new entries that are not in composed Unicode form (NFC) or have a part between `/` ending with `.` or a
-  space, so that an ID has a single spelling and file names are not changed by Windows, which removes such characters
+- Reject IDs of new entries that are not in composed Unicode form (NFC) or have a folder name ending with `.` or a
+  space, so that an ID has a single spelling and folder names are not changed by Windows, which removes such characters
 
 ## [2.0.0-beta.8] - 2026-11-13
 

@@ -9,16 +9,18 @@ describe('New entry ID validation', () => {
     'café',
     'v1.0/notes',
     'a.b',
+    'draft.',
+    'draft ',
+    'news/draft.',
   ])('should accept "%s"', (id) => {
     expect(() => assertValidNewEntryId(id)).not.toThrow()
   })
 
   it.each([
     ['a decomposed character', 'café'],
-    ['a segment ending with "."', 'draft.'],
-    ['a folder segment ending with "."', 'news./a'],
-    ['a segment ending with a space', 'draft '],
-    ['a folder segment ending with a space', 'news /a'],
+    ['a folder name ending with "."', 'news./a'],
+    ['a folder name ending with a space', 'news /a'],
+    ['a nested folder name ending with "."', 'news/2026./a'],
     ['invalid characters', 'a:b'],
     ['an empty segment', 'a//b'],
     ['a hidden segment', '.a'],

@@ -252,17 +252,23 @@ data:
 ### Entry IDs
 
 The path of an entry file relative to the entry folder excluding file extension constitutes the entry ID. Entry IDs
-can contain `/` for logical grouping, however the entry type is always taken from the file's metadata.
+can contain `/` to place entries in subfolders, however the entry type is always taken from the file's metadata.
 
-Entry IDs are case-sensitive, must map to valid unique file paths within the entries folder, and must not contain
-characters `\ * " < > : | ?` or control characters. Files and folders whose name starts with `.` are ignored by
-Commitspark. When creating an entry, its ID must also be in composed Unicode form (NFC), and no part between `/` may
-end with `.` or a space.
+Entry IDs are subject to the following rules:
+
+* Entry IDs are case-sensitive
+* Entry IDs must map to valid unique file paths within the entries folder
+* Never allowed:
+  * Characters `\ * " < > : | ?`
+  * Control characters
+  * File or folder names that start with `.`, as such files and folders are ignored by Commitspark
+* Additionally rejected when creating an entry:
+  * IDs not in composed Unicode form (NFC)
+  * Folder names that end with `.` or a space
 
 Commitspark does not limit the length of entry IDs and does not check whether IDs can be checked out on every operating
-system. For example, IDs that only differ in case, such as `ada` and `Ada`, collide on macOS and Windows, and reserved
-names such as `CON` or `NUL` as well as long paths cannot be checked out on Windows. Avoid such IDs if your repository
-is cloned on these systems.
+system, e.g. IDs that only differ in case, which collide on case-insensitive filesystems, or reserved file names such
+as `CON` on Windows.
 
 ### Serialization / Deserialization
 

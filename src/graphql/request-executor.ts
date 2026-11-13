@@ -25,14 +25,15 @@ interface ExecutedRequest<TData> {
  */
 export async function executeRequest<TData>(
   schema: GraphQLSchema,
-  query: string | DocumentNode | undefined,
-  variableValues: Record<string, unknown> | undefined,
-  operationName: string | undefined,
+  query: string | DocumentNode | null | undefined,
+  variableValues: Record<string, unknown> | null | undefined,
+  operationName: string | null | undefined,
   contextValue: unknown,
 ): Promise<ExecutedRequest<TData>> {
-  if (query === undefined || query === '') {
+  // GraphQL reports an empty query as syntax error, but fails on a missing query with an exception
+  if (query === undefined || query === null) {
     return requestErrors([
-      new GraphQLError('GraphQL request must contain a non-empty query.'),
+      new GraphQLError('GraphQL request must contain a query.'),
     ])
   }
 
@@ -97,8 +98,7 @@ function requestErrors<TData>(
 }
 
 /**
- * Formats an error for the response, setting `defaultCode` if the error has no code. The formatted error never
- * contains a stack trace.
+ * Formats an error for the response, setting `defaultCode` if the error has no code.
  */
 export function formatError(
   error: GraphQLError,

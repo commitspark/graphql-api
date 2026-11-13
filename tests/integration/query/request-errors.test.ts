@@ -30,6 +30,7 @@ describe('Request errors', () => {
     ['a syntax error', { query: '{ everyPerson { ' }],
     ['a validation error', { query: '{ unknownField }' }],
     ['a missing query', {}],
+    ['a query that is null', { query: null }],
     ['an empty query', { query: '' }],
     [
       'an operation that cannot be determined',
@@ -118,4 +119,19 @@ describe('Behavior independent of the environment', () => {
       ])
     },
   )
+})
+
+describe('Request parameters', () => {
+  it('should treat null as operation name and variables like omitted values', async () => {
+    const client = await createTestClient()
+
+    const result = await client.postGraphQL(gitRef, {
+      query: '{ Person(id: "ada") { name } }',
+      operationName: null,
+      variables: null,
+    })
+
+    expect(result.data).toEqual({ Person: { name: 'Ada' } })
+    expect(result.errors).toBeUndefined()
+  })
 })

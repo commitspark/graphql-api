@@ -48,8 +48,8 @@ export interface GraphQLRequest<
   /**
    * The operation to execute; required if the document contains more than one operation.
    */
-  operationName?: string
-  variables?: TVariables
+  operationName?: string | null
+  variables?: TVariables | null
 }
 
 export const postGraphQL = async <

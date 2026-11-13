@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are installed
 - Report request errors that prevent execution, e.g. syntax errors, validation errors or invalid variable values, with
   error code `BAD_GRAPHQL_REQUEST` instead of Apollo Server's codes `GRAPHQL_PARSE_FAILED`,
-  `GRAPHQL_VALIDATION_FAILED`, `BAD_USER_INPUT`, `OPERATION_RESOLUTION_FAILURE` and `BAD_REQUEST`, so that all error
-  codes are defined by Commitspark
+  `GRAPHQL_VALIDATION_FAILED`, `OPERATION_RESOLUTION_FAILURE`, `BAD_REQUEST` and, for invalid variable values,
+  `BAD_USER_INPUT`, so that all error codes are defined by Commitspark
 - Report unexpected errors with error code `INTERNAL_ERROR` instead of `INTERNAL_SERVER_ERROR`, so that a single code
   is used for internal errors
 - Allow introspection and never include stack traces in errors, independent of environment variable `NODE_ENV`, so that

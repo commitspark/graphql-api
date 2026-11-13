@@ -22,7 +22,6 @@ There are two common ways to use this library:
    ```shell
    npm i @commitspark/graphql-api
    ```
-
 2. By making GraphQL calls over HTTP to this library wrapped in a webserver or Lambda function.
 
    You can find an example Node.js Express web server implementation

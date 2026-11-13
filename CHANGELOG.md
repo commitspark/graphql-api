@@ -7,8 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `migrate()` to the client, which commits changes of the schema and of any number of entries computed from a
+  snapshot of a branch in a single validated commit, so that e.g. a field can be renamed in the schema and in all
+  entries at once, and entries that reference each other can be created
+- Add `removeUnknownFields()` to the client, which removes data under keys that are not fields in the schema and
+  metadata other than the entry type in a single commit, so that such data can be cleaned up explicitly
+
 ### Changed
 
+- Retain metadata other than the entry type when updating an entry instead of removing it, so that data is only
+  removed explicitly with `removeUnknownFields()`
 - Reject IDs of new entries that are not in composed Unicode form (NFC) or have a folder name ending with `.` or a
   space, so that an ID has a single spelling and folder names are not changed by Windows, which removes such characters
 

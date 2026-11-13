@@ -1,5 +1,5 @@
 import { validateEntryId } from '@commitspark/git-adapter'
-import { createError, ErrorCode } from '../errors.ts'
+import { createError, ErrorCode, ErrorMetadata } from '../errors.ts'
 
 /**
  * Throws an error with code `BAD_USER_INPUT` if the given ID is not valid for a new entry. In addition to the rules of
@@ -8,8 +8,10 @@ import { createError, ErrorCode } from '../errors.ts'
  * or a space, as Windows removes these characters from folder names. The file name may end with them, as it is followed
  * by the file extension.
  */
-export function assertValidNewEntryId(id: string): void {
-  const details = { argumentName: 'id', argumentValue: id }
+export function assertValidNewEntryId(
+  id: string,
+  details: ErrorMetadata = { argumentName: 'id', argumentValue: id },
+): void {
   try {
     validateEntryId(id)
   } catch (err) {

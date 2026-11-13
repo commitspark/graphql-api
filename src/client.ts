@@ -13,6 +13,13 @@ import { validateRepository } from './validation/repository-validator.ts'
 import { ValidationResult } from './validation/violation.ts'
 import { DataSourceContext } from './graphql/resolvers/entry-data-source.ts'
 import { callGitAdapter } from './persistence/git-adapter-call.ts'
+import {
+  migrate as runMigration,
+  MigrationFn,
+  MigrationResponse,
+} from './migration/migrate.ts'
+import { removeUnknownFields as runRemoveUnknownFields } from './migration/remove-unknown-fields.ts'
+import { CommitInput } from './graphql/resolvers/types.ts'
 
 const createContext = async (
   gitAdapter: GitAdapter,
@@ -126,6 +133,38 @@ export const validate = async (
   )
   const violations = await validateRepository(context)
   return { ref: context.getCurrentHash(), violations }
+}
+
+export const migrate = async (
+  gitAdapter: GitAdapter,
+  searchAdapter: SearchAdapter | undefined,
+  repositoryCache: RepositoryCacheHandler,
+  branch: string,
+  migration: MigrationFn,
+): Promise<MigrationResponse> => {
+  const context = await createContext(
+    gitAdapter,
+    searchAdapter,
+    repositoryCache,
+    branch,
+  )
+  return runMigration(context, migration)
+}
+
+export const removeUnknownFields = async (
+  gitAdapter: GitAdapter,
+  searchAdapter: SearchAdapter | undefined,
+  repositoryCache: RepositoryCacheHandler,
+  branch: string,
+  commit?: CommitInput,
+): Promise<MigrationResponse> => {
+  const context = await createContext(
+    gitAdapter,
+    searchAdapter,
+    repositoryCache,
+    branch,
+  )
+  return runRemoveUnknownFields(context, commit)
 }
 
 export interface RequestContext {

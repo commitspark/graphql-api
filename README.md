@@ -216,7 +216,8 @@ Commitspark.
 A Commitspark schema can be changed by modifying the schema file stored in the repository.
 
 It is recommended to update affected entries in the same commit as the schema and to check the repository with
-[`validate()`](#validate), e.g. in CI before merging.
+[`validate()`](#validate), e.g. in CI before merging. [`migrate()`](#migrate) changes schema and entries together in a
+single commit.
 
 ### Data not matching the schema
 
@@ -579,7 +580,7 @@ appropriate action.
 
 Errors that prevent processing a call at all are thrown instead, with the same error fields: an invalid schema
 (`BAD_SCHEMA`) and errors of the Git adapter while resolving `ref` or loading the schema. This also applies to
-`getSchema()` and `validate()`.
+`getSchema()`, `validate()`, `migrate()` and `removeUnknownFields()`, which throw all their errors.
 
 Example GraphQL response with error:
 
@@ -726,6 +727,60 @@ for (const violation of result.violations) {
 }
 process.exitCode = result.violations.length > 0 ? 1 : 0
 ```
+
+### migrate()
+
+This function changes the schema and any number of entries in a single commit, e.g. to rename a field in the schema and
+in all entries, to create entries that reference each other through non-null fields, or to delete an entry together
+with all references to it.
+
+Argument `branch` expects a branch name. Argument `migration` expects a function that receives a snapshot of the branch
+head and returns the changes:
+
+* The snapshot holds the commit hash in `ref`, the content of the schema file in `schema` and all entries as stored in
+  `entries`, keyed by entry ID, including entries of types that are not in the schema. Changing the snapshot has no
+  effect.
+* The returned `entries` hold each entry to write with its complete content as it is to be stored, or with `deletion`
+  set to `true` to delete it. Entries whose content does not change are ignored.
+* An optional returned `schema` replaces the content of the schema file.
+* An optional returned `commit` describes the commit (see [Commit messages](#commit-messages)). If no message is given,
+  `Migrate entries` is used.
+
+Before committing, the resulting repository state is validated. If the schema changes, all entries must match the new
+schema. Otherwise, only errors that did not exist before prevent the commit, so that problems of other entries do not
+block a migration. If the result has errors, nothing is committed and `BAD_USER_INPUT` is thrown with all problems
+under `extensions.commitspark.violations`. New entry IDs must follow the [rules for entry IDs](#entry-ids).
+
+If the branch moves before committing, `migration` is run again on the new branch head, up to three times in total
+(see [Mutations from multiple concurrent requests](#mutations-from-multiple-concurrent-requests)). The function must
+therefore only depend on the snapshot.
+
+The function returns the hash of the new commit in `ref`, or the hash of the snapshot if nothing changed.
+
+Example that renames field `name` of type `Author` to `fullName`:
+
+```typescript
+await client.migrate('main', (snapshot) => ({
+  schema: snapshot.schema.replace('name: String', 'fullName: String'),
+  entries: [...snapshot.entries.values()]
+    .filter((entry) => entry.metadata.type === 'Author')
+    .map((entry) => {
+      const { name, ...data } = entry.data ?? {}
+      return { ...entry, data: { ...data, fullName: name }, deletion: false }
+    }),
+  commit: { message: 'Rename field name of Author to fullName' },
+}))
+```
+
+### removeUnknownFields()
+
+This function removes all data stored under keys that are not fields in the schema (violation code `UNKNOWN_FIELD`)
+and all metadata except the entry type from the entries of a branch, in a single commit.
+
+Argument `branch` expects a branch name. Optional argument `commit` describes the commit (see
+[Commit messages](#commit-messages)). If no message is given, `Remove unknown fields` is used.
+
+The function returns the hash of the new commit in `ref`, or the hash of the branch head if nothing was removed.
 
 # License
 

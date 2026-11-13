@@ -51,8 +51,8 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
 
     const entryDraft: EntryDraft = {
       id: existingEntry.id,
-      // only the type is written, which removes metadata no longer in use from existing entries
-      metadata: { type: existingEntry.metadata.type },
+      // other metadata is retained like unknown keys of the data and only removed by `removeUnknownFields()`
+      metadata: existingEntry.metadata,
       // unknown keys of the existing data are retained
       data: mergeData(existingEntry.data ?? null, args.data ?? null),
       deletion: false,

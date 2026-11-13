@@ -18,14 +18,18 @@ const MAX_COMMIT_ATTEMPTS = 3
  * to the new branch head and the draft is created and validated again, including expected entry versions and
  * references, so that only actual conflicts are reported to the caller.
  *
- * Errors thrown by `createDraft` are not retried, as the draft was validated against the latest known state.
+ * Errors thrown by `createDraft` are not retried, as the draft was validated against the latest known state. If
+ * `createDraft` returns `undefined`, there is nothing to commit and no commit is made.
  */
 export const commitWithRetry = async (
   context: RequestContext,
-  createDraft: () => Promise<CommitDraft>,
+  createDraft: () => Promise<CommitDraft | undefined>,
 ): Promise<void> => {
   for (let attempt = 1; ; attempt++) {
     const commitDraft = await createDraft()
+    if (commitDraft === undefined) {
+      return
+    }
     try {
       const commit = await context.gitAdapter.createCommit(commitDraft)
       context.setCurrentHash(commit.commitHash)

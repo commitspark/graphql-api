@@ -1,4 +1,8 @@
-import { GitAdapter } from '@commitspark/git-adapter'
+import {
+  ErrorCode as GitAdapterErrorCode,
+  GitAdapter,
+  GitAdapterError,
+} from '@commitspark/git-adapter'
 import { mock } from 'jest-mock-extended'
 import { createClient } from '../../../src'
 import { mockEntries } from '../../git-adapter-mock'
@@ -134,4 +138,36 @@ describe('Request parameters', () => {
     expect(result.data).toEqual({ Person: { name: 'Ada' } })
     expect(result.errors).toBeUndefined()
   })
+})
+
+describe('Errors before execution', () => {
+  it.each<[string, unknown, string]>([
+    [
+      'with the code of a Git adapter error',
+      new GitAdapterError(GitAdapterErrorCode.NOT_FOUND, 'Unknown branch.'),
+      'NOT_FOUND',
+    ],
+    [
+      'with INTERNAL_ERROR for another error',
+      new Error('Failure.'),
+      'INTERNAL_ERROR',
+    ],
+  ])(
+    'should throw a failure to resolve the ref %s',
+    async (_description, adapterError, expectedCode) => {
+      const gitAdapter = mock<GitAdapter>()
+      gitAdapter.getLatestCommitHash.mockRejectedValue(adapterError)
+      const client = await createClient(gitAdapter)
+
+      for (const call of [
+        () => client.postGraphQL(gitRef, { query: '{ everyPerson { id } }' }),
+        () => client.getSchema(gitRef),
+        () => client.validate(gitRef),
+      ]) {
+        await expect(call()).rejects.toMatchObject({
+          extensions: { code: expectedCode },
+        })
+      }
+    },
+  )
 })

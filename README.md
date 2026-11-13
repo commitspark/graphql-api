@@ -561,6 +561,10 @@ The type of error is indicated in error field `extensions.code`, with additional
 `extensions.commitspark` (where available). This allows API callers to determine the cause of errors and take
 appropriate action.
 
+Errors that prevent processing a call at all are thrown instead, with the same error fields: an invalid schema
+(`BAD_SCHEMA`) and errors of the Git adapter while resolving `ref` or loading the schema. This also applies to
+`getSchema()` and `validate()`.
+
 Example GraphQL response with error:
 
 ```json

@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is used for internal errors
 - Allow introspection and never include stack traces in errors, independent of environment variable `NODE_ENV`, so that
   the API behaves the same in every environment
+- Throw errors of the Git adapter while resolving `ref` as GraphQL error with the adapter's error code in
+  `extensions.code`, like other errors of the Git adapter, instead of the adapter's error as is
 - Replace type `ApolloExecuteOperationRequest` of argument `request` of `postGraphQL()` with `GraphQLRequest`, which
   supports `query`, `operationName` and `variables`
 

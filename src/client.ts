@@ -12,6 +12,7 @@ import { RepositoryCacheHandler } from './persistence/cache.ts'
 import { validateRepository } from './validation/repository-validator.ts'
 import { ValidationResult } from './validation/violation.ts'
 import { DataSourceContext } from './graphql/resolvers/entry-data-source.ts'
+import { callGitAdapter } from './persistence/git-adapter-call.ts'
 
 const createContext = async (
   gitAdapter: GitAdapter,
@@ -19,7 +20,9 @@ const createContext = async (
   repositoryCache: RepositoryCacheHandler,
   ref: string,
 ): Promise<RequestContext> => {
-  let currentHash = await gitAdapter.getLatestCommitHash(ref)
+  let currentHash = await callGitAdapter(() =>
+    gitAdapter.getLatestCommitHash(ref),
+  )
   return {
     branch: ref,
     gitAdapter: gitAdapter,

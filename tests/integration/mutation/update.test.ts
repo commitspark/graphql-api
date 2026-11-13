@@ -331,7 +331,7 @@ type Box @Entry {
     }
     const item: Entry = {
       id: itemId,
-      // reference metadata written by earlier versions is removed when an entry is written
+      // metadata written by earlier versions is retained when an entry is updated
       metadata: { type: 'Item', referencedBy: [] } as EntryMetadata,
       data: {
         box: { id: box1Id },
@@ -339,9 +339,7 @@ type Box @Entry {
     }
     const updatedItem: Entry = {
       id: itemId,
-      metadata: {
-        type: 'Item',
-      },
+      metadata: { type: 'Item', referencedBy: [] } as EntryMetadata,
       data: {
         box: { id: box2Id },
       },

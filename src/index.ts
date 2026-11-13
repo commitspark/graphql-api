@@ -2,12 +2,14 @@ import {
   getSchema,
   GraphQLRequest,
   GraphQLResponse,
+  migrate,
   postGraphQL,
+  removeUnknownFields,
   SchemaResponse,
   validate,
   VariableValues,
 } from './client.ts'
-import { GitAdapter } from '@commitspark/git-adapter'
+import { Entry, EntryDraft, GitAdapter } from '@commitspark/git-adapter'
 import { SearchAdapter } from '@commitspark/search-adapter'
 import { ErrorCode, ErrorMetadata } from './graphql/errors.ts'
 import { createCacheHandler } from './persistence/cache.ts'
@@ -17,6 +19,13 @@ import {
   ViolationCode,
   ViolationSeverity,
 } from './validation/violation.ts'
+import {
+  MigrationFn,
+  MigrationResponse,
+  MigrationResult,
+  MigrationSnapshot,
+} from './migration/migrate.ts'
+import { CommitInput } from './graphql/resolvers/types.ts'
 
 interface Client {
   postGraphQL<
@@ -32,6 +41,21 @@ interface Client {
    * of failing on the first one, e.g. to check a repository in CI after changing the schema.
    */
   validate(ref: string): Promise<ValidationResult>
+  /**
+   * Runs `migration` on a snapshot of the head of `branch` and commits the returned schema and entries in a single
+   * commit, e.g. to rename a field in the schema and in all entries, or to change entries that reference each other.
+   * The result is validated before committing and nothing is committed if it has errors. If the branch moves before
+   * committing, `migration` is run again on the new head, so it must only depend on the snapshot.
+   */
+  migrate(branch: string, migration: MigrationFn): Promise<MigrationResponse>
+  /**
+   * Removes all data stored under keys that are not fields in the schema and all metadata except the entry type from
+   * the entries of `branch`, in a single commit.
+   */
+  removeUnknownFields(
+    branch: string,
+    commit?: CommitInput,
+  ): Promise<MigrationResponse>
 }
 
 interface ClientOptions {
@@ -53,6 +77,13 @@ export {
   Violation,
   ViolationCode,
   ViolationSeverity,
+  MigrationFn,
+  MigrationSnapshot,
+  MigrationResult,
+  MigrationResponse,
+  CommitInput,
+  Entry,
+  EntryDraft,
 }
 
 export async function createClient(
@@ -68,5 +99,9 @@ export async function createClient(
       getSchema(gitAdapter, searchAdapter, repositoryCache, ...args),
     validate: (...args) =>
       validate(gitAdapter, searchAdapter, repositoryCache, ...args),
+    migrate: (...args) =>
+      migrate(gitAdapter, searchAdapter, repositoryCache, ...args),
+    removeUnknownFields: (...args) =>
+      removeUnknownFields(gitAdapter, searchAdapter, repositoryCache, ...args),
   }
 }

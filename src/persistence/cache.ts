@@ -1,5 +1,5 @@
 import { Entry } from '@commitspark/git-adapter'
-import { ApolloContext } from '../client.ts'
+import { RequestContext } from '../client.ts'
 import { createError, ErrorCode } from '../graphql/errors.ts'
 import { callGitAdapter } from './git-adapter-call.ts'
 
@@ -26,10 +26,10 @@ interface CommitCacheRecord {
 
 export interface RepositoryCacheHandler {
   getEntriesRecord: (
-    context: ApolloContext,
+    context: RequestContext,
     ref: string,
   ) => Promise<EntriesRecord>
-  getSchema: (context: ApolloContext, ref: string) => Promise<string>
+  getSchema: (context: RequestContext, ref: string) => Promise<string>
 }
 
 const MAX_CACHE_ENTRIES = 50
@@ -40,7 +40,7 @@ const getEntriesRecordByRef = (
   contentCache: ContentCache,
   inflightEntries: InflightEntries,
   cacheSize: number,
-  context: ApolloContext,
+  context: RequestContext,
   ref: string,
 ): Promise<EntriesRecord> => {
   const cacheRecord = entriesCache.get(ref)
@@ -74,7 +74,7 @@ const fetchAndCacheEntries = async (
   entriesCache: EntriesCache,
   contentCache: ContentCache,
   cacheSize: number,
-  context: ApolloContext,
+  context: RequestContext,
   ref: string,
 ): Promise<EntriesRecord> => {
   const entryHashes = await callGitAdapter(() =>
@@ -183,7 +183,7 @@ const removeUnreferencedContent = (
 const getSchemaStringByRef = async (
   schemaCache: SchemaCache,
   cacheSize: number,
-  context: ApolloContext,
+  context: RequestContext,
   ref: string,
 ): Promise<string> => {
   const schemaCacheRecord = schemaCache.get(ref)

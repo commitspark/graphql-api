@@ -229,6 +229,12 @@ fields in the schema is ignored and does not prevent reading an entry.
 A `null` value in a response can therefore mean that no value is stored or that the stored value cannot be read. API
 callers should check the `errors` of a response to tell these apart, e.g. to avoid publishing incomplete content.
 
+Known upstream issue with version 16 of `graphql` (graphql-js): reading data that does not match the schema can cause an
+unhandled promise rejection, which terminates Node.js by default. This happens for a list whose elements have a non-null
+type, e.g. `[Item!]`, if an element fails while resolving a referenced entry and a later element fails as well. The
+issue is fixed in version 17 of `graphql` ([graphql-js#4643](https://github.com/graphql/graphql-js/pull/4643)). It is
+recommended to use `graphql` 17 or to keep data and schema consistent with [`validate()`](#validate).
+
 ## Entry storage
 
 Entries, i.e. instances of data types annotated with `@Entry`, are stored as `.yaml` YAML text files inside
@@ -559,6 +565,10 @@ The type of error is indicated in error field `extensions.code`, with additional
 `extensions.commitspark` (where available). This allows API callers to determine the cause of errors and take
 appropriate action.
 
+Errors that prevent processing a call at all are thrown instead, with the same error fields: an invalid schema
+(`BAD_SCHEMA`) and errors of the Git adapter while resolving `ref` or loading the schema. This also applies to
+`getSchema()` and `validate()`.
+
 Example GraphQL response with error:
 
 ```json
@@ -586,6 +596,7 @@ documented [here](https://github.com/commitspark/search-adapter):
 
 | Error code            | Description                                                                                  |
 |-----------------------|----------------------------------------------------------------------------------------------|
+| `BAD_GRAPHQL_REQUEST` | Request cannot be executed, e.g. due to a syntax error or invalid variable values            |
 | `BAD_USER_INPUT`      | Invalid input data provided by the caller                                                    |
 | `NOT_FOUND`           | Requested resource (entry, type, etc.) does not exist                                        |
 | `BAD_REPOSITORY_DATA` | Data in the repository is malformed or invalid according to the schema                       |
@@ -647,12 +658,11 @@ Optional argument `options` supports the following settings:
 
 This function is used to make GraphQL requests.
 
-Request execution is handled by ApolloServer behind the scenes.
-
 Argument `ref` expects a branch name, tag name or commit hash (see
 [Navigating the Git repository](#navigating-the-git-repository)).
 
-Argument `request` expects a conventional GraphQL query and supports query variables as well as introspection.
+Argument `request` expects a conventional GraphQL query and supports query variables as well as introspection. Errors
+are returned in field `errors` of the response (see [Error handling](#error-handling)).
 
 ### getSchema()
 

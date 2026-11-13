@@ -1,6 +1,6 @@
 import { Entry, EntryData } from '@commitspark/git-adapter'
 import { GraphQLSchema } from 'graphql'
-import { ApolloContext } from '../../client.ts'
+import { RequestContext } from '../../client.ts'
 import { createError, ErrorCode } from '../errors.ts'
 import { validateEntry } from '../../validation/entry-validator.ts'
 import {
@@ -32,7 +32,7 @@ export interface DataSourceContext {
  * that is not an object, are reported here, i.e. at the position of the entry.
  */
 export async function createEntrySource(
-  context: ApolloContext,
+  context: RequestContext,
   schema: GraphQLSchema,
   entry: Entry,
 ): Promise<EntryData & { id: string }> {
@@ -63,7 +63,7 @@ export async function createEntrySource(
  * field at `path` within the entry.
  */
 export function createEmbeddedSource(
-  context: ApolloContext,
+  context: RequestContext,
   parent: DataSourceContext,
   data: EntryData,
   path: Path,
@@ -75,7 +75,7 @@ export function createEmbeddedSource(
 }
 
 export function getDataSourceContext(
-  context: ApolloContext,
+  context: RequestContext,
   source: object,
 ): DataSourceContext {
   const sourceContext = context.dataSourceContexts.get(source)

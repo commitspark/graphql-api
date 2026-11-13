@@ -1,5 +1,4 @@
 import {
-  coerceInputValue,
   GraphQLEnumType,
   GraphQLObjectType,
   GraphQLOutputType,
@@ -19,6 +18,7 @@ import {
   hasDirective,
 } from '../graphql/schema-utils/directive-util.ts'
 import { isUnionOfEntryTypes } from '../graphql/schema-utils/entry-type-util.ts'
+import { validateInputValue } from '../graphql/schema-utils/input-value-validation.ts'
 import {
   idInputTypeName,
   REFERENCED_BY_FIELD_NAME,
@@ -192,7 +192,7 @@ class DataWalker {
     data: unknown,
     path: Path,
   ): void {
-    coerceInputValue(data, type, (_path, _invalidValue, error) =>
+    validateInputValue(data, type, (error) =>
       this.reportInvalidValue(error.message, path, data),
     )
   }

@@ -376,7 +376,7 @@ type TypeB {
     expect(result.errors).toMatchObject([
       {
         message: expect.stringContaining('OneOf'),
-        extensions: { code: 'BAD_USER_INPUT' },
+        extensions: { code: 'BAD_GRAPHQL_REQUEST' },
       },
     ])
     expect(result.data).toBeUndefined()

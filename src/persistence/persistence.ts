@@ -1,9 +1,9 @@
 import { Entry } from '@commitspark/git-adapter'
 import { createError, ErrorCode } from '../graphql/errors.ts'
-import { ApolloContext } from '../client.ts'
+import { RequestContext } from '../client.ts'
 
 export async function getTypeById(
-  context: ApolloContext,
+  context: RequestContext,
   id: string,
 ): Promise<string> {
   const requestedEntry = await findById(context, id)
@@ -11,7 +11,7 @@ export async function getTypeById(
 }
 
 export async function findById(
-  context: ApolloContext,
+  context: RequestContext,
   id: string,
 ): Promise<Entry> {
   const entriesRecord = await context.repositoryCache.getEntriesRecord(
@@ -30,7 +30,7 @@ export async function findById(
 }
 
 export async function findByType(
-  context: ApolloContext,
+  context: RequestContext,
   type: string,
 ): Promise<Entry[]> {
   const entriesRecord = await context.repositoryCache.getEntriesRecord(
@@ -41,7 +41,7 @@ export async function findByType(
 }
 
 export async function findByTypeId(
-  context: ApolloContext,
+  context: RequestContext,
   type: string,
   id: string,
 ): Promise<Entry> {
@@ -66,7 +66,7 @@ export async function findByTypeId(
  * whenever the stored entry changes.
  */
 export async function getEntryVersion(
-  context: ApolloContext,
+  context: RequestContext,
   id: string,
 ): Promise<string> {
   const entriesRecord = await context.repositoryCache.getEntriesRecord(
@@ -90,7 +90,7 @@ export async function getEntryVersion(
  * user was editing the entry, instead of overwriting these changes.
  */
 export async function assertExpectedVersion(
-  context: ApolloContext,
+  context: RequestContext,
   id: string,
   expectedVersion: string | null | undefined,
 ): Promise<void> {

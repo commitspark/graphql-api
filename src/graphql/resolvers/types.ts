@@ -1,4 +1,4 @@
-import { ApolloContext } from '../../client.ts'
+import { RequestContext } from '../../client.ts'
 import {
   GraphQLFieldResolver,
   GraphQLNamedType,
@@ -13,7 +13,7 @@ export interface CommitInput {
   body?: string | null
 }
 
-interface QueryMutationResolverContext extends ApolloContext {
+interface QueryMutationResolverContext extends RequestContext {
   type: GraphQLNamedType
 }
 
@@ -36,7 +36,7 @@ export type QueryMutationResolver<ResultType> = GraphQLFieldResolver<
 
 export type UnionTypeResolver = GraphQLTypeResolver<
   UnionTypeResolverSourceData,
-  ApolloContext
+  RequestContext
 >
 
 type UnionTypeResolverSourceData = EntryData & {
@@ -46,28 +46,28 @@ type UnionTypeResolverSourceData = EntryData & {
 
 export type SearchQueryResolver = GraphQLFieldResolver<
   unknown,
-  ApolloContext,
+  RequestContext,
   { query: string; types?: string[] | null; first?: number | null },
   Promise<SearchHit[]>
 >
 
 export type EntryFieldResolver = GraphQLFieldResolver<
   Record<string, unknown>,
-  ApolloContext,
+  RequestContext,
   Record<string, unknown>,
   ResolvedValue | Promise<ResolvedValue>
 >
 
 export type ReferencedByResolver = GraphQLFieldResolver<
   EntryData & { id: string },
-  ApolloContext,
+  RequestContext,
   Record<string, never>,
   Promise<string[]>
 >
 
 export type VersionResolver = GraphQLFieldResolver<
   EntryData & { id: string },
-  ApolloContext,
+  RequestContext,
   Record<string, never>,
   Promise<string>
 >

@@ -1,7 +1,7 @@
 import {
   GraphQLEnumType,
   GraphQLInputObjectType,
-  GraphQLNullableType,
+  GraphQLType,
   GraphQLObjectType,
   GraphQLScalarType,
   GraphQLUnionType,
@@ -24,7 +24,7 @@ import {
   hasDirective,
 } from './schema-utils/directive-util.ts'
 
-function generateFieldInputTypeString(type: GraphQLNullableType): string {
+function generateFieldInputTypeString(type: GraphQLType): string {
   if (isListType(type)) {
     return `[${generateFieldInputTypeString(type.ofType)}]`
   } else if (isNonNullType(type)) {

@@ -1,12 +1,12 @@
-import { ApolloContext } from '../../../src/client'
+import { RequestContext } from '../../../src/client'
 import {
   createEmbeddedSource,
   DataSourceContext,
   getDataSourceContext,
 } from '../../../src/graphql/resolvers/entry-data-source'
 
-const createRequestContext = (): ApolloContext =>
-  ({ dataSourceContexts: new WeakMap() }) as unknown as ApolloContext
+const createRequestContext = (): RequestContext =>
+  ({ dataSourceContexts: new WeakMap() }) as unknown as RequestContext
 
 const entryContext: DataSourceContext = {
   entryId: 'article',

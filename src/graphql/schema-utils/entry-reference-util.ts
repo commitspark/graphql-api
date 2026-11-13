@@ -1,5 +1,5 @@
 import {
-  GraphQLNullableType,
+  GraphQLType,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLUnionType,
@@ -9,7 +9,7 @@ import {
   isScalarType,
   isUnionType,
 } from 'graphql'
-import { ApolloContext } from '../../client.ts'
+import { RequestContext } from '../../client.ts'
 import { EntriesRecord } from '../../persistence/cache.ts'
 import {
   getUnionTypeNameFromFieldValue,
@@ -34,7 +34,7 @@ type ReferencedByIndex = Map<string, string[]>
 const referencedByIndexes = new WeakMap<EntriesRecord, ReferencedByIndex>()
 
 export async function getReferencingEntryIds(
-  context: ApolloContext,
+  context: RequestContext,
   schema: GraphQLSchema,
   id: string,
 ): Promise<string[]> {
@@ -125,7 +125,7 @@ function getReferencesInObjectFields(
 
 function getReferencesInField(
   fieldName: string,
-  type: GraphQLNullableType,
+  type: GraphQLType,
   data: unknown,
 ): EntryReference[] {
   if (data === null || data === undefined || isScalarType(type)) {

@@ -7,7 +7,7 @@ import {
   isUnionType,
 } from 'graphql'
 import { EntryData } from '@commitspark/git-adapter'
-import { ApolloContext } from '../../../client.ts'
+import { RequestContext } from '../../../client.ts'
 import { findById } from '../../../persistence/persistence.ts'
 import { buildsOnTypeWithEntryDirective } from '../../schema-utils/entry-type-util.ts'
 import {
@@ -35,7 +35,7 @@ export function resolveFieldValue(
   type: GraphQLOutputType,
   sourceContext: DataSourceContext,
   path: (string | number)[],
-  context: ApolloContext,
+  context: RequestContext,
   info: GraphQLResolveInfo,
 ): ResolvedValue | Promise<ResolvedValue> {
   throwViolationsAt(sourceContext, path)

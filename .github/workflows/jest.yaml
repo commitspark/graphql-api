@@ -3,6 +3,10 @@ on: push
 jobs:
     test:
         runs-on: ubuntu-26.04
+        strategy:
+            matrix:
+                # the major versions of the peer dependency range of graphql
+                graphql: ["^16.11.0", "^17.0.0"]
         steps:
             - uses: actions/checkout@v6
             - name: Setup Node.js
@@ -12,6 +16,9 @@ jobs:
 
             - name: Install dependencies
               run: npm ci
+
+            - name: Install graphql ${{ matrix.graphql }}
+              run: npm pkg set "devDependencies.graphql=${{ matrix.graphql }}" && npm install --ignore-scripts
 
             - name: Run tests
               run: npm test

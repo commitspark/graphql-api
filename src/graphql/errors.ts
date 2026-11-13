@@ -4,6 +4,7 @@ import { ErrorCode as SearchAdapterErrorCode } from '@commitspark/search-adapter
 import { Violation } from '../validation/violation.ts'
 
 export enum ErrorCode {
+  BAD_GRAPHQL_REQUEST = 'BAD_GRAPHQL_REQUEST',
   BAD_USER_INPUT = 'BAD_USER_INPUT',
   NOT_FOUND = 'NOT_FOUND',
   BAD_REPOSITORY_DATA = 'BAD_REPOSITORY_DATA',

@@ -1,6 +1,6 @@
 import {
-  ApolloExecuteOperationRequest,
   getSchema,
+  GraphQLRequest,
   GraphQLResponse,
   postGraphQL,
   SchemaResponse,
@@ -24,7 +24,7 @@ interface Client {
     TVariables extends VariableValues = VariableValues,
   >(
     ref: string,
-    request: ApolloExecuteOperationRequest<TData, TVariables>,
+    request: GraphQLRequest<TData, TVariables>,
   ): Promise<GraphQLResponse<TData | null>>
   getSchema(ref: string): Promise<SchemaResponse>
   /**
@@ -48,6 +48,7 @@ export {
   SchemaResponse,
   ErrorCode,
   ErrorMetadata,
+  GraphQLRequest,
   ValidationResult,
   Violation,
   ViolationCode,

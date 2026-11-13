@@ -231,6 +231,12 @@ fields in the schema is ignored and does not prevent reading an entry.
 A `null` value in a response can therefore mean that no value is stored or that the stored value cannot be read. API
 callers should check the `errors` of a response to tell these apart, e.g. to avoid publishing incomplete content.
 
+Known upstream issue with version 16 of `graphql` (graphql-js): reading data that does not match the schema can cause an
+unhandled promise rejection, which terminates Node.js by default. This happens for a list whose elements have a non-null
+type, e.g. `[Item!]`, if an element fails while resolving a referenced entry and a later element fails as well. The
+issue is fixed in version 17 of `graphql` ([graphql-js#4643](https://github.com/graphql/graphql-js/pull/4643)). It is
+recommended to use `graphql` 17 or to keep data and schema consistent with [`validate()`](#validate).
+
 ## Entry storage
 
 Entries, i.e. instances of data types annotated with `@Entry`, are stored as `.yaml` YAML text files inside

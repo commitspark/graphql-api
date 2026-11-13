@@ -256,7 +256,13 @@ can contain `/` for logical grouping, however the entry type is always taken fro
 
 Entry IDs are case-sensitive, must map to valid unique file paths within the entries folder, and must not contain
 characters `\ * " < > : | ?` or control characters. Files and folders whose name starts with `.` are ignored by
-Commitspark.
+Commitspark. When creating an entry, its ID must also be in composed Unicode form (NFC), and no part between `/` may
+end with `.` or a space.
+
+Commitspark does not limit the length of entry IDs and does not check whether IDs can be checked out on every operating
+system. For example, IDs that only differ in case, such as `ada` and `Ada`, collide on macOS and Windows, and reserved
+names such as `CON` or `NUL` as well as long paths cannot be checked out on Windows. Avoid such IDs if your repository
+is cloned on these systems.
 
 ### Serialization / Deserialization
 

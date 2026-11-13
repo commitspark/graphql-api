@@ -820,4 +820,47 @@ type EntryA @Entry {
     expect(gitAdapter.getEntryHashes).not.toHaveBeenCalled()
     expect(gitAdapter.createCommit).not.toHaveBeenCalled()
   })
+
+  it('should reject an ID that is not in composed Unicode form without committing', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type EntryA @Entry {
+    id: ID!
+    name: String
+}`
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation ($id: ID!, $mutationData: EntryAInput!) {
+        data: createEntryA(id: $id, data: $mutationData) {
+          id
+        }
+      }`,
+      variables: {
+        id: 'café',
+        mutationData: { name: 'My name' },
+      },
+    })
+
+    expect(result.errors).toMatchObject([
+      {
+        message: 'Entry ID "café" must be in composed Unicode form (NFC).',
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: { argumentName: 'id', argumentValue: 'café' },
+        },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
 })

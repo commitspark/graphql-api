@@ -1,10 +1,7 @@
 import { findById, findByTypeId } from '../../../persistence/persistence.ts'
 import { isObjectType } from 'graphql'
-import {
-  EntryData,
-  EntryDraft,
-  validateEntryId,
-} from '@commitspark/git-adapter'
+import { EntryData, EntryDraft } from '@commitspark/git-adapter'
+import { assertValidNewEntryId } from '../new-entry-id.ts'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
@@ -25,18 +22,7 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
       {},
     )
   }
-  try {
-    validateEntryId(args.id)
-  } catch (err) {
-    throw createError(
-      err instanceof Error ? err.message : String(err),
-      ErrorCode.BAD_USER_INPUT,
-      {
-        argumentName: 'id',
-        argumentValue: args.id,
-      },
-    )
-  }
+  assertValidNewEntryId(args.id)
   const commitMessage = getCommitMessage(
     args.commit,
     'Create',

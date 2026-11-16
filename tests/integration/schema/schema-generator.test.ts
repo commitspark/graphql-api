@@ -231,20 +231,30 @@ input EntryAInput {
 }
 
 """
-Data to update an entry of type "MyEntry" with. Fields that are not given keep their stored value,
-and \`null\` clears a field. A value given for a field replaces the stored value as a whole, including objects
-and lists.
+Data to update an entry of type "MyEntry" with. Fields that are not given keep their stored value, and
+\`null\` clears a field. Objects given for fields of an object type are merged into the stored object in the
+same way, while lists and unions given replace the stored value as a whole.
 """
 input MyEntryUpdateInput {
   name: String
-  nestedType: NestedTypeInput
+  nestedType: NestedTypeUpdateInput
   entryA: EntryAIdInput
 }
 
 """
-Data to update an entry of type "EntryA" with. Fields that are not given keep their stored value,
-and \`null\` clears a field. A value given for a field replaces the stored value as a whole, including objects
-and lists.
+Data to update an object of type "NestedType" with. Fields that are not given keep their stored value, and
+\`null\` clears a field. Objects given for fields of an object type are merged into the stored object in the
+same way, while lists and unions given replace the stored value as a whole.
+"""
+input NestedTypeUpdateInput {
+  title: String
+  description: String
+}
+
+"""
+Data to update an entry of type "EntryA" with. Fields that are not given keep their stored value, and
+\`null\` clears a field. Objects given for fields of an object type are merged into the stored object in the
+same way, while lists and unions given replace the stored value as a whole.
 """
 input EntryAUpdateInput {
   name: String
@@ -417,6 +427,68 @@ type TypeB {
     expect(fieldTypes(schema.getType('TypeBInput'))).toEqual({
       field2: 'String',
     })
+  })
+
+  it('should generate update input types with optional fields for entries and embedded single objects', async () => {
+    const schema = await buildGeneratedSchema(`directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    title: String!
+    tags: [String!]!
+    seo: Seo!
+    blocks: [Block!]
+    hero: Hero
+    author: Author!
+}
+
+type Seo {
+    title: String!
+    image: Image
+}
+
+type Image {
+    url: String!
+}
+
+type Block {
+    text: String!
+}
+
+type Hero {
+    content: HeroContent
+}
+
+union HeroContent = Block | Image
+
+type Author @Entry {
+    id: ID!
+    name: String!
+}`)
+
+    expect(fieldTypes(schema.getType('PageUpdateInput'))).toEqual({
+      title: 'String',
+      tags: '[String!]',
+      seo: 'SeoUpdateInput',
+      blocks: '[BlockInput!]',
+      hero: 'HeroUpdateInput',
+      author: 'AuthorIdInput',
+    })
+    expect(fieldTypes(schema.getType('SeoUpdateInput'))).toEqual({
+      title: 'String',
+      image: 'ImageUpdateInput',
+    })
+    expect(fieldTypes(schema.getType('ImageUpdateInput'))).toEqual({
+      url: 'String',
+    })
+    expect(fieldTypes(schema.getType('HeroUpdateInput'))).toEqual({
+      content: 'HeroContentInput',
+    })
+    expect(fieldTypes(schema.getType('AuthorUpdateInput'))).toEqual({
+      name: 'String',
+    })
+    // only used in lists and unions, whose values replace the stored value as a whole
+    expect(schema.getType('BlockUpdateInput')).toBeUndefined()
   })
 
   it('should include ID fields other than the entry ID in generated input types', async () => {

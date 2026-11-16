@@ -1,4 +1,5 @@
 import {
+  GraphQLObjectType,
   GraphQLType,
   GraphQLUnionType,
   isListType,
@@ -25,4 +26,21 @@ export function buildsOnTypeWithEntryDirective(type: GraphQLType): boolean {
     return hasDirective(type, ENTRY_DIRECTIVE_NAME)
   }
   return false
+}
+
+/**
+ * Returns the object type of a field whose values are merged into the stored value by update mutations, i.e. of a
+ * field holding a single embedded object (no list, no union, no reference to an entry).
+ */
+export function getMergedObjectType(
+  type: GraphQLType,
+): GraphQLObjectType | undefined {
+  const nullableType = isNonNullType(type) ? type.ofType : type
+  if (
+    isObjectType(nullableType) &&
+    !hasDirective(nullableType, ENTRY_DIRECTIVE_NAME)
+  ) {
+    return nullableType
+  }
+  return undefined
 }

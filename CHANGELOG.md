@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so that an update only needs to give the fields to change, also when the type has non-null fields; operations
   that declare a variable of type `<Type>Input` for `update<Type>` must change the variable type to
   `<Type>UpdateInput`
+- Merge objects given for fields of an object type in `update<Type>` into the stored object instead of replacing it,
+  so that fields of embedded objects that are not given are no longer removed; lists, unions, and references are
+  still replaced as a whole
 - Retain metadata other than the entry type when updating an entry instead of removing it, so that data is only
   removed explicitly with `removeUnknownFields()`
 - Reject IDs of new entries that are not in composed Unicode form (NFC) or have a folder name ending with `.` or a

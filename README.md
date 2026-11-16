@@ -744,7 +744,7 @@ Argument `migration` expects a function that receives a snapshot of the branch h
   set to `true` to delete it. Entries whose content does not change are ignored.
 * An optional returned `schema` replaces the schema in the schema file.
 * An optional returned `commit` describes the commit (see [Commit messages](#commit-messages)). If no message is given,
-  `Migrate entries` is used.
+  `Apply migration` is used.
 
 Before committing, the resulting repository state is validated. If the schema changes, all entries must match the new
 schema. If the schema does not change, errors that already exist at the branch head are ignored and only errors caused

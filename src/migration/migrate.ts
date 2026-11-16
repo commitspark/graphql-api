@@ -67,7 +67,7 @@ export interface MigrationResponse {
 export async function migrate(
   context: RequestContext,
   migration: MigrationFn,
-  defaultCommitMessage = 'Migrate entries',
+  defaultCommitMessage = 'Apply migration',
 ): Promise<MigrationResponse> {
   await commitWithRetry(context, async () => {
     const parentSha = context.getCurrentHash()

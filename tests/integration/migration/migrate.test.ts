@@ -104,7 +104,7 @@ describe('Migrations', () => {
     expect(gitAdapter.createCommit).toHaveBeenCalledWith({
       ref: branch,
       parentSha: headHash,
-      message: 'Migrate entries',
+      message: 'Apply migration',
       schema: newSchema,
       entries: [],
     })
@@ -160,7 +160,7 @@ describe('Migrations', () => {
 
     expect(gitAdapter.createCommit).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: 'Migrate entries',
+        message: 'Apply migration',
         entries: [
           expect.objectContaining({ id: 'grace' }),
           expect.objectContaining({ id: 'manual' }),

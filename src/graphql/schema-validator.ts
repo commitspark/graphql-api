@@ -153,6 +153,13 @@ function checkGeneratedNameCollisions(schema: GraphQLSchema): string[] {
       names.inputTypeName(type.name),
       `the input type of type "${type.name}"`,
     )
+    // reserved for all object types, as types without `@Entry` directive get one when embedded in an entry, so that
+    // whether a name is free does not depend on where a type is used
+    addGeneratedName(
+      typeNames,
+      names.updateInputTypeName(type.name),
+      `the update input type of type "${type.name}"`,
+    )
   }
   for (const type of entryTypes) {
     addGeneratedName(

@@ -11,6 +11,7 @@ import {
   generateIdInputTypeStrings,
   generateObjectInputTypeStrings,
   generateUnionInputTypeStrings,
+  generateUpdateInputTypeStrings,
 } from './input-type-generator.ts'
 import { generateSchemaRootTypeStrings } from './schema-root-type-generator.ts'
 import { printSchemaWithDirectives } from '@graphql-tools/utils'
@@ -84,6 +85,10 @@ export function generateSchemaFromString(
 
   const generatedUnionInputTypeStrings = generateUnionInputTypeStrings(
     schemaAnalyzerResult.unionTypes,
+  )
+
+  const generatedUpdateInputTypeStrings = generateUpdateInputTypeStrings(
+    schemaAnalyzerResult.objectTypes,
   )
 
   const generatedSchemaRootTypeStrings = generateSchemaRootTypeStrings(
@@ -181,6 +186,7 @@ ${generatedSchemaRootTypeStrings}`
     generatedIdInputTypeStrings.join('\n'),
     generatedObjectInputTypeStrings.join('\n'),
     generatedUnionInputTypeStrings.join('\n'),
+    generatedUpdateInputTypeStrings.join('\n'),
     generatedEntryFields
       .map((entryFields) => entryFields.typeExtensionString)
       .join('\n'),

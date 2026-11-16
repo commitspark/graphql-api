@@ -91,6 +91,16 @@ describe('Schema validator', () => {
       'Type name "ProductIdInput" is reserved for the reference input type of type "Product"; rename the type.',
     ],
     [
+      'a type named like the update input type of an @Entry type',
+      'type ProductUpdateInput { name: String }',
+      'Type name "ProductUpdateInput" is reserved for the update input type of type "Product"; rename the type.',
+    ],
+    [
+      'a type named like the update input type of a type without @Entry directive',
+      'type Seo { title: String }\ntype SeoUpdateInput { name: String }',
+      'Type name "SeoUpdateInput" is reserved for the update input type of type "Seo"; rename the type.',
+    ],
+    [
       'a type named like the input type of a union',
       'type Hero { title: String }\nunion Block = Hero\ntype BlockInput { name: String }',
       'Type name "BlockInput" is reserved for the input type of union "Block"; rename the type.',
@@ -115,6 +125,12 @@ describe('Schema validator', () => {
       'type ProductId { value: String }',
       'Generated type name "ProductIdInput" would be used for the input type of type "ProductId" and for the ' +
         'reference input type of type "Product"; rename one of the types.',
+    ],
+    [
+      'types whose generated input type names collide with an update input type',
+      'type ProductUpdate { value: String }',
+      'Generated type name "ProductUpdateInput" would be used for the update input type of type "Product" and for ' +
+        'the input type of type "ProductUpdate"; rename one of the types.',
     ],
     [
       '@Entry types whose generated query names collide',

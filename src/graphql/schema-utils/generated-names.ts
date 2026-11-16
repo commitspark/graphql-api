@@ -22,6 +22,13 @@ export const VERSION_FIELD_NAME = '_version'
 export const inputTypeName = (typeName: string): string => `${typeName}Input`
 
 /**
+ * Name of the input type for data of an update of an `@Entry` type or of an object embedded in it, in which all
+ * fields are optional.
+ */
+export const updateInputTypeName = (typeName: string): string =>
+  `${typeName}UpdateInput`
+
+/**
  * Name of the input type for references to an `@Entry` type or to a union of `@Entry` types.
  */
 export const idInputTypeName = (typeName: string): string =>

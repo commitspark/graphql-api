@@ -13,11 +13,13 @@ import {
 import { SchemaAnalyzerResult } from './schema-analyzer.ts'
 import {
   buildsOnTypeWithEntryDirective,
+  getMergedObjectType,
   isUnionOfEntryTypes,
 } from './schema-utils/entry-type-util.ts'
 import {
   idInputTypeName,
   inputTypeName,
+  updateInputTypeName,
 } from './schema-utils/generated-names.ts'
 import {
   ENTRY_DIRECTIVE_NAME,
@@ -91,6 +93,72 @@ export function generateObjectInputTypeStrings(
 
     return inputType
   })
+}
+
+/**
+ * Generates the input types of update mutations for the `@Entry` types and for the object types embedded in them as
+ * single objects. All fields are optional, so that only fields to change need to be given. Embedded single objects
+ * use update input types themselves, as they are merged into the stored object, while lists and unions use the input
+ * types for creating an entry, as their values replace the stored value as a whole.
+ */
+export function generateUpdateInputTypeStrings(
+  objectTypes: GraphQLObjectType[],
+): string[] {
+  const mergedTypeNames = new Set<string>()
+  const collectMergedTypes = (type: GraphQLObjectType): void => {
+    for (const field of Object.values(type.getFields())) {
+      const mergedType = getMergedObjectType(field.type)
+      if (mergedType !== undefined && !mergedTypeNames.has(mergedType.name)) {
+        mergedTypeNames.add(mergedType.name)
+        collectMergedTypes(mergedType)
+      }
+    }
+  }
+  const entryTypes = objectTypes.filter((type) =>
+    hasDirective(type, ENTRY_DIRECTIVE_NAME),
+  )
+  entryTypes.forEach(collectMergedTypes)
+
+  return objectTypes
+    .filter(
+      (type) =>
+        hasDirective(type, ENTRY_DIRECTIVE_NAME) ||
+        mergedTypeNames.has(type.name),
+    )
+    .map((objectType): string => {
+      const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
+      let fieldStrings = ''
+      for (const field of Object.values(objectType.getFields())) {
+        // the ID of an entry is passed as mutation argument instead of as part of the entry data
+        if (isEntryType && field.name === 'id') {
+          continue
+        }
+        const mergedType = getMergedObjectType(field.type)
+        const fieldTypeString =
+          mergedType !== undefined
+            ? updateInputTypeName(mergedType.name)
+            : generateFieldInputTypeString(
+                isNonNullType(field.type) ? field.type.ofType : field.type,
+              )
+        fieldStrings += `  ${field.name}: ${fieldTypeString}\n`
+      }
+      if (fieldStrings.length === 0) {
+        // generate a dummy field as empty input types are not permitted
+        fieldStrings = '  _: Boolean\n'
+      }
+
+      const description = isEntryType
+        ? `Data to update an entry of type "${objectType.name}" with.`
+        : `Data to update an object of type "${objectType.name}" with.`
+      return (
+        '"""\n' +
+        `${description} Fields that are not given keep their stored value, and\n` +
+        '`null` clears a field. Objects given for fields of an object type are merged into the stored object in the\n' +
+        'same way, while lists and unions given replace the stored value as a whole.\n' +
+        '"""\n' +
+        `input ${updateInputTypeName(objectType.name)} {\n${fieldStrings}}\n`
+      )
+    })
 }
 
 export function generateUnionInputTypeStrings(

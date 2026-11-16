@@ -90,6 +90,66 @@ describe('Validation of mutation results', () => {
     expect(commitDraft.entries).toEqual([{ ...updatedEntry, deletion: false }])
   })
 
+  it('should commit an update that omits a non-null field and keep the stored value', async () => {
+    const validEntry: Entry = {
+      ...storedEntry,
+      data: { name: 'Shirt', rating: 4 },
+    }
+    const gitAdapter = createTestAdapter([validEntry])
+    const updatedEntry: Entry = {
+      ...validEntry,
+      data: { name: 'Shirt', rating: 5 },
+    }
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [updatedEntry])
+    const client = await createClient(gitAdapter)
+
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: updateProduct(id: "shirt", data: { rating: 5 }) { id name rating } }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: { id: 'shirt', name: 'Shirt', rating: 5 },
+    })
+    const commitDraft = gitAdapter.createCommit.mock.calls[0][0] as CommitDraft
+    expect(commitDraft.entries).toEqual([{ ...updatedEntry, deletion: false }])
+  })
+
+  it('should not commit an update that clears a non-null field', async () => {
+    const validEntry: Entry = {
+      ...storedEntry,
+      data: { name: 'Shirt', rating: 4 },
+    }
+    const gitAdapter = createTestAdapter([validEntry])
+    const client = await createClient(gitAdapter)
+
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: updateProduct(id: "shirt", data: { name: null }) { id } }`,
+    })
+
+    expect(result.errors).toMatchObject([
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: {
+            fieldValue: 'shirt',
+            violations: [
+              {
+                severity: 'ERROR',
+                code: 'INVALID_VALUE',
+                entryId: 'shirt',
+                path: ['name'],
+              },
+            ],
+          },
+        },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
+
   it('should commit a new entry that references itself', async () => {
     const gitAdapter = createTestAdapter([])
     const newEntry: Entry = {

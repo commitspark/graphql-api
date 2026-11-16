@@ -93,7 +93,12 @@ type Query {
 
 type Mutation {
     createRocketFlight(id: ID!, data: RocketFlightInput!, commit: _CommitInput): RocketFlight
-    updateRocketFlight(id: ID!, data: RocketFlightInput!, expectedVersion: String, commit: _CommitInput): RocketFlight
+    updateRocketFlight(
+        id: ID!
+        data: RocketFlightUpdateInput!
+        expectedVersion: String
+        commit: _CommitInput
+    ): RocketFlight
     deleteRocketFlight(id: ID!, expectedVersion: String, commit: _CommitInput): ID
 }
 
@@ -113,6 +118,11 @@ input RocketFlightInput {
 
 input PayloadInput {
     weight: Int!
+}
+
+input RocketFlightUpdateInput {
+    vehicleName: String
+    payloads: [PayloadInput!]
 }
 
 extend type RocketFlight {
@@ -450,7 +460,14 @@ together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entr
 
 Mutations work on branch names only, as they create new commits.
 
-Each successful mutation appends a new commit on HEAD of the given branch.
+Each successful mutation appends a new commit on HEAD of the given branch, except for an update that does not change
+the entry, which makes no commit and returns the stored entry.
+
+`update<Type>` only changes the fields given in `data`. All fields of its input type `<Type>UpdateInput` are
+optional, fields that are not given keep their stored value, and `null` clears a field. An object given for a field
+of an object type is merged into the stored object in the same way, using input type `<ObjectType>UpdateInput`.
+Lists, unions, and references given replace the stored value as a whole, e.g. a list has to be given with all of its
+elements to add one element. To replace an entry as a whole, give all fields, with `null` for fields to clear.
 
 Before committing, Commitspark checks whether the entry as it would be written matches the schema. If the entry would
 not match the schema, no commit is made and the mutation fails with error `BAD_USER_INPUT`, listing the problems under

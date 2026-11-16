@@ -76,7 +76,7 @@ type EntryA @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+      query: `mutation ($id: ID!, $mutationData: EntryAUpdateInput!, $commit: _CommitInput!) {
         data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
           name
@@ -182,7 +182,9 @@ type SubType {
         fieldChanged: changedValue,
         fieldNulled: null,
         fieldNotSpecified: originalValue,
+        // embedded objects are merged into the stored object
         subTypeChanged: {
+          field1: originalValue,
           field2: changedValue,
         },
         subTypeNulled: null,
@@ -226,7 +228,7 @@ type SubType {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+      query: `mutation ($id: ID!, $mutationData: EntryAUpdateInput!, $commit: _CommitInput!) {
         data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
         }
@@ -242,6 +244,208 @@ type SubType {
     expect(result.data).toEqual({ data: { id: entryId } })
     expect(result.ref).toBe(postCommitHash)
   })
+
+  it('should merge nested objects recursively and replace lists, unions and references', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const postCommitHash = 'ef01'
+    const schema = `directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    title: String!
+    seo: Seo!
+    hero: Block
+    blocks: [Block!]
+    author: Author
+}
+
+type Seo {
+    title: String!
+    description: String
+    image: Image
+}
+
+type Image {
+    url: String!
+    alt: String
+}
+
+type Text {
+    text: String
+}
+
+type Quote {
+    quote: String
+    source: String
+}
+
+union Block = Text | Quote
+
+type Author @Entry {
+    id: ID!
+}`
+    const storedEntry: Entry = {
+      id: 'home',
+      metadata: { type: 'Page' },
+      data: {
+        title: 'Home',
+        seo: {
+          title: 'Home | Site',
+          description: 'Welcome',
+          image: { url: 'home.png', alt: 'Home' },
+          legacy: 'kept',
+        },
+        hero: { Quote: { quote: 'Hello', source: 'Jane' } },
+        blocks: [{ Text: { text: 'One' } }, { Text: { text: 'Two' } }],
+        author: { id: 'jane' },
+      },
+    }
+    const authors: Entry[] = ['jane', 'john'].map((id) => ({
+      id: id,
+      metadata: { type: 'Author' },
+      data: {},
+    }))
+    const expectedData = {
+      title: 'Home',
+      seo: {
+        title: 'Home | Site',
+        description: null,
+        image: { url: 'home.png', alt: 'Start' },
+        legacy: 'kept',
+      },
+      hero: { Quote: { quote: 'Hi' } },
+      blocks: [{ Text: { text: 'Three' } }],
+      author: { id: 'john' },
+    }
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [storedEntry, ...authors])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [
+      { ...storedEntry, data: expectedData },
+      ...authors,
+    ])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation {
+        data: updatePage(id: "home", data: {
+          seo: { description: null, image: { alt: "Start" } }
+          hero: { Quote: { quote: "Hi" } }
+          blocks: [{ Text: { text: "Three" } }]
+          author: { id: "john" }
+        }) { id }
+      }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    const commitDraft = gitAdapter.createCommit.mock.calls[0][0] as CommitDraft
+    expect(commitDraft.entries).toEqual([
+      { ...storedEntry, data: expectedData, deletion: false },
+    ])
+  })
+
+  it('should write a nested object as given if no object is stored', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    seo: Seo
+}
+
+type Seo {
+    title: String!
+    description: String
+}`
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [
+      { id: 'home', metadata: { type: 'Page' }, data: { seo: null } },
+    ])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: updatePage(id: "home", data: { seo: { description: "Welcome" } }) { id } }`,
+    })
+
+    // the object given is written as is, so that the missing non-null field fails validation
+    expect(result.errors).toMatchObject([
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: {
+            violations: [
+              {
+                code: 'INVALID_VALUE',
+                entryId: 'home',
+                path: ['seo', 'title'],
+              },
+            ],
+          },
+        },
+      },
+    ])
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['no fields', '{}'],
+    [
+      'only stored values',
+      '{ title: "Home", seo: { description: "Welcome" } }',
+    ],
+  ])(
+    'should not commit an update that gives %s and return the stored entry',
+    async (_description, data) => {
+      const gitAdapter = mock<GitAdapter>()
+      const gitRef = 'myRef'
+      const commitHash = 'abcd'
+      const schema = `directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    title: String!
+    seo: Seo
+}
+
+type Seo {
+    description: String
+}`
+      gitAdapter.getLatestCommitHash
+        .calledWith(gitRef)
+        .mockResolvedValue(commitHash)
+      gitAdapter.getSchema.mockResolvedValue(schema)
+      mockEntries(gitAdapter, commitHash, [
+        {
+          id: 'home',
+          metadata: { type: 'Page' },
+          data: { title: 'Home', seo: { description: 'Welcome' } },
+        },
+      ])
+
+      const client = await createClient(gitAdapter)
+      const result = await client.postGraphQL(gitRef, {
+        query: `mutation { data: updatePage(id: "home", data: ${data}) { id title seo { description } } }`,
+      })
+
+      expect(result.errors).toBeUndefined()
+      expect(result.data).toEqual({
+        data: { id: 'home', title: 'Home', seo: { description: 'Welcome' } },
+      })
+      expect(result.ref).toBe(commitHash)
+      expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+    },
+  )
 
   it('should return an error when trying to update a non-existent entry', async () => {
     const gitAdapter = mock<GitAdapter>()
@@ -267,7 +471,7 @@ type EntryA @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+      query: `mutation ($id: ID!, $mutationData: EntryAUpdateInput!, $commit: _CommitInput!) {
         data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
           name
@@ -370,7 +574,7 @@ type Box @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: ItemInput!, $commit: _CommitInput!) {
+      query: `mutation ($id: ID!, $mutationData: ItemUpdateInput!, $commit: _CommitInput!) {
         data: updateItem(id: $id, data: $mutationData, commit: $commit) {
           id
         }
@@ -475,7 +679,7 @@ enum MyEnum {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!, $commit: _CommitInput!) {
+      query: `mutation ($id: ID!, $mutationData: EntryAUpdateInput!, $commit: _CommitInput!) {
         data: updateEntryA(id: $id, data: $mutationData, commit: $commit) {
           id
           string
@@ -535,7 +739,7 @@ type EntryA @Entry {
 
     const client = await createClient(gitAdapter)
     const result = await client.postGraphQL(gitRef, {
-      query: `mutation ($id: ID!, $mutationData: EntryAInput!) {
+      query: `mutation ($id: ID!, $mutationData: EntryAUpdateInput!) {
         data: updateEntryA(id: $id, data: $mutationData) {
           id
         }

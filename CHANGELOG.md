@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge objects given for fields of an object type in `update<Type>` into the stored object instead of replacing it,
   so that fields of embedded objects that are not given are no longer removed; lists, unions, and references are
   still replaced as a whole
+- Make no commit for `update<Type>` if the entry would not change, e.g. if no fields or only stored values are given,
+  so that the history does not fill with commits without changes
 - Retain metadata other than the entry type when updating an entry instead of removing it, so that data is only
   removed explicitly with `removeUnknownFields()`
 - Reject IDs of new entries that are not in composed Unicode form (NFC) or have a folder name ending with `.` or a

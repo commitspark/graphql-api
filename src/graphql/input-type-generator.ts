@@ -18,6 +18,7 @@ import {
 import {
   idInputTypeName,
   inputTypeName,
+  updateInputTypeName,
 } from './schema-utils/generated-names.ts'
 import {
   ENTRY_DIRECTIVE_NAME,
@@ -90,6 +91,41 @@ export function generateObjectInputTypeStrings(
     inputType += '}\n'
 
     return inputType
+  })
+}
+
+/**
+ * Generates the input types of update mutations, which contain the fields of the `@Entry` type without `id` and with
+ * all fields optional, so that only fields to change need to be given. The values of the fields use the same types as
+ * the input type for creating an entry, as values given are written as a whole.
+ */
+export function generateUpdateInputTypeStrings(
+  entryDirectiveTypes: GraphQLObjectType[],
+): string[] {
+  return entryDirectiveTypes.map((entryType): string => {
+    let fieldStrings = ''
+    for (const field of Object.values(entryType.getFields())) {
+      if (field.name === 'id') {
+        continue
+      }
+      const fieldType = isNonNullType(field.type)
+        ? field.type.ofType
+        : field.type
+      fieldStrings += `  ${field.name}: ${generateFieldInputTypeString(fieldType)}\n`
+    }
+    if (fieldStrings.length === 0) {
+      // generate a dummy field as empty input types are not permitted
+      fieldStrings = '  _: Boolean\n'
+    }
+
+    return (
+      '"""\n' +
+      `Data to update an entry of type "${entryType.name}" with. Fields that are not given keep their stored value,\n` +
+      'and `null` clears a field. A value given for a field replaces the stored value as a whole, including objects\n' +
+      'and lists.\n' +
+      '"""\n' +
+      `input ${updateInputTypeName(entryType.name)} {\n${fieldStrings}}\n`
+    )
   })
 }
 

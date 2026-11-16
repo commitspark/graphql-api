@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Generate input type `<Type>UpdateInput` with all fields optional for `update<Type>` instead of using `<Type>Input`,
+  so that an update only needs to give the fields to change, also when the type has non-null fields; operations
+  that declare a variable of type `<Type>Input` for `update<Type>` must change the variable type to
+  `<Type>UpdateInput`
 - Retain metadata other than the entry type when updating an entry instead of removing it, so that data is only
   removed explicitly with `removeUnknownFields()`
 - Reject IDs of new entries that are not in composed Unicode form (NFC) or have a folder name ending with `.` or a

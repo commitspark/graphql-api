@@ -142,7 +142,7 @@ type Mutation {
   ): EntryA
   updateMyEntry(
     id: ID!
-    data: MyEntryInput!
+    data: MyEntryUpdateInput!
     """
     Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
     version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
@@ -155,7 +155,7 @@ type Mutation {
   ): MyEntry
   updateEntryA(
     id: ID!
-    data: EntryAInput!
+    data: EntryAUpdateInput!
     """
     Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
     version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
@@ -230,6 +230,26 @@ input EntryAInput {
   name: String
 }
 
+"""
+Data to update an entry of type "MyEntry" with. Fields that are not given keep their stored value,
+and \`null\` clears a field. A value given for a field replaces the stored value as a whole, including objects
+and lists.
+"""
+input MyEntryUpdateInput {
+  name: String
+  nestedType: NestedTypeInput
+  entryA: EntryAIdInput
+}
+
+"""
+Data to update an entry of type "EntryA" with. Fields that are not given keep their stored value,
+and \`null\` clears a field. A value given for a field replaces the stored value as a whole, including objects
+and lists.
+"""
+input EntryAUpdateInput {
+  name: String
+}
+
 extend type MyEntry {
   _referencedBy: [ID!]
   """
@@ -294,7 +314,7 @@ type EntryB @Entry {
       })
       expect(argumentTypes(mutationFields[`update${typeName}`])).toEqual({
         id: 'ID!',
-        data: `${typeName}Input!`,
+        data: `${typeName}UpdateInput!`,
         expectedVersion: 'String',
         commit: '_CommitInput',
       })

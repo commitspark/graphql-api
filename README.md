@@ -757,14 +757,17 @@ If the branch moves before committing, `migration` is run again on the new branc
 (see [Mutations from multiple concurrent requests](#mutations-from-multiple-concurrent-requests)). The function must
 therefore only depend on the snapshot.
 
-The function returns the hash of the new commit in `ref`, or the hash of the snapshot if nothing changed.
+The function returns the hash of the new commit in `ref`, or the hash of the snapshot if nothing changed. It is
+recommended to write idempotent migration functions, i.e. functions that change nothing when run again on their own
+result, so that a migration can safely be run again, e.g. after a merge brought in entries that were not migrated.
 
 #### Migration example
 
 In this example, field `author: String` of type `Article` is turned into a reference to new entries of type `Author`.
 The parser of library `graphql` is only used to locate the field independent of the formatting of the schema. The
 schema itself is modified by string operations instead of printing the changed syntax tree with `print()`, which would
-discard comments and formatting of the schema file:
+discard comments and formatting of the schema file. The migration is idempotent, as it only changes the schema if it
+was not changed before, only changes articles whose author is still a string, and reuses existing author entries:
 
 ```typescript
 import { EntryDraft, MigrationFn } from '@commitspark/graphql-api'
@@ -784,8 +787,14 @@ function changeSchema(schema: string): string {
     article?.kind === Kind.OBJECT_TYPE_DEFINITION
       ? article.fields?.find((candidate) => candidate.name.value === 'author')
       : undefined
-  if (field?.type.kind !== Kind.NAMED_TYPE || field.type.name.value !== 'String' || field.type.loc === undefined) {
-    throw new Error('Field "Article.author" of type "String" not found; migration already applied?')
+  if (field?.type.kind !== Kind.NAMED_TYPE || field.type.loc === undefined) {
+    throw new Error('Field "Article.author" not found.')
+  }
+  if (field.type.name.value === 'Author') {
+    return schema // already migrated
+  }
+  if (field.type.name.value !== 'String') {
+    throw new Error(`Field "Article.author" has unexpected type "${field.type.name.value}".`)
   }
   const { start, end } = field.type.loc
   return `${schema.slice(0, start)}Author${schema.slice(end)}\n${AUTHOR_TYPE}`
@@ -796,21 +805,23 @@ const toId = (name: string) =>
 
 const extractAuthors: MigrationFn = (snapshot) => {
   const entries: EntryDraft[] = []
-  const authorIdsByName = new Map<string, string>()
+  const newAuthorIds = new Set<string>()
   for (const entry of snapshot.entries.values()) {
-    if (entry.metadata.type !== 'Article') {
-      continue
+    const name = entry.data?.author
+    if (entry.metadata.type !== 'Article' || typeof name !== 'string') {
+      continue // not an article, or already migrated
     }
-    const { author: name, ...data } = entry.data ?? {}
-    if (typeof name === 'string' && name.trim() !== '') {
-      let authorId = authorIdsByName.get(name)
-      if (authorId === undefined) {
-        authorId = toId(name)
-        if (snapshot.entries.has(authorId)) {
-          throw new Error(`Entry "${authorId}" already exists.`)
-        }
-        authorIdsByName.set(name, authorId)
+    const data = { ...entry.data }
+    if (name.trim() === '') {
+      delete data.author
+    } else {
+      const authorId = toId(name)
+      const existingAuthor = snapshot.entries.get(authorId)
+      if (existingAuthor === undefined && !newAuthorIds.has(authorId)) {
+        newAuthorIds.add(authorId)
         entries.push({ id: authorId, metadata: { type: 'Author' }, data: { name }, deletion: false })
+      } else if (existingAuthor !== undefined && existingAuthor.metadata.type !== 'Author') {
+        throw new Error(`Entry "${authorId}" already exists and is not an author.`)
       }
       data.author = { id: authorId }
     }

@@ -41,6 +41,16 @@ export async function generateSchema(
     context,
     context.getCurrentHash(),
   )
+  return generateSchemaFromString(context, originalSchemaString)
+}
+
+/**
+ * Generates the API from the given schema, e.g. from a schema that is not committed yet.
+ */
+export function generateSchemaFromString(
+  context: RequestContext,
+  originalSchemaString: string,
+): IExecutableSchemaDefinition {
   const { schema, problems } = validateSchemaDefinition(originalSchemaString)
   if (schema === undefined || problems.length > 0) {
     throw createError(`Invalid schema.`, ErrorCode.BAD_SCHEMA, {

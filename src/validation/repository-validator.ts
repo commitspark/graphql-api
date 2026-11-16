@@ -67,12 +67,32 @@ export async function assertValidEntryDrafts(
     return entriesRecord.byId.get(id)?.metadata.type
   }
 
-  const errors = entryDrafts
-    .filter((draft) => !draft.deletion)
-    .flatMap((draft) => validateEntry(generatedSchema, draft, getEntryType))
-    .filter((violation) => violation.severity === ViolationSeverity.ERROR)
+  assertNoErrors(
+    entryDrafts
+      .filter((draft) => !draft.deletion)
+      .flatMap((draft) => validateEntry(generatedSchema, draft, getEntryType)),
+  )
+}
+
+/**
+ * Throws `BAD_USER_INPUT` with all violations of severity error, if there are any.
+ */
+export function assertNoErrors(violations: Violation[]): void {
+  const errors = violations.filter(
+    (violation) => violation.severity === ViolationSeverity.ERROR,
+  )
   if (errors.length === 0) {
     return
+  }
+  const schemaErrors = errors.filter(
+    (violation) => violation.entryId === undefined,
+  )
+  if (schemaErrors.length > 0) {
+    throw createError(
+      `Schema would not be valid: ${formatViolations(schemaErrors, false)}`,
+      ErrorCode.BAD_USER_INPUT,
+      { violations: errors },
+    )
   }
   const affectedEntryIds = [
     ...new Set(errors.map((violation) => violation.entryId)),

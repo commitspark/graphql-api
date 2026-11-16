@@ -15,6 +15,17 @@ export function getCommitMessage(
   typeName: string,
   id: string,
 ): Pick<CommitDraft, 'message' | 'body'> {
+  return getCommitMessageOrDefault(commit, `${operation} ${typeName} "${id}"`)
+}
+
+/**
+ * Determines message and body of a commit from `commit`. The message is trimmed and must be a single line; an omitted
+ * or empty message is replaced by `defaultMessage`. The body is trimmed and omitted if empty.
+ */
+export function getCommitMessageOrDefault(
+  commit: CommitInput | null | undefined,
+  defaultMessage: string,
+): Pick<CommitDraft, 'message' | 'body'> {
   const message = commit?.message?.trim() ?? ''
   if (/[\r\n]/.test(message)) {
     throw createError(
@@ -25,8 +36,7 @@ export function getCommitMessage(
   }
   const body = commit?.body?.trim() ?? ''
 
-  const commitMessage =
-    message !== '' ? message : `${operation} ${typeName} "${id}"`
+  const commitMessage = message !== '' ? message : defaultMessage
   if (body === '') {
     return { message: commitMessage }
   }

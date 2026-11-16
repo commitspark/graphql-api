@@ -86,6 +86,30 @@ describe('Migrations', () => {
     })
   })
 
+  it('should commit a schema change without entry changes', async () => {
+    const gitAdapter = createGitAdapter([ada, book])
+    const client = await createClient(gitAdapter)
+    const newSchema = schema.replace(
+      'title: String',
+      'title: String\n    subtitle: String',
+    )
+
+    const result = await client.migrate(branch, () => ({
+      schema: newSchema,
+      entries: [],
+    }))
+
+    expect(result).toEqual({ ref: newHash })
+    expect(gitAdapter.createCommit).toHaveBeenCalledTimes(1)
+    expect(gitAdapter.createCommit).toHaveBeenCalledWith({
+      ref: branch,
+      parentSha: headHash,
+      message: 'Migrate entries',
+      schema: newSchema,
+      entries: [],
+    })
+  })
+
   it('should pass a snapshot with all entries, the schema and the commit hash', async () => {
     const unknownTypeEntry: Entry = {
       id: 'legacy',

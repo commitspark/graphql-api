@@ -398,6 +398,55 @@ type Seo {
     expect(gitAdapter.createCommit).not.toHaveBeenCalled()
   })
 
+  it.each([
+    ['no fields', '{}'],
+    [
+      'only stored values',
+      '{ title: "Home", seo: { description: "Welcome" } }',
+    ],
+  ])(
+    'should not commit an update that gives %s and return the stored entry',
+    async (_description, data) => {
+      const gitAdapter = mock<GitAdapter>()
+      const gitRef = 'myRef'
+      const commitHash = 'abcd'
+      const schema = `directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    title: String!
+    seo: Seo
+}
+
+type Seo {
+    description: String
+}`
+      gitAdapter.getLatestCommitHash
+        .calledWith(gitRef)
+        .mockResolvedValue(commitHash)
+      gitAdapter.getSchema.mockResolvedValue(schema)
+      mockEntries(gitAdapter, commitHash, [
+        {
+          id: 'home',
+          metadata: { type: 'Page' },
+          data: { title: 'Home', seo: { description: 'Welcome' } },
+        },
+      ])
+
+      const client = await createClient(gitAdapter)
+      const result = await client.postGraphQL(gitRef, {
+        query: `mutation { data: updatePage(id: "home", data: ${data}) { id title seo { description } } }`,
+      })
+
+      expect(result.errors).toBeUndefined()
+      expect(result.data).toEqual({
+        data: { id: 'home', title: 'Home', seo: { description: 'Welcome' } },
+      })
+      expect(result.ref).toBe(commitHash)
+      expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+    },
+  )
+
   it('should return an error when trying to update a non-existent entry', async () => {
     const gitAdapter = mock<GitAdapter>()
     const gitRef = 'myRef'

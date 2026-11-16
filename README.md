@@ -460,7 +460,8 @@ together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entr
 
 Mutations work on branch names only, as they create new commits.
 
-Each successful mutation appends a new commit on HEAD of the given branch.
+Each successful mutation appends a new commit on HEAD of the given branch, except for an update that does not change
+the entry, which makes no commit and returns the stored entry.
 
 `update<Type>` only changes the fields given in `data`. All fields of its input type `<Type>UpdateInput` are
 optional, fields that are not given keep their stored value, and `null` clears a field. An object given for a field

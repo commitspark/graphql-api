@@ -88,6 +88,14 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
       deletion: false,
     }
     await assertValidEntryDrafts(context, info.schema, [entryDraft])
+    // no commit is made if the update does not change the entry, where no stored data equals an empty object;
+    // compared in serialized form, as the stored file also changes if only the order of keys changes
+    if (
+      JSON.stringify(entryDraft.data) ===
+      JSON.stringify(existingEntry.data ?? {})
+    ) {
+      return undefined
+    }
 
     return {
       ref: context.branch,

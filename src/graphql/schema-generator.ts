@@ -88,7 +88,7 @@ export function generateSchemaFromString(
   )
 
   const generatedUpdateInputTypeStrings = generateUpdateInputTypeStrings(
-    schemaAnalyzerResult.entryDirectiveTypes,
+    schemaAnalyzerResult.objectTypes,
   )
 
   const generatedSchemaRootTypeStrings = generateSchemaRootTypeStrings(

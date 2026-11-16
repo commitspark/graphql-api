@@ -463,8 +463,9 @@ Mutations work on branch names only, as they create new commits.
 Each successful mutation appends a new commit on HEAD of the given branch.
 
 `update<Type>` only changes the fields given in `data`. All fields of its input type `<Type>UpdateInput` are
-optional, fields that are not given keep their stored value, and `null` clears a field. A value given for a field
-replaces the stored value as a whole, including objects and lists, e.g. a list has to be given with all of its
+optional, fields that are not given keep their stored value, and `null` clears a field. An object given for a field
+of an object type is merged into the stored object in the same way, using input type `<ObjectType>UpdateInput`.
+Lists, unions, and references given replace the stored value as a whole, e.g. a list has to be given with all of its
 elements to add one element. To replace an entry as a whole, give all fields, with `null` for fields to clear.
 
 Before committing, Commitspark checks whether the entry as it would be written matches the schema. If the entry would

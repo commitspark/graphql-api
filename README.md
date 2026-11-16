@@ -757,17 +757,19 @@ If the branch moves before committing, `migration` is run again on the new branc
 (see [Mutations from multiple concurrent requests](#mutations-from-multiple-concurrent-requests)). The function must
 therefore only depend on the snapshot.
 
-The function returns the hash of the new commit in `ref`, or the hash of the snapshot if nothing changed. It is
-recommended to write idempotent migration functions, i.e. functions that change nothing when run again on their own
-result, so that a migration can safely be run again, e.g. after a merge brought in entries that were not migrated.
+`migrate()` returns the hash of the new commit in `ref`, or the hash of the snapshot if nothing changed.
+
+It is recommended to write idempotent migration functions, i.e. functions that change nothing when run on their own
+result, so that they can safely be run again, e.g. after entries that were not migrated yet are merged into a branch.
 
 #### Migration example
 
-In this example, field `author: String` of type `Article` is turned into a reference to new entries of type `Author`.
-The parser of library `graphql` is only used to locate the field independent of the formatting of the schema. The
-schema itself is modified by string operations instead of printing the changed syntax tree with `print()`, which would
-discard comments and formatting of the schema file. The migration is idempotent, as it only changes the schema if it
-was not changed before, only changes articles whose author is still a string, and reuses existing author entries:
+In this example of an idempotent migration function, field `author: String` of type `Article` is turned into a reference
+to new entries of type `Author`. The parser of library `graphql` is only used to locate the field independent of the
+formatting of the schema. The schema itself is modified by string operations instead of printing the changed syntax tree
+with `print()`, which would discard comments and formatting of the schema file. To be idempotent, the migration function
+only changes the schema if it was not changed before, only changes articles whose author is still a string, and reuses
+existing author entries:
 
 ```typescript
 import { EntryDraft, MigrationFn } from '@commitspark/graphql-api'

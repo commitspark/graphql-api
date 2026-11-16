@@ -215,9 +215,8 @@ Commitspark.
 
 A Commitspark schema can be changed by modifying the schema file stored in the repository.
 
-It is recommended to update affected entries in the same commit as the schema and to check the repository with
-[`validate()`](#validate), e.g. in CI before merging. [`migrate()`](#migrate) changes schema and entries together in a
-single commit.
+It is recommended to update affected entries in the same commit as the schema, either using [`migrate()`](#migrate) or
+manually, and to check the repository with [`validate()`](#validate), e.g. in CI before merging.
 
 ### Data not matching the schema
 
@@ -730,12 +729,13 @@ process.exitCode = result.violations.length > 0 ? 1 : 0
 
 ### migrate()
 
-This function changes the schema and any number of entries in a single commit, e.g. to rename a field in the schema and
-in all entries, to create entries that reference each other through non-null fields, or to delete an entry together
-with all references to it.
+This function changes the schema and any number of entries in a single commit. This goes beyond what the GraphQL
+mutations offer, e.g. to change the schema together with a large number of affected entries, or to create entries that
+reference each other through non-null fields.
 
-Argument `branch` expects a branch name. Argument `migration` expects a function that receives a snapshot of the branch
-head and returns the changes:
+Argument `branch` expects a branch name.
+
+Argument `migration` expects a function that receives a snapshot of the branch head and returns all changes to commit:
 
 * The snapshot holds the commit hash in `ref`, the schema as stored in the schema file in `schema` and all entries as
   stored in `entries`, keyed by entry ID, including entries of types that are not in the schema. Changing the snapshot
@@ -747,9 +747,11 @@ head and returns the changes:
   `Migrate entries` is used.
 
 Before committing, the resulting repository state is validated. If the schema changes, all entries must match the new
-schema. Otherwise, only errors that did not exist before prevent the commit, so that problems of other entries do not
-block a migration. If the result has errors, nothing is committed and `BAD_USER_INPUT` is thrown with all problems
-under `extensions.commitspark.violations`. New entry IDs must follow the [rules for entry IDs](#entry-ids).
+schema. If the schema does not change, errors that already exist at the branch head are ignored and only errors caused
+by the migration prevent the commit, so that existing problems, e.g. an entry left with a missing required field by an
+earlier schema change, do not block a migration. If the result has errors, nothing is committed and `BAD_USER_INPUT` is
+thrown with all problems under `extensions.commitspark.violations`. New entry IDs must follow the
+[rules for entry IDs](#entry-ids).
 
 If the branch moves before committing, `migration` is run again on the new branch head, up to three times in total
 (see [Mutations from multiple concurrent requests](#mutations-from-multiple-concurrent-requests)). The function must
@@ -757,20 +759,75 @@ therefore only depend on the snapshot.
 
 The function returns the hash of the new commit in `ref`, or the hash of the snapshot if nothing changed.
 
-Example that renames field `name` of type `Author` to `fullName`:
+#### Migration example
+
+In this example, field `author: String` of type `Article` is turned into a reference to new entries of type `Author`.
+The parser of library `graphql` is only used to locate the field independent of the formatting of the schema. The
+schema itself is modified by string operations instead of printing the changed syntax tree with `print()`, which would
+discard comments and formatting of the schema file:
 
 ```typescript
-await client.migrate('main', (snapshot) => ({
-  schema: snapshot.schema.replace('name: String', 'fullName: String'),
-  entries: [...snapshot.entries.values()]
-    .filter((entry) => entry.metadata.type === 'Author')
-    .map((entry) => {
-      const { name, ...data } = entry.data ?? {}
-      return { ...entry, data: { ...data, fullName: name }, deletion: false }
-    }),
-  commit: { message: 'Rename field name of Author to fullName' },
-}))
+import { EntryDraft, MigrationFn } from '@commitspark/graphql-api'
+import { Kind, parse } from 'graphql'
+
+const AUTHOR_TYPE = `type Author @Entry {
+    id: ID!
+    name: String!
+}
+`
+
+function changeSchema(schema: string): string {
+  const article = parse(schema).definitions.find(
+    (definition) => definition.kind === Kind.OBJECT_TYPE_DEFINITION && definition.name.value === 'Article',
+  )
+  const field =
+    article?.kind === Kind.OBJECT_TYPE_DEFINITION
+      ? article.fields?.find((candidate) => candidate.name.value === 'author')
+      : undefined
+  if (field?.type.kind !== Kind.NAMED_TYPE || field.type.name.value !== 'String' || field.type.loc === undefined) {
+    throw new Error('Field "Article.author" of type "String" not found; migration already applied?')
+  }
+  const { start, end } = field.type.loc
+  return `${schema.slice(0, start)}Author${schema.slice(end)}\n${AUTHOR_TYPE}`
+}
+
+const toId = (name: string) =>
+  'authors/' + name.normalize('NFC').toLowerCase().trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')
+
+const extractAuthors: MigrationFn = (snapshot) => {
+  const entries: EntryDraft[] = []
+  const authorIdsByName = new Map<string, string>()
+  for (const entry of snapshot.entries.values()) {
+    if (entry.metadata.type !== 'Article') {
+      continue
+    }
+    const { author: name, ...data } = entry.data ?? {}
+    if (typeof name === 'string' && name.trim() !== '') {
+      let authorId = authorIdsByName.get(name)
+      if (authorId === undefined) {
+        authorId = toId(name)
+        if (snapshot.entries.has(authorId)) {
+          throw new Error(`Entry "${authorId}" already exists.`)
+        }
+        authorIdsByName.set(name, authorId)
+        entries.push({ id: authorId, metadata: { type: 'Author' }, data: { name }, deletion: false })
+      }
+      data.author = { id: authorId }
+    }
+    entries.push({ ...entry, data, deletion: false })
+  }
+  return {
+    schema: changeSchema(snapshot.schema),
+    entries,
+    commit: { message: 'Turn article authors into Author entries' },
+  }
+}
+
+await client.migrate('migrate/authors', extractAuthors)
 ```
+
+Errors thrown by the migration function are passed on unchanged and nothing is committed. Running the migration on a
+separate branch allows checking the result, e.g. with [`validate()`](#validate) in CI, and reviewing it before merging.
 
 ### removeUnknownFields()
 

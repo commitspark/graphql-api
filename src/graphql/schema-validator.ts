@@ -157,6 +157,11 @@ function checkGeneratedNameCollisions(schema: GraphQLSchema): string[] {
   for (const type of entryTypes) {
     addGeneratedName(
       typeNames,
+      names.updateInputTypeName(type.name),
+      `the update input type of type "${type.name}"`,
+    )
+    addGeneratedName(
+      typeNames,
       names.idInputTypeName(type.name),
       `the reference input type of type "${type.name}"`,
     )

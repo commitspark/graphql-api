@@ -91,6 +91,11 @@ describe('Schema validator', () => {
       'Type name "ProductIdInput" is reserved for the reference input type of type "Product"; rename the type.',
     ],
     [
+      'a type named like the update input type of an @Entry type',
+      'type ProductUpdateInput { name: String }',
+      'Type name "ProductUpdateInput" is reserved for the update input type of type "Product"; rename the type.',
+    ],
+    [
       'a type named like the input type of a union',
       'type Hero { title: String }\nunion Block = Hero\ntype BlockInput { name: String }',
       'Type name "BlockInput" is reserved for the input type of union "Block"; rename the type.',
@@ -117,6 +122,12 @@ describe('Schema validator', () => {
         'reference input type of type "Product"; rename one of the types.',
     ],
     [
+      'types whose generated input type names collide with an update input type',
+      'type ProductUpdate { value: String }',
+      'Generated type name "ProductUpdateInput" would be used for the input type of type "ProductUpdate" and for ' +
+        'the update input type of type "Product"; rename one of the types.',
+    ],
+    [
       '@Entry types whose generated query names collide',
       'type everyProduct @Entry { id: ID! }',
       'Generated query name "everyProduct" would be used for the query of all entries of type "Product" and for ' +
@@ -141,7 +152,8 @@ describe('Schema validator', () => {
   })
 
   it('should accept names that only resemble generated names', () => {
-    // unions of types without @Entry directive have no reference input type, so `BlockIdInput` is free
+    // unions of types without @Entry directive have no reference input type, so `BlockIdInput` is free, and types
+    // without @Entry directive have no update input type, so `NoteUpdateInput` is free
     const schemaDefinition =
       entryDirective +
       productType +
@@ -149,7 +161,8 @@ describe('Schema validator', () => {
       'union Block = Hero\n' +
       'type BlockIdInput { name: String }\n' +
       'type ProductInputs { name: String }\n' +
-      'type Note { _version: Int }'
+      'type Note { _version: Int }\n' +
+      'type NoteUpdateInput { name: String }'
 
     expect(getProblems(schemaDefinition)).toEqual([])
   })

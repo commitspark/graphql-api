@@ -70,7 +70,7 @@ export function generateQueriesAndMutations(
       )
 
     const updateMutationName = names.updateMutationName(typeName)
-    const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${inputTypeName}!\n${expectedVersionArgument}${commitArgument('Update')}  ): ${typeName}`
+    const updateMutationString = `${updateMutationName}(\n    id: ID!\n    data: ${names.updateInputTypeName(typeName)}!\n${expectedVersionArgument}${commitArgument('Update')}  ): ${typeName}`
     const updateMutationResolver: QueryMutationResolver<EntryData> = (
       source,
       args,

@@ -466,14 +466,13 @@ commit internally resolved as branch HEAD for the duration of the request is upd
 
 #### Mutations from multiple concurrent requests
 
-When a repository is written to concurrently, whether through one or several Commitspark instances or from other
-sources, the following logic guards against race conditions and data loss:
+Commitspark guards against data loss when a branch is written to concurrently, by Commitspark or other sources, on the
+level of entries and of the branch.
 
-Every `@Entry` type has a generated field `_version` that changes whenever the stored entry changes. Mutations
-`update<Type>` and `delete<Type>` accept an optional argument `expectedVersion`. If it is given and the entry has a
-different version, the mutation fails with error code `CONFLICT` instead of overwriting changes made in the meantime.
-Callers that let users edit entries are recommended to read `_version` together with the entry and pass it as
-`expectedVersion` when saving, e.g.:
+Every `@Entry` type has a generated field `_version` that changes whenever the stored entry changes. If the optional
+argument `expectedVersion` of `update<Type>` or `delete<Type>` differs from it, the mutation fails with error `CONFLICT`
+instead of overwriting changes made in the meantime. Callers that let users edit entries are recommended to pass the
+`_version` read with the entry:
 
 ```graphql
 mutation {
@@ -483,14 +482,10 @@ mutation {
 }
 ```
 
-Each mutation is validated (expected version, references, etc.) against the latest commit of the branch and passed to
-the Git adapter together with this commit as expected parent. Git adapters must only add the new commit if the branch
-still points to that parent. If another commit was added to the branch in the meantime, the mutation is validated again
-against the new branch head and committed on top of it, up to three times in total, so that changes to unrelated
-entries do not lead to errors. If the attempts are exhausted, the mutation fails with error code `CONFLICT`.
-
-How reliably a Git adapter detects a moved branch depends on its Git provider; see the documentation of the respective
-adapter for limitations.
+Each mutation is validated against the latest commit of the branch, and the Git adapter must only commit if the branch
+still points to it. If the branch has moved, the mutation is validated and committed again on the new head, so that
+changes to unrelated entries do not cause errors. After three failed attempts, it fails with error `CONFLICT`. How
+reliably a moved branch is detected depends on the Git provider; see the documentation of the respective adapter.
 
 #### Commit messages
 

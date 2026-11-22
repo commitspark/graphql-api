@@ -125,6 +125,10 @@ input RocketFlightUpdateInput {
     payloads: [PayloadInput!]
 }
 
+input PayloadUpdateInput {
+    weight: Int
+}
+
 extend type RocketFlight {
     _referencedBy: [ID!]
     _version: String!
@@ -461,16 +465,16 @@ together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entr
 Mutations work on branch names only, as they create new commits.
 
 Each successful mutation appends a new commit on HEAD of the given branch, except for an update that would not change
-the stored entry file, which makes no commit and returns the stored entry. Giving `null` for a field without stored
-value changes the file, as the field is then written with value `null`.
+the stored entry file, which makes no commit and returns the stored entry with unchanged `_version`. Giving `null` for
+a field without stored value changes the file, as the field is then written with value `null`.
 
 `update<Type>` only changes the fields given in `data`. All fields of its input type `<Type>UpdateInput` are
 optional, fields that are not given keep their stored value, and `null` clears a nullable field. An object given for a
-field of an object type is merged into the stored object in the same way, using input type `<ObjectType>UpdateInput`.
-Lists, unions, and references given replace the stored value as a whole, e.g. a list has to be given with all of its
-elements to add one element. To replace an entry as a whole, give all fields, including all fields of embedded objects,
-with `null` for fields to clear. Data stored under keys that are not fields in the schema is retained in either case
-and only removed by [`removeUnknownFields()`](#removeunknownfields).
+field of an object type is merged into the stored object in the same way, using input type `<ObjectType>UpdateInput`,
+which is generated for every object type. Lists, unions, and references given replace the stored value as a whole, e.g.
+a list has to be given with all of its elements to add one element. To replace an entry as a whole, give all fields,
+including all fields of embedded objects, with `null` for fields to clear. Data stored under keys that are not fields in
+the schema is retained in either case and only removed by [`removeUnknownFields()`](#removeunknownfields).
 
 Before committing, Commitspark checks whether the entry as it would be written matches the schema. If the entry would
 not match the schema, no commit is made and the mutation fails with error `BAD_USER_INPUT`, listing the problems under

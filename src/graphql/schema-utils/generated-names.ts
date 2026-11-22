@@ -28,8 +28,7 @@ export const PLACEHOLDER_INPUT_FIELD_NAME = '_'
 export const inputTypeName = (typeName: string): string => `${typeName}Input`
 
 /**
- * Name of the input type for data of an update of an `@Entry` type or of an object embedded in it, in which all
- * fields are optional.
+ * Name of the input type for data of an update of an object type, in which all fields are optional.
  */
 export const updateInputTypeName = (typeName: string): string =>
   `${typeName}UpdateInput`

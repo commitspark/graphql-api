@@ -429,7 +429,7 @@ type TypeB {
     })
   })
 
-  it('should generate update input types with optional fields for entries and embedded single objects', async () => {
+  it('should generate update input types with optional fields for all object types', async () => {
     const schema = await buildGeneratedSchema(`directive @Entry on OBJECT
 
 type Page @Entry {
@@ -487,8 +487,10 @@ type Author @Entry {
     expect(fieldTypes(schema.getType('AuthorUpdateInput'))).toEqual({
       name: 'String',
     })
-    // only used in lists and unions, whose values replace the stored value as a whole
-    expect(schema.getType('BlockUpdateInput')).toBeUndefined()
+    // generated independent of usage, although only used in lists and unions, whose values replace the stored value
+    expect(fieldTypes(schema.getType('BlockUpdateInput'))).toEqual({
+      text: 'String',
+    })
   })
 
   it('should generate update input types for self-referencing embedded types', async () => {

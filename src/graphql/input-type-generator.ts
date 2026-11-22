@@ -102,62 +102,39 @@ export function generateObjectInputTypeStrings(
 }
 
 /**
- * Generates the input types of update mutations for the `@Entry` types and for the object types embedded in them as
- * single objects. All fields are optional, so that only fields to change need to be given. Embedded single objects
- * use update input types themselves, as they are merged into the stored object, while lists, unions and references
- * use the input types for creating an entry, as their values replace the stored value as a whole.
+ * Generates the input types of update mutations for all object types, independent of whether a type is used as single
+ * embedded object, so that the generated types do not change when a type is used differently. All fields are
+ * optional, so that only fields to change need to be given. Embedded single objects use update input types themselves,
+ * as they are merged into the stored object, while lists, unions and references use the input types for creating an
+ * entry, as their values replace the stored value as a whole.
  */
 export function generateUpdateInputTypeStrings(
   objectTypes: GraphQLObjectType[],
 ): string[] {
-  const mergedTypeNames = new Set<string>()
-  const collectMergedTypes = (type: GraphQLObjectType): void => {
-    for (const field of Object.values(type.getFields())) {
-      const mergedType = getMergedObjectType(field.type)
-      if (mergedType !== undefined && !mergedTypeNames.has(mergedType.name)) {
-        mergedTypeNames.add(mergedType.name)
-        collectMergedTypes(mergedType)
+  return objectTypes.map((objectType): string => {
+    const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
+    const fieldStrings = generateInputFieldStrings(objectType, (fieldType) => {
+      const mergedType = getMergedObjectType(fieldType)
+      if (mergedType !== undefined) {
+        return updateInputTypeName(mergedType.name)
       }
-    }
-  }
-  const entryTypes = objectTypes.filter((type) =>
-    hasDirective(type, ENTRY_DIRECTIVE_NAME),
-  )
-  entryTypes.forEach(collectMergedTypes)
-
-  return objectTypes
-    .filter(
-      (type) =>
-        hasDirective(type, ENTRY_DIRECTIVE_NAME) ||
-        mergedTypeNames.has(type.name),
-    )
-    .map((objectType): string => {
-      const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
-      const fieldStrings = generateInputFieldStrings(
-        objectType,
-        (fieldType) => {
-          const mergedType = getMergedObjectType(fieldType)
-          if (mergedType !== undefined) {
-            return updateInputTypeName(mergedType.name)
-          }
-          return generateFieldInputTypeString(
-            isNonNullType(fieldType) ? fieldType.ofType : fieldType,
-          )
-        },
-      )
-
-      const description = isEntryType
-        ? `Data to update an entry of type "${objectType.name}" with.`
-        : `Data to update an object of type "${objectType.name}" with.`
-      return (
-        '"""\n' +
-        `${description} Fields that are not given keep their stored value, and\n` +
-        '`null` clears a nullable field. Objects given for fields of an object type are merged into the stored object\n' +
-        'in the same way, while lists, unions and references given replace the stored value as a whole.\n' +
-        '"""\n' +
-        `input ${updateInputTypeName(objectType.name)} {\n${fieldStrings}}\n`
+      return generateFieldInputTypeString(
+        isNonNullType(fieldType) ? fieldType.ofType : fieldType,
       )
     })
+
+    const description = isEntryType
+      ? `Data to update an entry of type "${objectType.name}" with.`
+      : `Data to update an object of type "${objectType.name}" with.`
+    return (
+      '"""\n' +
+      `${description} Fields that are not given keep their stored value, and\n` +
+      '`null` clears a nullable field. Objects given for fields of an object type are merged into the stored object\n' +
+      'in the same way, while lists, unions and references given replace the stored value as a whole.\n' +
+      '"""\n' +
+      `input ${updateInputTypeName(objectType.name)} {\n${fieldStrings}}\n`
+    )
+  })
 }
 
 export function generateUnionInputTypeStrings(

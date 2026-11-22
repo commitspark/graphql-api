@@ -231,9 +231,8 @@ input EntryAInput {
 }
 
 """
-Data to update an entry of type "MyEntry" with. Fields that are not given keep their stored value, and
-\`null\` clears a nullable field. Objects given for fields of an object type are merged into the stored object
-in the same way, while lists, unions and references given replace the stored value as a whole.
+Data to update an entry of type "MyEntry" with. Fields not given keep their stored value, \`null\` clears a nullable field,
+objects are merged, and lists, unions and references are replaced.
 """
 input MyEntryUpdateInput {
   name: String
@@ -242,9 +241,8 @@ input MyEntryUpdateInput {
 }
 
 """
-Data to update an object of type "NestedType" with. Fields that are not given keep their stored value, and
-\`null\` clears a nullable field. Objects given for fields of an object type are merged into the stored object
-in the same way, while lists, unions and references given replace the stored value as a whole.
+Data to update an object of type "NestedType" with. Fields not given keep their stored value, \`null\` clears a nullable field,
+objects are merged, and lists, unions and references are replaced.
 """
 input NestedTypeUpdateInput {
   title: String
@@ -252,9 +250,8 @@ input NestedTypeUpdateInput {
 }
 
 """
-Data to update an entry of type "EntryA" with. Fields that are not given keep their stored value, and
-\`null\` clears a nullable field. Objects given for fields of an object type are merged into the stored object
-in the same way, while lists, unions and references given replace the stored value as a whole.
+Data to update an entry of type "EntryA" with. Fields not given keep their stored value, \`null\` clears a nullable field,
+objects are merged, and lists, unions and references are replaced.
 """
 input EntryAUpdateInput {
   name: String

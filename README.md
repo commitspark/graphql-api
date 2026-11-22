@@ -508,8 +508,8 @@ level of entries and of the branch.
 
 Every `@Entry` type has a generated field `_version` that changes whenever the stored entry changes. If the optional
 argument `expectedVersion` of `update<Type>` or `delete<Type>` differs from it, the mutation fails with error `CONFLICT`
-instead of overwriting changes made in the meantime. Callers that let users edit entries are recommended to pass the
-`_version` read with the entry:
+instead of overwriting changes made in the meantime. Callers that update entries based on a previous read are
+recommended to pass the `_version` read with the entry:
 
 ```graphql
 mutation {

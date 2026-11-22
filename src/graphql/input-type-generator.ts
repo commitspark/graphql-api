@@ -128,9 +128,8 @@ export function generateUpdateInputTypeStrings(
       : `Data to update an object of type "${objectType.name}" with.`
     return (
       '"""\n' +
-      `${description} Fields that are not given keep their stored value, and\n` +
-      '`null` clears a nullable field. Objects given for fields of an object type are merged into the stored object\n' +
-      'in the same way, while lists, unions and references given replace the stored value as a whole.\n' +
+      `${description} Fields not given keep their stored value, \`null\` clears a nullable field,\n` +
+      'objects are merged, and lists, unions and references are replaced.\n' +
       '"""\n' +
       `input ${updateInputTypeName(objectType.name)} {\n${fieldStrings}}\n`
     )

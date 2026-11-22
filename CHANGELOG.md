@@ -17,15 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Generate input type `<Type>UpdateInput` with all fields optional for `update<Type>` instead of using `<Type>Input`,
-  so that an update only needs to give the fields to change, also when the type has non-null fields; operations
-  that declare a variable of type `<Type>Input` for `update<Type>` must change the variable type to
-  `<Type>UpdateInput`; `<Type>UpdateInput` is generated for every object type, so schemas that define e.g. types
-  `Product` and `ProductUpdate`, or a type named `<Type>UpdateInput`, are rejected with `BAD_SCHEMA` and must rename
-  the colliding type
-- Merge objects given for fields of an object type in `update<Type>` into the stored object instead of replacing it,
-  so that fields of embedded objects that are not given are no longer removed; lists, unions, and references are
-  still replaced as a whole
+- Use input type `<Type>UpdateInput` with all fields optional for `update<Type>` instead of `<Type>Input`, so that an
+  update only needs to give the fields to change; operations declaring a variable of type `<Type>Input` for
+  `update<Type>` must change it to `<Type>UpdateInput`
+- Generate `<Type>UpdateInput` for every object type; schemas defining e.g. types `Product` and `ProductUpdate`, or a
+  type named `<Type>UpdateInput`, are therefore rejected with `BAD_SCHEMA` and must rename a type
+- Merge objects given for fields of an embedded object type in `update<Type>` into the stored object instead of
+  replacing it, so that fields of embedded objects that are not given are no longer removed; lists, unions, and
+  references are still replaced as a whole
 - Make no commit for `update<Type>` if the stored entry file would not change, e.g. if no fields or only stored values
   are given, so that the history does not fill with commits without changes; such an update returns the stored entry
   without checking it against the schema, as nothing is written

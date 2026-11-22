@@ -11,6 +11,7 @@ import { commitWithRetry } from '../../../persistence/commit-with-retry.ts'
 import { assertValidEntryDrafts } from '../../../validation/repository-validator.ts'
 import { createEntrySource } from '../entry-data-source.ts'
 import { getMergedObjectType } from '../../schema-utils/entry-type-util.ts'
+import { assertNoPlaceholderField } from '../placeholder-input-field.ts'
 
 function isDataObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -64,6 +65,7 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
     )
   }
   const entryType = context.type
+  assertNoPlaceholderField(entryType, args.data ?? null)
   const commitMessage = getCommitMessage(
     args.commit,
     'Update',
@@ -87,15 +89,16 @@ export const mutationUpdateResolver: QueryMutationResolver<EntryData> = async (
       data: mergeData(entryType, existingEntry.data ?? null, args.data ?? null),
       deletion: false,
     }
-    await assertValidEntryDrafts(context, info.schema, [entryDraft])
-    // no commit is made if the update does not change the entry, where no stored data equals an empty object;
-    // compared in serialized form, as the stored file also changes if only the order of keys changes
+    // no commit is made if the stored file would not change, where no stored data equals an empty object; compared in
+    // serialized form, as the file also changes if only the order of keys changes, or if `null` is given for a field
+    // without stored value; checked before validation, as nothing is written that would need to be valid
     if (
       JSON.stringify(entryDraft.data) ===
       JSON.stringify(existingEntry.data ?? {})
     ) {
       return undefined
     }
+    await assertValidEntryDrafts(context, info.schema, [entryDraft])
 
     return {
       ref: context.branch,

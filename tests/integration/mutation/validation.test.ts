@@ -68,6 +68,20 @@ describe('Validation of mutation results', () => {
     expect(gitAdapter.createCommit).not.toHaveBeenCalled()
   })
 
+  it('should not check or commit an update of an invalid entry that would not change the entry', async () => {
+    const gitAdapter = createTestAdapter([storedEntry])
+    const client = await createClient(gitAdapter)
+
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: updateProduct(id: "shirt", data: { name: "Shirt" }) { id name } }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({ data: { id: 'shirt', name: 'Shirt' } })
+    expect(result.ref).toBe(commitHash)
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
+
   it('should commit an update that fixes invalid data and retain unknown keys', async () => {
     const gitAdapter = createTestAdapter([storedEntry])
     const updatedEntry: Entry = {

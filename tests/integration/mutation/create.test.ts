@@ -863,4 +863,75 @@ type EntryA @Entry {
     expect(result.data).toEqual({ data: null })
     expect(gitAdapter.createCommit).not.toHaveBeenCalled()
   })
+
+  it('should reject data that gives the placeholder field of a type without fields to give', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type Tag @Entry {
+    id: ID!
+}`
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.calledWith(commitHash).mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: createTag(id: "news", data: { _: true }) { id } }`,
+    })
+
+    expect(result.errors).toMatchObject([
+      {
+        message:
+          'Field "_" is a placeholder, as type "Tag" has no fields to give, and must not be given.',
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: { argumentName: 'data' },
+        },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
+
+  it('should write a field named like the placeholder if the type declares it', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const postCommitHash = 'ef01'
+    const schema = `directive @Entry on OBJECT
+
+type Flag @Entry {
+    id: ID!
+    _: Boolean
+}`
+    const newEntry: Entry = {
+      id: 'beta',
+      metadata: { type: 'Flag' },
+      data: { _: true },
+    }
+
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [newEntry])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: createFlag(id: "beta", data: { _: true }) { id _ } }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({ data: { id: 'beta', _: true } })
+    const commitDraft = gitAdapter.createCommit.mock.calls[0][0] as CommitDraft
+    expect(commitDraft.entries).toEqual([{ ...newEntry, deletion: false }])
+  })
 })

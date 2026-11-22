@@ -3,6 +3,7 @@ import {
   GraphQLInputObjectType,
   GraphQLType,
   GraphQLObjectType,
+  GraphQLOutputType,
   GraphQLScalarType,
   GraphQLUnionType,
   isListType,
@@ -19,6 +20,7 @@ import {
 import {
   idInputTypeName,
   inputTypeName,
+  PLACEHOLDER_INPUT_FIELD_NAME,
   updateInputTypeName,
 } from './schema-utils/generated-names.ts'
 import {
@@ -65,41 +67,45 @@ export function generateIdInputTypeStrings(
   })
 }
 
+/**
+ * Generates the field definitions of an input type for the given object type, with the input type of each field given
+ * by `fieldInputTypeString`. The ID of an entry is left out, as it is passed as mutation argument instead of as part of
+ * the entry data. If no fields remain, a placeholder field is generated, as empty input types are not permitted.
+ */
+function generateInputFieldStrings(
+  objectType: GraphQLObjectType,
+  fieldInputTypeString: (fieldType: GraphQLOutputType) => string,
+): string {
+  const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
+  let fieldStrings = ''
+  for (const field of Object.values(objectType.getFields())) {
+    if (isEntryType && field.name === 'id') {
+      continue
+    }
+    fieldStrings += `  ${field.name}: ${fieldInputTypeString(field.type)}\n`
+  }
+  if (fieldStrings.length === 0) {
+    return `  ${PLACEHOLDER_INPUT_FIELD_NAME}: Boolean\n`
+  }
+  return fieldStrings
+}
+
 export function generateObjectInputTypeStrings(
   objectTypes: GraphQLObjectType[],
 ): string[] {
-  return objectTypes.map((objectType): string => {
-    const name = objectType.name
-    const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
-    let inputType = `input ${inputTypeName(name)} {\n`
-    let inputTypeFieldStrings = ''
-    for (const fieldsKey in objectType.getFields()) {
-      const field = objectType.getFields()[fieldsKey]
-      // the ID of an entry is passed as mutation argument instead of as part of the entry data
-      if (isEntryType && field.name === 'id') {
-        continue
-      }
-      const inputTypeString = generateFieldInputTypeString(field.type)
-      inputTypeFieldStrings += `  ${field.name}: ${inputTypeString}\n`
-    }
-
-    if (inputTypeFieldStrings.length > 0) {
-      inputType += `${inputTypeFieldStrings}`
-    } else {
-      // generate a dummy field as empty input types are not permitted
-      inputType += '  _: Boolean\n'
-    }
-    inputType += '}\n'
-
-    return inputType
-  })
+  return objectTypes.map(
+    (objectType): string =>
+      `input ${inputTypeName(objectType.name)} {\n` +
+      generateInputFieldStrings(objectType, generateFieldInputTypeString) +
+      '}\n',
+  )
 }
 
 /**
  * Generates the input types of update mutations for the `@Entry` types and for the object types embedded in them as
  * single objects. All fields are optional, so that only fields to change need to be given. Embedded single objects
- * use update input types themselves, as they are merged into the stored object, while lists and unions use the input
- * types for creating an entry, as their values replace the stored value as a whole.
+ * use update input types themselves, as they are merged into the stored object, while lists, unions and references
+ * use the input types for creating an entry, as their values replace the stored value as a whole.
  */
 export function generateUpdateInputTypeStrings(
   objectTypes: GraphQLObjectType[],
@@ -127,25 +133,18 @@ export function generateUpdateInputTypeStrings(
     )
     .map((objectType): string => {
       const isEntryType = hasDirective(objectType, ENTRY_DIRECTIVE_NAME)
-      let fieldStrings = ''
-      for (const field of Object.values(objectType.getFields())) {
-        // the ID of an entry is passed as mutation argument instead of as part of the entry data
-        if (isEntryType && field.name === 'id') {
-          continue
-        }
-        const mergedType = getMergedObjectType(field.type)
-        const fieldTypeString =
-          mergedType !== undefined
-            ? updateInputTypeName(mergedType.name)
-            : generateFieldInputTypeString(
-                isNonNullType(field.type) ? field.type.ofType : field.type,
-              )
-        fieldStrings += `  ${field.name}: ${fieldTypeString}\n`
-      }
-      if (fieldStrings.length === 0) {
-        // generate a dummy field as empty input types are not permitted
-        fieldStrings = '  _: Boolean\n'
-      }
+      const fieldStrings = generateInputFieldStrings(
+        objectType,
+        (fieldType) => {
+          const mergedType = getMergedObjectType(fieldType)
+          if (mergedType !== undefined) {
+            return updateInputTypeName(mergedType.name)
+          }
+          return generateFieldInputTypeString(
+            isNonNullType(fieldType) ? fieldType.ofType : fieldType,
+          )
+        },
+      )
 
       const description = isEntryType
         ? `Data to update an entry of type "${objectType.name}" with.`
@@ -153,8 +152,8 @@ export function generateUpdateInputTypeStrings(
       return (
         '"""\n' +
         `${description} Fields that are not given keep their stored value, and\n` +
-        '`null` clears a field. Objects given for fields of an object type are merged into the stored object in the\n' +
-        'same way, while lists and unions given replace the stored value as a whole.\n' +
+        '`null` clears a nullable field. Objects given for fields of an object type are merged into the stored object\n' +
+        'in the same way, while lists, unions and references given replace the stored value as a whole.\n' +
         '"""\n' +
         `input ${updateInputTypeName(objectType.name)} {\n${fieldStrings}}\n`
       )

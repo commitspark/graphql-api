@@ -20,12 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generate input type `<Type>UpdateInput` with all fields optional for `update<Type>` instead of using `<Type>Input`,
   so that an update only needs to give the fields to change, also when the type has non-null fields; operations
   that declare a variable of type `<Type>Input` for `update<Type>` must change the variable type to
-  `<Type>UpdateInput`
+  `<Type>UpdateInput`; name `<Type>UpdateInput` is reserved for every object type, so schemas that define e.g. types
+  `Product` and `ProductUpdate`, or a type named `<Type>UpdateInput`, are rejected with `BAD_SCHEMA` and must rename
+  the colliding type
 - Merge objects given for fields of an object type in `update<Type>` into the stored object instead of replacing it,
   so that fields of embedded objects that are not given are no longer removed; lists, unions, and references are
   still replaced as a whole
-- Make no commit for `update<Type>` if the entry would not change, e.g. if no fields or only stored values are given,
-  so that the history does not fill with commits without changes
+- Make no commit for `update<Type>` if the stored entry file would not change, e.g. if no fields or only stored values
+  are given, so that the history does not fill with commits without changes; such an update returns the stored entry
+  without checking it against the schema, as nothing is written
+- Reject data of `create<Type>` and `update<Type>` that gives the placeholder field `_` of an input type without fields
+  with `BAD_USER_INPUT` instead of writing it into the entry
 - Retain metadata other than the entry type when updating an entry instead of removing it, so that data is only
   removed explicitly with `removeUnknownFields()`
 - Reject IDs of new entries that are not in composed Unicode form (NFC) or have a folder name ending with `.` or a

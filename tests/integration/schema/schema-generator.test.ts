@@ -232,8 +232,8 @@ input EntryAInput {
 
 """
 Data to update an entry of type "MyEntry" with. Fields that are not given keep their stored value, and
-\`null\` clears a field. Objects given for fields of an object type are merged into the stored object in the
-same way, while lists and unions given replace the stored value as a whole.
+\`null\` clears a nullable field. Objects given for fields of an object type are merged into the stored object
+in the same way, while lists, unions and references given replace the stored value as a whole.
 """
 input MyEntryUpdateInput {
   name: String
@@ -243,8 +243,8 @@ input MyEntryUpdateInput {
 
 """
 Data to update an object of type "NestedType" with. Fields that are not given keep their stored value, and
-\`null\` clears a field. Objects given for fields of an object type are merged into the stored object in the
-same way, while lists and unions given replace the stored value as a whole.
+\`null\` clears a nullable field. Objects given for fields of an object type are merged into the stored object
+in the same way, while lists, unions and references given replace the stored value as a whole.
 """
 input NestedTypeUpdateInput {
   title: String
@@ -253,8 +253,8 @@ input NestedTypeUpdateInput {
 
 """
 Data to update an entry of type "EntryA" with. Fields that are not given keep their stored value, and
-\`null\` clears a field. Objects given for fields of an object type are merged into the stored object in the
-same way, while lists and unions given replace the stored value as a whole.
+\`null\` clears a nullable field. Objects given for fields of an object type are merged into the stored object
+in the same way, while lists, unions and references given replace the stored value as a whole.
 """
 input EntryAUpdateInput {
   name: String
@@ -489,6 +489,28 @@ type Author @Entry {
     })
     // only used in lists and unions, whose values replace the stored value as a whole
     expect(schema.getType('BlockUpdateInput')).toBeUndefined()
+  })
+
+  it('should generate update input types for self-referencing embedded types', async () => {
+    const schema = await buildGeneratedSchema(`directive @Entry on OBJECT
+
+type Tree @Entry {
+    id: ID!
+    root: Node
+}
+
+type Node {
+    label: String!
+    child: Node
+}`)
+
+    expect(fieldTypes(schema.getType('TreeUpdateInput'))).toEqual({
+      root: 'NodeUpdateInput',
+    })
+    expect(fieldTypes(schema.getType('NodeUpdateInput'))).toEqual({
+      label: 'String',
+      child: 'NodeUpdateInput',
+    })
   })
 
   it('should include ID fields other than the entry ID in generated input types', async () => {

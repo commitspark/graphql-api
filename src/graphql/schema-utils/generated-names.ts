@@ -17,6 +17,12 @@ export const REFERENCED_BY_FIELD_NAME = '_referencedBy'
 export const VERSION_FIELD_NAME = '_version'
 
 /**
+ * Name of the field generated in input types of object types without fields to give, as empty input types are not
+ * permitted. Mutations reject data that gives it, so that it never ends up in an entry.
+ */
+export const PLACEHOLDER_INPUT_FIELD_NAME = '_'
+
+/**
  * Name of the input type for data of an object type or of a union of object types without `@Entry` directive.
  */
 export const inputTypeName = (typeName: string): string => `${typeName}Input`

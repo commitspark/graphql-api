@@ -755,4 +755,129 @@ type EntryA @Entry {
       expect.objectContaining({ message: 'Update EntryA "A"' }),
     )
   })
+
+  it('should commit an update that gives `null` for a field without stored value', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const postCommitHash = 'ef01'
+    const schema = `directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    title: String
+    subtitle: String
+}`
+    const storedEntry: Entry = {
+      id: 'home',
+      metadata: { type: 'Page' },
+      data: { title: 'Home' },
+    }
+    const updatedEntry: Entry = {
+      ...storedEntry,
+      data: { title: 'Home', subtitle: null },
+    }
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [storedEntry])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [updatedEntry])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: updatePage(id: "home", data: { subtitle: null }) { id title subtitle } }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    expect(result.data).toEqual({
+      data: { id: 'home', title: 'Home', subtitle: null },
+    })
+    const commitDraft = gitAdapter.createCommit.mock.calls[0][0] as CommitDraft
+    expect(commitDraft.entries).toEqual([{ ...updatedEntry, deletion: false }])
+  })
+
+  it('should merge objects of a self-referencing embedded type recursively', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const postCommitHash = 'ef01'
+    const schema = `directive @Entry on OBJECT
+
+type Tree @Entry {
+    id: ID!
+    root: Node
+}
+
+type Node {
+    label: String
+    child: Node
+}`
+    const storedEntry: Entry = {
+      id: 'tree',
+      metadata: { type: 'Tree' },
+      data: {
+        root: { label: 'a', child: { label: 'b', child: { label: 'c' } } },
+      },
+    }
+    const updatedEntry: Entry = {
+      ...storedEntry,
+      data: {
+        root: { label: 'a', child: { label: 'B', child: { label: 'c' } } },
+      },
+    }
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [storedEntry])
+    gitAdapter.createCommit.mockResolvedValue({ commitHash: postCommitHash })
+    mockEntries(gitAdapter, postCommitHash, [updatedEntry])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: updateTree(id: "tree", data: { root: { child: { label: "B" } } }) { id } }`,
+    })
+
+    expect(result.errors).toBeUndefined()
+    const commitDraft = gitAdapter.createCommit.mock.calls[0][0] as CommitDraft
+    expect(commitDraft.entries).toEqual([{ ...updatedEntry, deletion: false }])
+  })
+
+  it('should reject data that gives the placeholder field of a type without fields to give', async () => {
+    const gitAdapter = mock<GitAdapter>()
+    const gitRef = 'myRef'
+    const commitHash = 'abcd'
+    const schema = `directive @Entry on OBJECT
+
+type Tag @Entry {
+    id: ID!
+}`
+    gitAdapter.getLatestCommitHash
+      .calledWith(gitRef)
+      .mockResolvedValue(commitHash)
+    gitAdapter.getSchema.mockResolvedValue(schema)
+    mockEntries(gitAdapter, commitHash, [
+      { id: 'news', metadata: { type: 'Tag' }, data: {} },
+    ])
+
+    const client = await createClient(gitAdapter)
+    const result = await client.postGraphQL(gitRef, {
+      query: `mutation { data: updateTag(id: "news", data: { _: true }) { id } }`,
+    })
+
+    expect(result.errors).toMatchObject([
+      {
+        message:
+          'Field "_" is a placeholder, as type "Tag" has no fields to give, and must not be given.',
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          commitspark: { argumentName: 'data' },
+        },
+      },
+    ])
+    expect(result.data).toEqual({ data: null })
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
 })

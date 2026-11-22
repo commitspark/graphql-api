@@ -2,6 +2,7 @@ import { findById, findByTypeId } from '../../../persistence/persistence.ts'
 import { isObjectType } from 'graphql'
 import { EntryData, EntryDraft } from '@commitspark/git-adapter'
 import { assertValidNewEntryId } from '../new-entry-id.ts'
+import { assertNoPlaceholderField } from '../placeholder-input-field.ts'
 import { QueryMutationResolver } from '../types.ts'
 import { createError, ErrorCode } from '../../errors.ts'
 import { getCommitMessage } from '../commit-message.ts'
@@ -23,6 +24,7 @@ export const mutationCreateResolver: QueryMutationResolver<EntryData> = async (
     )
   }
   assertValidNewEntryId(args.id)
+  assertNoPlaceholderField(context.type, args.data ?? null)
   const commitMessage = getCommitMessage(
     args.commit,
     'Create',

@@ -493,7 +493,7 @@ it.
 #### Updates without changes
 
 An update that would not change the stored entry file makes no commit, is not validated, and returns the stored entry
-with unchanged `_version`. Giving `null` for a field without stored value changes the file.
+with unchanged `_version`. Giving `null` for a field not present in the stored file changes the file.
 
 #### Multiple mutations in one request
 

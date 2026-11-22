@@ -86,7 +86,7 @@ schema {
 }
 
 type Query {
-    everyRocketFlight: [RocketFlight]
+    everyRocketFlight(first: Int, offset: Int): [RocketFlight]
     RocketFlight(id: ID!): RocketFlight
     _typeName(id: ID!): String
 }
@@ -448,7 +448,7 @@ on. It can be a
 
 * branch name,
 * tag name (lightweight or annotated), or
-* commit hash, if supported by the Git adapter
+* commit hash.
 
 ## Reading and writing data
 
@@ -459,6 +459,16 @@ commit, which is returned as `ref` of the response.
 
 If no entry exists for the ID given to a query by ID, i.e. `<Type>(id)` or `_typeName(id)`, the query returns `null`
 together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entry with this ID has a different type.
+
+#### Pagination
+
+`every<Type>` returns entries ordered by ID, comparing Unicode code points. Arguments `first` and `offset` select a
+page, e.g. `everyRocketFlight(first: 20, offset: 40)`.
+
+To get consistent pages, request later pages with the commit hash returned as `ref` of the first response. As a commit
+never changes, its pages neither overlap nor miss entries, and their responses can be cached indefinitely. With a
+branch name, each page reflects the latest commit of the branch. To determine the number of entries, query only their
+IDs, e.g. `everyRocketFlight { id }`.
 
 ### Mutations
 
@@ -599,8 +609,8 @@ For values within a union, the field path contains the name of the concrete unio
 e.g. `blocks[2].TextBlock.body`. The field path therefore matches the structure of the entry data as stored in the
 repository and as expected by mutations (see [Unions](#unions)).
 
-Hits are based on the commit returned as `ref` of the search response. Where the Git adapter supports commit hashes
-as `ref` argument, entries of hits can therefore be retrieved from exactly the searched commit.
+Hits are based on the commit returned as `ref` of the search response. Entries of hits can therefore be retrieved
+from exactly the searched commit by passing this commit hash as `ref`.
 
 # Error handling
 

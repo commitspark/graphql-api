@@ -2,6 +2,7 @@ import { Entry } from '@commitspark/git-adapter'
 import { RequestContext } from '../client.ts'
 import { createError, ErrorCode } from '../graphql/errors.ts'
 import { callGitAdapter } from './git-adapter-call.ts'
+import { compareEntryIds } from './entry-order.ts'
 
 type Ref = string
 type ContentHash = string
@@ -12,6 +13,9 @@ type ContentCache = Map<ContentHash, EntryContent>
 type SchemaCache = Map<Ref, string>
 type InflightEntries = Map<Ref, Promise<EntriesRecord>>
 
+/**
+ * Entries of a commit. Maps and lists are ordered by entry ID (see `compareEntryIds()`).
+ */
 export interface EntriesRecord {
   byId: Map<string, Entry>
   byType: Map<string, Entry[]>
@@ -114,10 +118,14 @@ const fetchAndCacheEntries = async (
     }
   }
 
+  // entries are ordered by ID once per commit, so that all lists derived from a commit have the same stable order
+  const sortedEntryHashes = [...entryHashes].sort((a, b) =>
+    compareEntryIds(a.id, b.id),
+  )
   const entriesById = new Map<string, Entry>()
   const entriesByType = new Map<string, Entry[]>()
   const hashesById = new Map<string, ContentHash>()
-  for (const { id, hash } of entryHashes) {
+  for (const { id, hash } of sortedEntryHashes) {
     hashesById.set(id, hash)
     const entry: Entry = {
       id: id,

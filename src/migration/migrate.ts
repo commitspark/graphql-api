@@ -19,6 +19,7 @@ import {
   Violation,
   ViolationCode,
 } from '../validation/violation.ts'
+import { compareEntryIds } from '../persistence/entry-order.ts'
 
 export interface MigrationSnapshot {
   /**
@@ -213,7 +214,7 @@ function validateEntries(
 ): Violation[] {
   const getEntryType = (id: string) => entries.get(id)?.metadata.type
   return [...entries.values()]
-    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    .sort((a, b) => compareEntryIds(a.id, b.id))
     .flatMap((entry) => validateEntry(generatedSchema, entry, getEntryType))
 }
 

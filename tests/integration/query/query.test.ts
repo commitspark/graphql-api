@@ -1240,9 +1240,9 @@ type NavLink {
     expect(result.errors).toBeUndefined()
     expect(result.data).toEqual({
       everyPage: [
-        // sorted by ID; "about" references "home" twice but is listed once
-        { id: 'home', _referencedBy: ['about', 'header'] },
+        // entries and referencing IDs are ordered by ID; "about" references "home" twice but is listed once
         { id: 'about', _referencedBy: ['header'] },
+        { id: 'home', _referencedBy: ['about', 'header'] },
       ],
       everyMedia: [{ id: 'logo', _referencedBy: ['about'] }],
       everyHeader: [{ id: 'header', _referencedBy: [] }],

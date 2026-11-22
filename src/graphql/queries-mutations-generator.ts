@@ -25,8 +25,22 @@ export function generateQueriesAndMutations(
     const typeName = objectType.name
 
     const queryEveryName = names.queryEveryName(typeName)
-    // elements are nullable, so that an entry that cannot be read does not null the whole list
-    const queryEveryString = `${queryEveryName}: [${objectType.name}]`
+    // elements are nullable, so that an entry that cannot be read does not null the whole list; continuation lines are
+    // indented as within the generated root type
+    const queryEveryString =
+      '"""\n' +
+      `  Entries of type "${typeName}", ordered by ID.\n` +
+      '  """\n' +
+      `  ${queryEveryName}(\n` +
+      '    """\n' +
+      '    Maximum number of entries to return. If omitted, all remaining entries are returned.\n' +
+      '    """\n' +
+      '    first: Int\n' +
+      '    """\n' +
+      '    Number of entries to skip.\n' +
+      '    """\n' +
+      '    offset: Int\n' +
+      `  ): [${typeName}]`
     const queryEveryResolverFunc: QueryMutationResolver<
       Promise<EntryData>[]
     > = (source, args, context, info) =>

@@ -116,8 +116,32 @@ schema {
 }
 
 type Query {
-  everyMyEntry: [MyEntry]
-  everyEntryA: [EntryA]
+  """
+  Entries of type "MyEntry", ordered by ID.
+  """
+  everyMyEntry(
+    """
+    Maximum number of entries to return. If omitted, all remaining entries are returned.
+    """
+    first: Int
+    """
+    Number of entries to skip.
+    """
+    offset: Int
+  ): [MyEntry]
+  """
+  Entries of type "EntryA", ordered by ID.
+  """
+  everyEntryA(
+    """
+    Maximum number of entries to return. If omitted, all remaining entries are returned.
+    """
+    first: Int
+    """
+    Number of entries to skip.
+    """
+    offset: Int
+  ): [EntryA]
   MyEntry(id: ID!): MyEntry
   EntryA(id: ID!): EntryA
   _typeName(id: ID!): String
@@ -306,7 +330,10 @@ type EntryB @Entry {
         [`every${typeName}`]: `[${typeName}]`,
         [typeName]: typeName,
       })
-      expect(argumentTypes(queryFields[`every${typeName}`])).toEqual({})
+      expect(argumentTypes(queryFields[`every${typeName}`])).toEqual({
+        first: 'Int',
+        offset: 'Int',
+      })
       expect(argumentTypes(queryFields[typeName])).toEqual({ id: 'ID!' })
 
       expect(fieldTypes(schema.getMutationType())).toMatchObject({

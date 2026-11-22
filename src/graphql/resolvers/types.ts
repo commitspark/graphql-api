@@ -30,6 +30,8 @@ export type QueryMutationResolver<ResultType> = GraphQLFieldResolver<
     data?: EntryData
     commit?: CommitInput | null
     expectedVersion?: string | null
+    first?: number | null
+    offset?: number | null
   },
   Promise<ResultType>
 >

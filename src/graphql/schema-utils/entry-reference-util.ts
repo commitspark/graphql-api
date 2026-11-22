@@ -84,9 +84,7 @@ function buildReferencedByIndex(
     }
   }
 
-  for (const referencingIds of referencedByIndex.values()) {
-    referencingIds.sort()
-  }
+  // referencing IDs are ordered by ID, as entries of a commit are
   return referencedByIndex
 }
 

@@ -472,7 +472,8 @@ a field without stored value changes the file, as the field is then written with
 optional, fields that are not given keep their stored value, and `null` clears a nullable field. An object given for a
 field of an object type is merged into the stored object in the same way, using input type `<ObjectType>UpdateInput`,
 which is generated for every object type. Lists, unions, and references given replace the stored value as a whole, e.g.
-a list has to be given with all of its elements to add one element. To replace an entry as a whole, give all fields,
+a list has to be given with all of its elements to add one element, and a union value has to be given with all fields of
+its member type, also if the stored value has the same member type. To replace an entry as a whole, give all fields,
 including all fields of embedded objects, with `null` for fields to clear. Data stored under keys that are not fields in
 the schema is retained in either case and only removed by [`removeUnknownFields()`](#removeunknownfields).
 

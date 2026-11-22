@@ -83,50 +83,77 @@ describe('Schema validator', () => {
     [
       'a type named like the input type of another type',
       'type ProductInput { name: String }',
-      'Type name "ProductInput" is reserved for the input type of type "Product"; rename the type.',
+      'Type name "ProductInput" is reserved for the input type of type "Product"; rename type "ProductInput".',
     ],
     [
       'a type named like the reference input type of an @Entry type',
       'type ProductIdInput { name: String }',
-      'Type name "ProductIdInput" is reserved for the reference input type of type "Product"; rename the type.',
+      'Type name "ProductIdInput" is reserved for the reference input type of type "Product"; rename type "ProductIdInput".',
+    ],
+    [
+      'a type named like the update input type of an @Entry type',
+      'type ProductUpdateInput { name: String }',
+      'Type name "ProductUpdateInput" is reserved for the update input type of type "Product"; rename type "ProductUpdateInput".',
+    ],
+    [
+      'a type named like the update input type of a type without @Entry directive',
+      'type Seo { title: String }\ntype SeoUpdateInput { name: String }',
+      'Type name "SeoUpdateInput" is reserved for the update input type of type "Seo"; rename type "SeoUpdateInput".',
     ],
     [
       'a type named like the input type of a union',
       'type Hero { title: String }\nunion Block = Hero\ntype BlockInput { name: String }',
-      'Type name "BlockInput" is reserved for the input type of union "Block"; rename the type.',
+      'Type name "BlockInput" is reserved for the input type of union "Block"; rename type "BlockInput".',
     ],
     [
       'a type named like the reference input type of a union of @Entry types',
       'type Page @Entry { id: ID! }\nunion Link = Product | Page\ntype LinkIdInput { name: String }',
-      'Type name "LinkIdInput" is reserved for the reference input type of union "Link"; rename the type.',
+      'Type name "LinkIdInput" is reserved for the reference input type of union "Link"; rename type "LinkIdInput".',
     ],
     [
       'a type named like a root type',
       'type Query { name: String }',
-      'Type name "Query" is reserved for a root type; rename the type.',
+      'Type name "Query" is reserved for a root type; rename type "Query".',
     ],
     [
       'a type named like a type of Commitspark',
       'type _CommitInput { message: String }',
-      'Type name "_CommitInput" is reserved for a type of Commitspark; rename the type.',
+      'Type name "_CommitInput" is reserved for a type of Commitspark; rename type "_CommitInput".',
     ],
     [
       'types whose generated type names collide',
       'type ProductId { value: String }',
       'Generated type name "ProductIdInput" would be used for the input type of type "ProductId" and for the ' +
-        'reference input type of type "Product"; rename one of the types.',
+        'reference input type of type "Product"; rename type "ProductId" or type "Product".',
+    ],
+    [
+      'types whose generated input type names collide with an update input type',
+      'type ProductUpdate { value: String }',
+      'Generated type name "ProductUpdateInput" would be used for the update input type of type "Product" and for ' +
+        'the input type of type "ProductUpdate"; rename type "Product" or type "ProductUpdate".',
+    ],
+    [
+      'a union whose generated input type name collides with an update input type',
+      'type Hero { title: String }\nunion ProductUpdate = Hero',
+      'Generated type name "ProductUpdateInput" would be used for the update input type of type "Product" and for ' +
+        'the input type of union "ProductUpdate"; rename type "Product" or union "ProductUpdate".',
+    ],
+    [
+      'a union named like the input type of another type',
+      'type Hero { title: String }\nunion ProductInput = Hero',
+      'Type name "ProductInput" is reserved for the input type of type "Product"; rename union "ProductInput".',
     ],
     [
       '@Entry types whose generated query names collide',
       'type everyProduct @Entry { id: ID! }',
       'Generated query name "everyProduct" would be used for the query of all entries of type "Product" and for ' +
-        'the query of a single entry of type "everyProduct"; rename one of the types.',
+        'the query of a single entry of type "everyProduct"; rename type "Product" or type "everyProduct".',
     ],
     [
       'an @Entry type named like a query of Commitspark',
       'type _search @Entry { id: ID! }',
       'Generated query name "_search" would be used for a query of Commitspark and for the query of a single ' +
-        'entry of type "_search"; rename one of the types.',
+        'entry of type "_search"; rename type "_search".',
     ],
     [
       'an @Entry type with a field named like a field added by Commitspark',

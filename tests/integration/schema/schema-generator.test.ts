@@ -142,7 +142,7 @@ type Mutation {
   ): EntryA
   updateMyEntry(
     id: ID!
-    data: MyEntryInput!
+    data: MyEntryUpdateInput!
     """
     Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
     version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
@@ -155,7 +155,7 @@ type Mutation {
   ): MyEntry
   updateEntryA(
     id: ID!
-    data: EntryAInput!
+    data: EntryAUpdateInput!
     """
     Version of the entry (field \`_version\`) that the change is based on. If given and the entry has a different
     version, the mutation fails with error code CONFLICT instead of overwriting changes made since.
@@ -230,6 +230,33 @@ input EntryAInput {
   name: String
 }
 
+"""
+Data to update an entry of type "MyEntry" with. Fields not given keep their stored value, \`null\` clears a nullable field,
+objects are merged, and lists, unions and references are replaced.
+"""
+input MyEntryUpdateInput {
+  name: String
+  nestedType: NestedTypeUpdateInput
+  entryA: EntryAIdInput
+}
+
+"""
+Data to update an object of type "NestedType" with. Fields not given keep their stored value, \`null\` clears a nullable field,
+objects are merged, and lists, unions and references are replaced.
+"""
+input NestedTypeUpdateInput {
+  title: String
+  description: String
+}
+
+"""
+Data to update an entry of type "EntryA" with. Fields not given keep their stored value, \`null\` clears a nullable field,
+objects are merged, and lists, unions and references are replaced.
+"""
+input EntryAUpdateInput {
+  name: String
+}
+
 extend type MyEntry {
   _referencedBy: [ID!]
   """
@@ -294,7 +321,7 @@ type EntryB @Entry {
       })
       expect(argumentTypes(mutationFields[`update${typeName}`])).toEqual({
         id: 'ID!',
-        data: `${typeName}Input!`,
+        data: `${typeName}UpdateInput!`,
         expectedVersion: 'String',
         commit: '_CommitInput',
       })
@@ -396,6 +423,92 @@ type TypeB {
     })
     expect(fieldTypes(schema.getType('TypeBInput'))).toEqual({
       field2: 'String',
+    })
+  })
+
+  it('should generate update input types with optional fields for all object types', async () => {
+    const schema = await buildGeneratedSchema(`directive @Entry on OBJECT
+
+type Page @Entry {
+    id: ID!
+    title: String!
+    tags: [String!]!
+    seo: Seo!
+    blocks: [Block!]
+    hero: Hero
+    author: Author!
+}
+
+type Seo {
+    title: String!
+    image: Image
+}
+
+type Image {
+    url: String!
+}
+
+type Block {
+    text: String!
+}
+
+type Hero {
+    content: HeroContent
+}
+
+union HeroContent = Block | Image
+
+type Author @Entry {
+    id: ID!
+    name: String!
+}`)
+
+    expect(fieldTypes(schema.getType('PageUpdateInput'))).toEqual({
+      title: 'String',
+      tags: '[String!]',
+      seo: 'SeoUpdateInput',
+      blocks: '[BlockInput!]',
+      hero: 'HeroUpdateInput',
+      author: 'AuthorIdInput',
+    })
+    expect(fieldTypes(schema.getType('SeoUpdateInput'))).toEqual({
+      title: 'String',
+      image: 'ImageUpdateInput',
+    })
+    expect(fieldTypes(schema.getType('ImageUpdateInput'))).toEqual({
+      url: 'String',
+    })
+    expect(fieldTypes(schema.getType('HeroUpdateInput'))).toEqual({
+      content: 'HeroContentInput',
+    })
+    expect(fieldTypes(schema.getType('AuthorUpdateInput'))).toEqual({
+      name: 'String',
+    })
+    // generated independent of usage, although only used in lists and unions, whose values replace the stored value
+    expect(fieldTypes(schema.getType('BlockUpdateInput'))).toEqual({
+      text: 'String',
+    })
+  })
+
+  it('should generate update input types for self-referencing embedded types', async () => {
+    const schema = await buildGeneratedSchema(`directive @Entry on OBJECT
+
+type Tree @Entry {
+    id: ID!
+    root: Node
+}
+
+type Node {
+    label: String!
+    child: Node
+}`)
+
+    expect(fieldTypes(schema.getType('TreeUpdateInput'))).toEqual({
+      root: 'NodeUpdateInput',
+    })
+    expect(fieldTypes(schema.getType('NodeUpdateInput'))).toEqual({
+      label: 'String',
+      child: 'NodeUpdateInput',
     })
   })
 

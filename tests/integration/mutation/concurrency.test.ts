@@ -108,6 +108,26 @@ type EntryA @Entry {
     expect(gitAdapter.createCommit).not.toHaveBeenCalled()
   })
 
+  it('should fail with CONFLICT for an update that would not change the entry when the expected version does not match', async () => {
+    mockHeads([['h1', [entryAChanged]]])
+
+    const result = await (
+      await createClient(gitAdapter)
+    ).postGraphQL(gitRef, {
+      query: `mutation ($expectedVersion: String) {
+        data: updateEntryA(id: "A", data: {}, expectedVersion: $expectedVersion) { name }
+      }`,
+      variables: { expectedVersion: getVersion(entryA) },
+    })
+
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors?.[0].extensions).toMatchObject({
+      code: 'CONFLICT',
+      commitspark: { argumentName: 'expectedVersion' },
+    })
+    expect(gitAdapter.createCommit).not.toHaveBeenCalled()
+  })
+
   it('should retry against the new branch head when the branch moved due to an unrelated change', async () => {
     const updatedEntry: Entry = { ...entryA, data: { name: 'new' } }
     mockHeads([

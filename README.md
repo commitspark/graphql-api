@@ -93,7 +93,12 @@ type Query {
 
 type Mutation {
     createRocketFlight(id: ID!, data: RocketFlightInput!, commit: _CommitInput): RocketFlight
-    updateRocketFlight(id: ID!, data: RocketFlightInput!, expectedVersion: String, commit: _CommitInput): RocketFlight
+    updateRocketFlight(
+        id: ID!
+        data: RocketFlightUpdateInput!
+        expectedVersion: String
+        commit: _CommitInput
+    ): RocketFlight
     deleteRocketFlight(id: ID!, expectedVersion: String, commit: _CommitInput): ID
 }
 
@@ -113,6 +118,15 @@ input RocketFlightInput {
 
 input PayloadInput {
     weight: Int!
+}
+
+input RocketFlightUpdateInput {
+    vehicleName: String
+    payloads: [PayloadInput!]
+}
+
+input PayloadUpdateInput {
+    weight: Int
 }
 
 extend type RocketFlight {
@@ -448,15 +462,38 @@ together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entr
 
 ### Mutations
 
-Mutations work on branch names only, as they create new commits.
+Mutations work on branch names only, as they append commits to HEAD of the given branch.
 
-Each successful mutation appends a new commit on HEAD of the given branch.
+#### Validation
 
-Before committing, Commitspark checks whether the entry as it would be written matches the schema. If the entry would
-not match the schema, no commit is made and the mutation fails with error `BAD_USER_INPUT`, listing the problems under
-`extensions.commitspark.violations`. This also applies to existing data of fields not included in an update, e.g. a
-stored value that no longer matches a changed field type; such a value can be fixed by including the field in the
-update. Data stored under keys that are not fields in the schema is retained by updates.
+Before committing, Commitspark checks the entry as it would be written against the schema. If it does not match, no
+commit is made and the mutation fails with error `BAD_USER_INPUT`, listing the problems under
+`extensions.commitspark.violations`. This includes stored values of fields not given in an update, e.g. after a field
+type change; such a value is fixed by giving the field.
+
+#### Updating entries
+
+`update<Type>` only changes the fields given in `data`, as all fields of its input type `<Type>UpdateInput` are
+optional:
+
+* Fields that are not given keep their stored value, and `null` clears a nullable field.
+* An object given for a field of an embedded object type, i.e. one without `@Entry`, is merged into the stored object in
+  the same way, using input type `<ObjectType>UpdateInput`, which is generated for every object type.
+* Lists, unions, and references replace the stored value as a whole, e.g. a list has to be given with all of its
+  elements, and a union value with all fields of its member type.
+
+To replace an entry as a whole, give all fields, including all fields of embedded objects, with `null` for fields to
+clear.
+
+Data stored under keys that are not fields in the schema is retained at the top level of the entry and inside merged
+embedded objects. It is removed together with a value that is replaced or cleared, i.e. inside a list element, a union
+value, or an embedded object given as `null`. Otherwise, only [`removeUnknownFields()`](#removeunknownfields) removes
+it.
+
+#### Updates without changes
+
+An update that would not change the stored entry file makes no commit, is not validated, and returns the stored entry
+with unchanged `_version`. Giving `null` for a field not present in the stored file changes the file.
 
 #### Multiple mutations in one request
 
@@ -471,8 +508,8 @@ level of entries and of the branch.
 
 Every `@Entry` type has a generated field `_version` that changes whenever the stored entry changes. If the optional
 argument `expectedVersion` of `update<Type>` or `delete<Type>` differs from it, the mutation fails with error `CONFLICT`
-instead of overwriting changes made in the meantime. Callers that let users edit entries are recommended to pass the
-`_version` read with the entry:
+instead of overwriting changes made in the meantime. Callers that update entries based on a previous read are
+recommended to pass the `_version` read with the entry:
 
 ```graphql
 mutation {

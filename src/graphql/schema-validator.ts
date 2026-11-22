@@ -94,17 +94,33 @@ function checkSupportedConstructs(
 }
 
 /**
- * Maps a generated name to descriptions of what it is generated for, e.g. `'the input type of type "Product"'`.
- * A name with more than one description is generated more than once.
+ * Use of a generated name: what it is generated for, e.g. `'the input type of type "Product"'`, and the user type or
+ * union it is generated from, e.g. `'type "Product"'`, if any.
  */
-type GeneratedNames = Map<string, string[]>
+interface GeneratedNameUse {
+  description: string
+  source?: string
+}
+
+/**
+ * Maps a generated name to its uses. A name with more than one use is generated more than once.
+ */
+type GeneratedNames = Map<string, GeneratedNameUse[]>
 
 function addGeneratedName(
   generatedNames: GeneratedNames,
   name: string,
   description: string,
+  source?: string,
 ): void {
-  generatedNames.set(name, [...(generatedNames.get(name) ?? []), description])
+  generatedNames.set(name, [
+    ...(generatedNames.get(name) ?? []),
+    { description, source },
+  ])
+}
+
+function joinDescriptions(uses: GeneratedNameUse[]): string {
+  return uses.map((use) => use.description).join(' and for ')
 }
 
 function describeDuplicates(
@@ -112,13 +128,18 @@ function describeDuplicates(
   kind: string,
 ): string[] {
   return [...generatedNames.entries()]
-    .filter(([, descriptions]) => descriptions.length > 1)
+    .filter(([, uses]) => uses.length > 1)
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(
-      ([name, descriptions]) =>
-        `Generated ${kind} name "${name}" would be used for ${descriptions.join(' and for ')}; rename one of ` +
-        `the types.`,
-    )
+    .map(([name, uses]) => {
+      // names that are not generated from a user type or union are fixed, so only those can be renamed
+      const sources = new Set(
+        uses.map((use) => use.source).filter((source) => source !== undefined),
+      )
+      return (
+        `Generated ${kind} name "${name}" would be used for ${joinDescriptions(uses)}; rename ` +
+        `${[...sources].join(' or ')}.`
+      )
+    })
 }
 
 /**
@@ -152,6 +173,13 @@ function checkGeneratedNameCollisions(schema: GraphQLSchema): string[] {
       typeNames,
       names.inputTypeName(type.name),
       `the input type of type "${type.name}"`,
+      `type "${type.name}"`,
+    )
+    addGeneratedName(
+      typeNames,
+      names.updateInputTypeName(type.name),
+      `the update input type of type "${type.name}"`,
+      `type "${type.name}"`,
     )
   }
   for (const type of entryTypes) {
@@ -159,6 +187,7 @@ function checkGeneratedNameCollisions(schema: GraphQLSchema): string[] {
       typeNames,
       names.idInputTypeName(type.name),
       `the reference input type of type "${type.name}"`,
+      `type "${type.name}"`,
     )
   }
   for (const type of unionTypes) {
@@ -167,12 +196,14 @@ function checkGeneratedNameCollisions(schema: GraphQLSchema): string[] {
         typeNames,
         names.idInputTypeName(type.name),
         `the reference input type of union "${type.name}"`,
+        `union "${type.name}"`,
       )
     } else {
       addGeneratedName(
         typeNames,
         names.inputTypeName(type.name),
         `the input type of union "${type.name}"`,
+        `union "${type.name}"`,
       )
     }
   }
@@ -194,11 +225,13 @@ function checkGeneratedNameCollisions(schema: GraphQLSchema): string[] {
       queryNames,
       names.queryEveryName(type.name),
       `the query of all entries of type "${type.name}"`,
+      `type "${type.name}"`,
     )
     addGeneratedName(
       queryNames,
       names.queryByIdName(type.name),
       `the query of a single entry of type "${type.name}"`,
+      `type "${type.name}"`,
     )
     for (const [mutationName, operation] of [
       [names.createMutationName(type.name), 'create'],
@@ -209,16 +242,17 @@ function checkGeneratedNameCollisions(schema: GraphQLSchema): string[] {
         mutationNames,
         mutationName,
         `the ${operation} mutation of type "${type.name}"`,
+        `type "${type.name}"`,
       )
     }
   }
 
   const results: string[] = []
   for (const type of userTypes) {
-    const descriptions = typeNames.get(type.name)
-    if (descriptions !== undefined) {
+    const uses = typeNames.get(type.name)
+    if (uses !== undefined) {
       results.push(
-        `Type name "${type.name}" is reserved for ${descriptions.join(' and for ')}; rename the type.`,
+        `Type name "${type.name}" is reserved for ${joinDescriptions(uses)}; rename ${isUnionType(type) ? 'union' : 'type'} "${type.name}".`,
       )
     }
   }

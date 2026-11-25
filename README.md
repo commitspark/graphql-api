@@ -463,7 +463,8 @@ together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entr
 #### Pagination
 
 `every<Type>` returns entries ordered by ID, comparing Unicode code points. Arguments `first` and `offset` select a
-page, e.g. `everyRocketFlight(first: 20, offset: 40)`.
+page, e.g. `everyRocketFlight(first: 20, offset: 40)`, which limits the response, not the data read from the
+repository.
 
 To get consistent pages, request later pages with the commit hash returned as `ref` of the first response. As a commit
 never changes, its pages neither overlap nor miss entries, and their responses can be cached indefinitely. With a

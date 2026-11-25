@@ -1,4 +1,4 @@
-import { Entry } from '@commitspark/git-adapter'
+import { Entry, validateEntryId } from '@commitspark/git-adapter'
 import { RequestContext } from '../client.ts'
 import { createError, ErrorCode } from '../graphql/errors.ts'
 import { callGitAdapter } from './git-adapter-call.ts'
@@ -84,6 +84,7 @@ const fetchAndCacheEntries = async (
   const entryHashes = await callGitAdapter(() =>
     context.gitAdapter.getEntryHashes(ref),
   )
+  entryHashes.forEach(({ id }) => assertValidStoredEntryId(id))
 
   // hold on to known content now, as it may be evicted from the content cache while missing content is fetched
   const contentByHash = new Map<ContentHash, EntryContent>()
@@ -163,7 +164,28 @@ const fetchAndCacheEntries = async (
   return newCacheRecord.entriesRecord
 }
 
+// an entry file whose name is no valid entry ID cannot be read, so that it is reported instead of being skipped silently
+const assertValidStoredEntryId = (id: string): void => {
+  try {
+    validateEntryId(id)
+  } catch (err) {
+    throw createError(
+      `Entry file of entry "${id}" has a name that is no valid entry ID: ${err instanceof Error ? err.message : String(err)}`,
+      ErrorCode.BAD_REPOSITORY_DATA,
+      { fieldValue: id },
+    )
+  }
+}
+
 const createEntryContent = (entry: Entry): EntryContent => {
+  // entries are grouped by type, so that an entry without type cannot be read
+  if (typeof entry.metadata?.type !== 'string') {
+    throw createError(
+      `Entry "${entry.id}" has no type in its metadata.`,
+      ErrorCode.BAD_REPOSITORY_DATA,
+      { fieldValue: entry.id },
+    )
+  }
   const content: EntryContent = { metadata: entry.metadata }
   if (entry.data !== undefined) {
     content.data = entry.data

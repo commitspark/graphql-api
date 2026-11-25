@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Order entries of `every<Type>` by ID instead of in the order of the Git adapter, so that the order is stable and
   pages are well-defined; IDs are compared by Unicode code point, which also applies to `_referencedBy` and violations
+- Fail reads with `BAD_REPOSITORY_DATA` if an entry file has a name that is no valid entry ID or an entry has no type,
+  instead of with `BAD_REQUEST` or an internal error, so that the error points to the repository
 
 ## [2.0.0-beta.9] - 2026-11-22
 

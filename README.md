@@ -759,10 +759,10 @@ Violations that concern a stored value hold it as `value`, exactly as stored, in
 
 #### CI pipeline validation example
 
-Example of a check that fails on errors and warnings:
+Example of a check of the checked out commit that fails on errors and warnings:
 
 ```typescript
-const result = await client.validate('main')
+const result = await client.validate('HEAD')
 for (const violation of result.violations) {
   console.log(violation.severity, violation.entryId ?? '', violation.path.join('.'), violation.message)
 }

@@ -759,7 +759,8 @@ Violations that concern a stored value hold it as `value`, exactly as stored, in
 
 #### CI pipeline validation example
 
-Example of a check of the checked out commit that fails on errors and warnings:
+Example of a check of the checked out commit, using the
+[filesystem adapter](https://github.com/commitspark/git-adapter-filesystem), that fails on errors and warnings:
 
 ```typescript
 const result = await client.validate('HEAD')

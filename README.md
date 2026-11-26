@@ -462,14 +462,16 @@ together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entr
 
 #### Pagination
 
-`every<Type>` returns entries ordered by ID, comparing Unicode code points. Arguments `first` and `offset` select a
-page, e.g. `everyRocketFlight(first: 20, offset: 40)`, which limits the response, not the data read from the
-repository.
+`every<Type>` returns entries ordered by ID in Unicode code point order. Arguments `first` and `offset` limit the
+response to a page, e.g. `everyRocketFlight(first: 20, offset: 40)` returns entries 41 to 60. All entries of the type
+are still read from the repository.
 
 To get consistent pages, request later pages with the commit hash returned as `ref` of the first response. As a commit
-never changes, its pages neither overlap nor miss entries, and their responses can be cached indefinitely. With a
-branch name, each page reflects the latest commit of the branch. To determine the number of entries, query only their
-IDs, e.g. `everyRocketFlight { id }`.
+never changes, such pages neither overlap nor miss entries, and their responses can be cached indefinitely. With a
+branch name, pages can overlap or miss entries if the branch changes between requests.
+
+To count entries, query only IDs without `first` or `offset`, e.g. `everyRocketFlight { id }`, with the same commit
+hash as the pages.
 
 ### Mutations
 
@@ -610,8 +612,8 @@ For values within a union, the field path contains the name of the concrete unio
 e.g. `blocks[2].TextBlock.body`. The field path therefore matches the structure of the entry data as stored in the
 repository and as expected by mutations (see [Unions](#unions)).
 
-Hits are based on the commit returned as `ref` of the search response. Entries of hits can therefore be retrieved
-from exactly the searched commit by passing this commit hash as `ref`.
+Hits are based on the commit returned as `ref` of the search response. To read the entries of hits from exactly this
+commit, pass its hash as `ref`.
 
 # Error handling
 
@@ -760,8 +762,8 @@ Violations that concern a stored value hold it as `value`, exactly as stored, in
 
 #### CI pipeline validation example
 
-Example of a check of the checked out commit, using the
-[filesystem adapter](https://github.com/commitspark/git-adapter-filesystem), that fails on errors and warnings:
+Example of a check that fails on errors and warnings, run on the checked-out commit with the
+[filesystem adapter](https://github.com/commitspark/git-adapter-filesystem), which also accepts `HEAD` as `ref`:
 
 ```typescript
 const result = await client.validate('HEAD')

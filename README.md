@@ -463,8 +463,8 @@ together with error `NOT_FOUND`. For `<Type>(id)`, this also applies if the entr
 #### Pagination
 
 `every<Type>` returns entries ordered by ID in Unicode code point order. Arguments `first` and `offset` limit the
-response to a page, e.g. `everyRocketFlight(first: 20, offset: 40)` returns entries 41 to 60. All entries of the type
-are still read from the repository.
+response to a page, e.g. `everyRocketFlight(first: 20, offset: 40)` returns entries 41 to 60. The Git adapter still
+retrieves all entries of the commit, except entries whose content Commitspark has already cached.
 
 To get consistent pages, request later pages with the commit hash returned as `ref` of the first response. As a commit
 never changes, such pages neither overlap nor miss entries, and their responses can be cached indefinitely. With a

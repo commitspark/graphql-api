@@ -13,6 +13,7 @@ import {
   ViolationCode,
   ViolationSeverity,
 } from './violation.ts'
+import { compareEntryIds } from '../persistence/entry-order.ts'
 
 /**
  * Validates the schema and all entries at the current commit of the context. Entries are only validated if the
@@ -38,9 +39,10 @@ export async function validateRepository(
     context.getCurrentHash(),
   )
   const getEntryType = (id: string) => entriesRecord.byId.get(id)?.metadata.type
-  return [...entriesRecord.byId.values()]
-    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-    .flatMap((entry) => validateEntry(generatedSchema, entry, getEntryType))
+  // entries of a commit are ordered by ID
+  return [...entriesRecord.byId.values()].flatMap((entry) =>
+    validateEntry(generatedSchema, entry, getEntryType),
+  )
 }
 
 /**
@@ -95,8 +97,9 @@ export function assertNoErrors(violations: Violation[]): void {
     )
   }
   const affectedEntryIds = [
-    ...new Set(errors.map((violation) => violation.entryId)),
-  ].sort()
+    // violations without entry ID are schema errors, which were thrown above
+    ...new Set(errors.map((violation) => violation.entryId as string)),
+  ].sort(compareEntryIds)
   const message =
     affectedEntryIds.length === 1
       ? `Entry "${affectedEntryIds[0]}" would not match the schema: ${formatViolations(errors, false)}`

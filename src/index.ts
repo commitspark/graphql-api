@@ -1,4 +1,5 @@
 import {
+  getEntryChanges,
   getSchema,
   GraphQLRequest,
   GraphQLResponse,
@@ -26,6 +27,11 @@ import {
   MigrationSnapshot,
 } from './migration/migrate.ts'
 import { CommitInput } from './graphql/resolvers/types.ts'
+import {
+  EntryChange,
+  EntryChangeKind,
+  EntryChangesResult,
+} from './changes/entry-changes.ts'
 
 interface Client {
   postGraphQL<
@@ -41,6 +47,12 @@ interface Client {
    * of failing on the first one, e.g. to check a repository in CI after changing the schema.
    */
   validate(ref: string): Promise<ValidationResult>
+  /**
+   * Lists the entries that differ between the commits `fromRef` and `toRef` resolve to, e.g. to update only changed
+   * entries in a search index after a push. Only the content of the two commits is compared, not the history between
+   * them.
+   */
+  getEntryChanges(fromRef: string, toRef: string): Promise<EntryChangesResult>
   /**
    * Runs `migration` on a snapshot of the head of `branch` and commits the returned schema and entries in a single
    * commit, e.g. to rename a field in the schema and in all entries, or to change entries that reference each other.
@@ -81,6 +93,9 @@ export {
   MigrationSnapshot,
   MigrationResult,
   MigrationResponse,
+  EntryChange,
+  EntryChangeKind,
+  EntryChangesResult,
   CommitInput,
   Entry,
   EntryDraft,
@@ -99,6 +114,8 @@ export async function createClient(
       getSchema(gitAdapter, searchAdapter, repositoryCache, ...args),
     validate: (...args) =>
       validate(gitAdapter, searchAdapter, repositoryCache, ...args),
+    getEntryChanges: (...args) =>
+      getEntryChanges(gitAdapter, searchAdapter, repositoryCache, ...args),
     migrate: (...args) =>
       migrate(gitAdapter, searchAdapter, repositoryCache, ...args),
     removeUnknownFields: (...args) =>

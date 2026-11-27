@@ -697,10 +697,16 @@ from type `String` to `Int`, without updating the entry data to match, produces 
 
 # TypeScript API
 
-The GraphQL API reads and writes the entries of a single commit. The client functions additionally work on the
-repository as a whole, e.g. to validate all entries or to compare two commits. Commitspark leaves reviewing and
-approving changes to features of the Git provider such as pull requests, and provides no delivery features such as
-webhooks or cache purging.
+Tasks are divided as follows:
+
+* The GraphQL API, called with `postGraphQL()`, reads and writes the entries of a single commit.
+* The other client functions work on the schema or on all entries at once, e.g. to validate all entries or to compare
+  two commits.
+* Changes are reviewed and approved on the platform of the Git provider, not through Commitspark, e.g. in pull requests
+  on GitHub or merge requests on GitLab.
+* Content delivery, e.g. rebuilding pages or purging caches, is best handled by dedicated tools. Commitspark provides
+  the information to trigger them only for what changed, e.g. the entries changed by a push (see
+  [`getEntryChanges()`](#getentrychanges)).
 
 ## createClient()
 

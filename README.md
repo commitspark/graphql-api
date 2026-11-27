@@ -443,8 +443,8 @@ removed:
 
 ## Navigating the Git repository
 
-As Commitspark is Git-based, `postGraphQL()`, `getSchema()` and `validate()` take a `ref` argument that selects the commit to work
-on. It can be a
+As Commitspark is Git-based, `postGraphQL()`, `getSchema()`, `validate()` and `getEntryChanges()` take arguments that
+select the commits to work on by ref. A ref can be a
 
 * branch name,
 * tag name (lightweight or annotated), or
@@ -697,6 +697,17 @@ from type `String` to `Int`, without updating the entry data to match, produces 
 
 # TypeScript API
 
+Tasks are divided as follows:
+
+* The GraphQL API, called with `postGraphQL()`, reads and writes the entries of a single commit.
+* The other client functions work on the schema or on all entries at once, e.g. to validate all entries or to compare
+  two commits.
+* Changes are reviewed and approved on the platform of the Git provider, not through Commitspark, e.g. in pull requests
+  on GitHub or merge requests on GitLab.
+* Content delivery, e.g. rebuilding pages or purging caches, is best handled by dedicated tools. Commitspark provides
+  the information to trigger them only for what changed, e.g. the entries changed by a push (see
+  [`getEntryChanges()`](#getentrychanges)).
+
 ## createClient()
 
 This function is used to create a Commitspark GraphQL API client instance.
@@ -772,6 +783,44 @@ for (const violation of result.violations) {
 }
 process.exitCode = result.violations.length > 0 ? 1 : 0
 ```
+
+### getEntryChanges()
+
+This function lists the entries that differ between two commits, e.g. to update only the changed entries in a search
+index after a push.
+
+Arguments `fromRef` and `toRef` expect a branch name, tag name or commit hash each (see
+[Navigating the Git repository](#navigating-the-git-repository)). Only the content of the two commits is compared, not
+the history between them, so the result is also correct after reverts and force pushes, as long as the commit of
+`fromRef` still exists.
+
+The result holds the commit hashes the refs resolved to in `from` and `to`, and the changed entries in `entries`,
+ordered by ID. Each change has the entry `id`, a `kind` (`ADDED`, `MODIFIED` or `DELETED`), the entry `type` at `to` and
+the `previousType` at `from`. `type` is `null` for deleted entries and `previousType` is `null` for added entries.
+
+An entry counts as changed if the content of its file differs, including formatting-only changes, but not if only
+entries it references changed. If an entry is displayed with data of entries it references, e.g. an article page with
+the name of its author, query `_referencedBy` of the changed entries to find the entries to update.
+
+To find out whether the schema changed, compare the results of [`getSchema()`](#getschema) for both commits.
+
+Example of a sync to a search index that keeps one index per entry type:
+
+```typescript
+const { to, entries } = await client.getEntryChanges(lastSyncedHash, 'main')
+for (const { id, type, previousType } of entries) {
+  if (previousType !== null && previousType !== type) {
+    await searchIndex.remove(previousType, id) // entry deleted or its type changed
+  }
+  if (type !== null) {
+    await searchIndex.put(type, id, await readEntry(to, type, id)) // reads with postGraphQL(to, ...)
+  }
+}
+lastSyncedHash = to
+```
+
+Reading with `to` and passing it as `fromRef` of the next call ensures that no change is missed if the branch moves
+during the sync.
 
 ### migrate()
 

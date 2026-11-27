@@ -20,6 +20,10 @@ import {
 } from './migration/migrate.ts'
 import { removeUnknownFields as runRemoveUnknownFields } from './migration/remove-unknown-fields.ts'
 import { CommitInput } from './graphql/resolvers/types.ts'
+import {
+  EntryChangesResult,
+  getEntryChanges as compareEntries,
+} from './changes/entry-changes.ts'
 
 const createContext = async (
   gitAdapter: GitAdapter,
@@ -133,6 +137,22 @@ export const validate = async (
   )
   const violations = await validateRepository(context)
   return { ref: context.getCurrentHash(), violations }
+}
+
+export const getEntryChanges = async (
+  gitAdapter: GitAdapter,
+  searchAdapter: SearchAdapter | undefined,
+  repositoryCache: RepositoryCacheHandler,
+  fromRef: string,
+  toRef: string,
+): Promise<EntryChangesResult> => {
+  const context = await createContext(
+    gitAdapter,
+    searchAdapter,
+    repositoryCache,
+    toRef,
+  )
+  return compareEntries(context, fromRef)
 }
 
 export const migrate = async (
